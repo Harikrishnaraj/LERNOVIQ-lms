@@ -32,7 +32,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-014** Signup → Supabase Auth + `/verify-email`. — F-001, F-002
 - [x] **T-015** Login UI + wiring; safe error on bad credentials; suspended users blocked. — F-001
 - [x] **T-016** Logout + session refresh in middleware; expired session redirects to login. — F-004
-- [ ] **T-017** Forgot/reset password. — F-003
+- [x] **T-017** Forgot/reset password. — F-003
 - [ ] **T-018** Server-side role lookup + role-aware redirect after login; remove temporary landing links. — F-006
 - [ ] **T-019** Route guards for `/learner`, `/instructor`, `/admin` (middleware + layout) + permission-denied page; `can(user, permission)` helper with tests. — F-006, F-007
 - [ ] **T-020** Admin MFA (TOTP enrol + challenge; admin routes require AAL2). — F-005

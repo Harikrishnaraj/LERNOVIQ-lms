@@ -23,7 +23,12 @@ export default function LoginPage() {
         </CardContent>
       </Card>
 
-      <p className="mt-6 text-center text-sm text-text-secondary">
+      <p className="mt-3 text-center text-sm">
+        <Link href="/forgot-password" className="font-medium text-primary hover:underline">
+          Forgot password?
+        </Link>
+      </p>
+      <p className="mt-3 text-center text-sm text-text-secondary">
         Don&apos;t have an account?{" "}
         <Link href="/signup" className="font-medium text-primary hover:underline">
           Sign up
