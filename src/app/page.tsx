@@ -28,7 +28,10 @@ export default async function HomePage() {
       <p className="mt-3 max-w-lg text-text-secondary">
         Learn, teach and operate learning — all in Modern LMS.
       </p>
-      <div className="mt-8 flex gap-3">
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link href="/courses" className={buttonClasses({ variant: "secondary", size: "lg" })}>
+          Browse courses
+        </Link>
         <Link href="/signup" className={buttonClasses({ size: "lg" })}>
           Sign up
         </Link>
