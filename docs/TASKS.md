@@ -45,7 +45,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-030** Migration: `courses`, `course_versions`, `course_sections`, `lessons`, `lesson_assets`, `categories`, `enrollments`, `lesson_progress` + RLS. — F-101
 - [x] **T-031** Dev seed script (fixtures only, never imported by app code). — F-903
 - [x] **T-032** Public catalog `/courses`: Postgres full-text search, filters (category, level, language, duration, price, rating), sort, pagination. — F-101
-- [ ] **T-033** Course detail `/courses/[slug]`: outcomes, curriculum preview, instructor, reviews summary. — F-102
+- [x] **T-033** Course detail `/courses/[slug]`: outcomes, curriculum preview, instructor, reviews summary. — F-102
 - [ ] **T-034** `enrollInCourse` service + Enroll button (free courses). — F-103
 - [ ] **T-035** My Learning (in progress / completed / saved) with empty state. — F-104
 - [ ] **T-036** Course player: curriculum sidebar, lesson content, prev/next, locked lessons, distraction-free layout. — F-105
