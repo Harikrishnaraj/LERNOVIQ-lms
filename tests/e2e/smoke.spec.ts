@@ -1,12 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-test("landing links to all three portals", async ({ page }) => {
+// The e2e test user (see auth.setup.ts) only has the default "learner" role,
+// so "/" role-aware-redirects it there (T-018).
+test("signed-in visit to / redirects to the user's portal", async ({ page }) => {
   await page.goto("/");
-  for (const name of ["learner", "instructor", "admin"]) {
-    await expect(
-      page.getByRole("link", { name: new RegExp(`open ${name} portal`, "i") }),
-    ).toBeVisible();
-  }
+  await expect(page).toHaveURL(/\/learner$/);
+});
+
+test("signed-out landing links to signup and login", async ({ page }) => {
+  await page.context().clearCookies();
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
 });
 
 for (const [portal, target, heading] of [

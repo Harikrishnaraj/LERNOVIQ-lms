@@ -6,7 +6,13 @@ import { login } from "@/features/auth/login";
 
 export const metadata = { title: "Log in" };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-16">
       <div className="mb-8 flex items-center gap-3">
@@ -19,7 +25,7 @@ export default function LoginPage() {
       <Card>
         <CardHeader title="Welcome back" description="Log in to continue learning." />
         <CardContent>
-          <LoginForm onSubmit={login} />
+          <LoginForm onSubmit={login.bind(null, next ?? null)} />
         </CardContent>
       </Card>
 

@@ -29,7 +29,8 @@ setup("authenticate", async ({ page }) => {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL("/");
+  // Default new signup role is "learner" (T-018 role-aware redirect).
+  await page.waitForURL("/learner");
 
   mkdirSync(AUTH_DIR, { recursive: true });
   await page.context().storageState({ path: STORAGE_STATE });

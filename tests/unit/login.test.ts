@@ -1,19 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { login } from "@/features/auth/login";
 
-const { redirectMock, signInMock, signOutMock, singleMock } = vi.hoisted(() => ({
+const { redirectMock, signInMock, signOutMock, singleMock, userRolesMock } = vi.hoisted(() => ({
   redirectMock: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   }),
   signInMock: vi.fn(),
   signOutMock: vi.fn(),
   singleMock: vi.fn(),
+  userRolesMock: vi.fn(async () => ({ data: [{ role_id: "learner" }] })),
 }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { signInWithPassword: signInMock, signOut: signOutMock },
-    from: vi.fn(() => ({ select: vi.fn(() => ({ eq: vi.fn(() => ({ single: singleMock })) })) })),
+    from: vi.fn((table: string) =>
+      table === "user_roles"
+        ? { select: vi.fn(() => ({ eq: userRolesMock })) }
+        : { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: singleMock })) })) },
+    ),
   })),
 }));
 
@@ -25,33 +30,48 @@ describe("login server action", () => {
     signInMock.mockReset();
     signOutMock.mockReset();
     singleMock.mockReset();
+    userRolesMock.mockClear();
   });
 
   it("rejects invalid input server-side without calling Supabase", async () => {
-    const result = await login({ email: "not-an-email", password: "" });
+    const result = await login(null, { email: "not-an-email", password: "" });
     expect(result).toEqual({ error: "Please check your details and try again." });
     expect(signInMock).not.toHaveBeenCalled();
   });
 
   it("returns one generic error for wrong credentials, not revealing the cause", async () => {
     signInMock.mockResolvedValue({ data: {}, error: { message: "Invalid login credentials" } });
-    const result = await login(validInput);
+    const result = await login(null, validInput);
     expect(result).toEqual({ error: "Invalid email or password." });
   });
 
   it("signs a suspended user back out and reports suspension", async () => {
     signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     singleMock.mockResolvedValue({ data: { status: "suspended" } });
-    const result = await login(validInput);
+    const result = await login(null, validInput);
     expect(result).toEqual({ error: "Your account has been suspended. Contact support." });
     expect(signOutMock).toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("redirects home for an active user", async () => {
+  it("redirects to the user's portal for an active user", async () => {
     signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     singleMock.mockResolvedValue({ data: { status: "active" } });
-    await expect(login(validInput)).rejects.toThrow("REDIRECT:/");
+    await expect(login(null, validInput)).rejects.toThrow("REDIRECT:/learner");
     expect(signOutMock).not.toHaveBeenCalled();
+  });
+
+  it("honors a safe ?next= path instead of the role default", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    singleMock.mockResolvedValue({ data: { status: "active" } });
+    await expect(login("/instructor/courses", validInput)).rejects.toThrow(
+      "REDIRECT:/instructor/courses",
+    );
+  });
+
+  it("ignores an unsafe ?next= (open-redirect) and falls back to the role default", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    singleMock.mockResolvedValue({ data: { status: "active" } });
+    await expect(login("//evil.example.com", validInput)).rejects.toThrow("REDIRECT:/learner");
   });
 });
