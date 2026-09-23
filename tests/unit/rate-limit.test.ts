@@ -21,7 +21,7 @@ describe("rateLimit", () => {
     expect(await rateLimit("login", "1.1.1.1", "A@B.com")).toBe(true);
     expect(rpcMock).toHaveBeenCalledWith("check_rate_limit", {
       p_key: "login:ip:1.1.1.1",
-      p_limit: 100,
+      p_limit: 300,
       p_window_seconds: 900,
     });
     expect(rpcMock).toHaveBeenCalledWith("check_rate_limit", {

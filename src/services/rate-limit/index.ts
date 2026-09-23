@@ -21,7 +21,7 @@ export async function clientIp(): Promise<string> {
 
 // Shared NATs/offices sit behind one IP, so the per-IP bucket is looser than
 // the per-subject (email) one.
-const IP_LIMIT_MULTIPLIER = 10;
+const IP_LIMIT_MULTIPLIER = 30;
 
 // Returns true when the request may proceed. The caller's IP and the optional
 // subject (e.g. the target email) are checked independently: either one over
