@@ -9,7 +9,7 @@ This file records the current project state. It is intentionally different from 
 
 ## Current Status
 
-**Phase:** Phase 0 (Foundation) complete — 2026-09-23.
+**Phase:** Phase 0 (Foundation) complete; Phase 1 (Auth) in progress — 2026-09-23.
 
 **Prototype review:** Completed for the supplied learner, instructor and admin prototypes.
 
@@ -17,7 +17,7 @@ This file records the current project state. It is intentionally different from 
 
 **Feature tracking:** 98 features in `docs/FEATURES.md`, 137 tasks across Phases 0–12 in `docs/TASKS.md` (ADR-028). Run `npm run features` for live coverage.
 
-**Next task:** T-011 (Supabase client setup). Needs a Supabase dev project and keys in `.env.local`.
+**Next task:** T-012 (Supabase migration: profiles/roles/permissions + RLS). Needs a Supabase dev project and keys in `.env.local` — none exists yet, so T-012's migration can be written but not applied/verified until the user provides a project.
 
 ### What exists (Phase 0)
 
@@ -28,7 +28,12 @@ This file records the current project state. It is intentionally different from 
 - Navigation: `src/config/navigation.ts` — single source for all three portals' routes, icons (lucide) and the task ID that builds each screen.
 - Placeholder routes via `[...section]` (ADR-027).
 - Domain: `src/features/courses/course-status.ts` state machine (ADR-010).
-- Tests: 29 Vitest unit tests, 12 Playwright E2E (desktop 1440 + mobile 375). `npm run check` passes.
+- Tests: 32 Vitest unit tests, 12 Playwright E2E (desktop 1440 + mobile 375). `npm run check` passes.
+
+### What exists (Phase 1, in progress)
+
+- `src/lib/supabase/{env,client,server,middleware}.ts` (T-011): `client.ts` for Client Components (`createBrowserClient`), `server.ts` for Server Components/Actions/Route Handlers (`createServerClient` + `next/headers` cookies), `middleware.ts` exports `updateSession(request)` for session refresh — not yet wired into a root `middleware.ts` (that lands with route guards, T-016/T-019). `env.ts` zod-validates `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` and throws a clear error if missing, rather than connecting to `undefined`.
+- **Known issue:** no `.env.local` / Supabase project exists yet, so the Supabase clients are untested against a live backend — only the env-validation error path has a unit test (`tests/unit/supabase-env.test.ts`). T-012 (DB migration) needs real project credentials to apply and verify.
 
 ## Source Prototypes Reviewed
 
