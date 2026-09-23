@@ -17,6 +17,9 @@ setup("authenticate", async ({ page }) => {
     { auth: { persistSession: false } },
   );
 
+  // Repeated local runs from one IP would otherwise trip the login limiter (T-021).
+  await admin.from("rate_limit_hits").delete().gte("id", 0);
+
   const email = `e2e-smoke-${Date.now()}@example.com`;
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -24,6 +27,10 @@ setup("authenticate", async ({ page }) => {
     email_confirm: true,
   });
   if (error) throw error;
+
+  // Existing learner specs assume onboarding is done; onboarding.spec.ts
+  // covers the un-onboarded path with its own user.
+  await admin.from("learner_onboarding").insert({ user_id: data.user.id, interests: ["design"] });
 
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);

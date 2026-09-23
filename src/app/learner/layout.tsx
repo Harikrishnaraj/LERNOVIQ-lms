@@ -4,6 +4,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { logout } from "@/features/auth/logout";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/permissions/can";
+import { hasCompletedOnboarding } from "@/features/onboarding/status";
 
 export const metadata: Metadata = {
   title: { default: "Learner", template: "%s · Learner · Modern LMS" },
@@ -19,6 +20,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   if (!(await can(supabase, user.id, "portal.learner.access"))) redirect("/permission-denied");
+  if (!(await hasCompletedOnboarding(supabase, user.id))) redirect("/onboarding");
 
   return (
     <PortalShell portal="learner" user={user && { email: user.email! }} onLogout={logout}>
