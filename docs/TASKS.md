@@ -47,7 +47,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-032** Public catalog `/courses`: Postgres full-text search, filters (category, level, language, duration, price, rating), sort, pagination. — F-101
 - [x] **T-033** Course detail `/courses/[slug]`: outcomes, curriculum preview, instructor, reviews summary. — F-102
 - [x] **T-034** `enrollInCourse` service + Enroll button (free courses). — F-103
-- [ ] **T-035** My Learning (in progress / completed / saved) with empty state. — F-104
+- [x] **T-035** My Learning (in progress / completed / saved) with empty state. — F-104
 - [ ] **T-036** Course player: curriculum sidebar, lesson content, prev/next, locked lessons, distraction-free layout. — F-105
 - [ ] **T-037** `completeLesson` + progress persistence; video resume position. — F-105, F-106
 - [ ] **T-038** Assessments schema (`assessments`, `assessment_questions`, `assessment_options`, `assessment_attempts`); learner API never returns answer keys. — F-107

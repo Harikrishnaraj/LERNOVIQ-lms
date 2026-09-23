@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { EnrollButton } from "@/components/courses/enroll-button";
+import { SaveButton } from "@/components/courses/save-button";
 import { enrollInCourse } from "@/features/enrollment/enroll";
 import { isEnrolled } from "@/features/enrollment/status";
+import { toggleSaveCourse } from "@/features/my-learning/saved";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 
@@ -51,13 +53,23 @@ export async function EnrollmentPanel({
     );
   }
 
-  if (priceCents > 0) {
-    return (
-      <p className="text-sm text-text-secondary">
-        Paid enrollment is not available yet. Checkout is coming soon.
-      </p>
-    );
-  }
+  const { data: savedRow } = await supabase
+    .from("saved_courses")
+    .select("course_id")
+    .eq("user_id", user.id)
+    .eq("course_id", courseId)
+    .maybeSingle();
 
-  return <EnrollButton onEnroll={enrollInCourse.bind(null, slug)} />;
+  return (
+    <div className="space-y-3">
+      {priceCents > 0 ? (
+        <p className="text-sm text-text-secondary">
+          Paid enrollment is not available yet. Checkout is coming soon.
+        </p>
+      ) : (
+        <EnrollButton onEnroll={enrollInCourse.bind(null, slug)} />
+      )}
+      <SaveButton saved={savedRow !== null} onToggle={toggleSaveCourse.bind(null, slug)} />
+    </div>
+  );
 }
