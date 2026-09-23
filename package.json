@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run lint && npm test && npm run features && npm run build",
+    "seed": "node scripts/seed.mjs",
     "features": "node scripts/check-features.mjs",
     "features:strict": "node scripts/check-features.mjs --strict"
   },
