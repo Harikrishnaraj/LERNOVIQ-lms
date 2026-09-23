@@ -20,6 +20,7 @@ test.describe("course player", () => {
   let learnerId: string;
   let enrolledCourse: Awaited<ReturnType<typeof createCourse>>;
   let otherCourse: Awaited<ReturnType<typeof createCourse>>;
+  let progressCourse: Awaited<ReturnType<typeof createCourse>>;
 
   test.beforeAll(async () => {
     learnerId = JSON.parse(readFileSync("tests/e2e/.auth/user.meta.json", "utf8")).userId;
@@ -56,7 +57,26 @@ test.describe("course player", () => {
         },
       ],
     });
-    courseIds.push(enrolledCourse.courseId, otherCourse.courseId);
+    progressCourse = await createCourse(svc, instructor.id, {
+      slug: `${tag}-progress`,
+      title: `${tag} Progress`,
+      sections: [
+        {
+          title: "P",
+          lessons: [
+            { title: "Step one", content: "<p>one</p>" },
+            { title: "Step two", content: "<p>two</p>" },
+            { title: "Step three", content: "<p>three</p>" },
+          ],
+        },
+      ],
+    });
+    courseIds.push(enrolledCourse.courseId, otherCourse.courseId, progressCourse.courseId);
+    await svc.from("enrollments").insert({
+      user_id: learnerId,
+      course_id: progressCourse.courseId,
+      version_id: progressCourse.versionId,
+    });
     await svc.from("enrollments").insert({
       user_id: learnerId,
       course_id: enrolledCourse.courseId,
@@ -147,6 +167,43 @@ test.describe("course player", () => {
     const card = page.getByRole("listitem").filter({ hasText: `${tag} Enrolled` });
     await card.getByRole("link", { name: /Start learning|Resume/ }).click();
     await expect(page).toHaveURL(new RegExp(`/learn/${enrolledCourse.lessonIds[0]}$`));
+  });
+
+  test("marking lessons complete persists across reloads, advances, and shows in My Learning", async ({
+    page,
+  }) => {
+    const base = `/learner/courses/${tag}-progress/learn`;
+    await page.goto(`${base}/${progressCourse.lessonIds[0]}`);
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: "Mark complete and continue" }).click();
+    await expect(page).toHaveURL(`${base}/${progressCourse.lessonIds[1]}`);
+    await expect(page.getByRole("heading", { level: 1, name: "Step two" })).toBeVisible();
+
+    // The completion survives a reload: sidebar marker, header bar and lesson state.
+    await page.goto(`${base}/${progressCourse.lessonIds[0]}`);
+    await expect(page.getByText("Lesson completed")).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: "Course content" }).getByRole("link", { name: /Step one/ }),
+    ).toContainText("Completed");
+    await expect(page.getByRole("progressbar", { name: "Course progress" })).toHaveAttribute(
+      "aria-valuenow",
+      "33",
+    );
+
+    // Entry route resumes at the first unfinished lesson.
+    await page.goto(`/learner/courses/${tag}-progress`);
+    await expect(page).toHaveURL(`${base}/${progressCourse.lessonIds[1]}`);
+
+    // My Learning reflects it.
+    await page.goto("/learner/my-learning");
+    const card = page.getByRole("listitem").filter({ hasText: `${tag} Progress` });
+    await expect(card).toContainText("1 of 3 lessons");
+
+    // Finish the last lesson: there is no next lesson, so the page just refreshes to completed.
+    await page.goto(`${base}/${progressCourse.lessonIds[2]}`);
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: "Mark complete" }).click();
+    await expect(page.getByText("Lesson completed")).toBeVisible();
   });
 
   test("works at 375px without horizontal scroll", async ({ page }) => {

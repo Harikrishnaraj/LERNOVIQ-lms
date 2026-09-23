@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
+import { LessonControls } from "@/components/player/lesson-controls";
 import { PlayerSidebar } from "@/components/player/player-sidebar";
+import { ResumableVideo } from "@/components/player/resumable-video";
+import { Progress } from "@/components/ui/progress";
 import { buttonClasses } from "@/components/ui/button";
-import { getLessonContent, getPlayerCourse } from "@/features/player/data";
+import { getLessonContent, getLessonProgress, getPlayerCourse } from "@/features/player/data";
+import { completeLesson, saveVideoPosition } from "@/features/player/progress";
+import { progressPercent } from "@/features/my-learning/queries";
 import { adjacentLessons, isLessonLocked } from "@/features/player/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeLessonHtml } from "@/lib/sanitize";
@@ -39,6 +44,12 @@ export default async function LessonPage({
   const lesson = await getLessonContent(supabase, lessonId);
   if (!lesson) redirect(`/courses/${slug}`); // RLS says no
 
+  const lessonProgress = course.enrollmentId
+    ? await getLessonProgress(supabase, course.enrollmentId, lessonId)
+    : { completed: false, positionSeconds: 0 };
+  const totalLessons = course.sections.reduce((n, sec) => n + sec.lessons.length, 0);
+  const percent = progressPercent(course.completedLessonIds.size, totalLessons);
+
   const safeHtml = sanitizeLessonHtml(lesson.content);
   const videoOk = lesson.videoUrl?.startsWith("https://") ?? false;
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
@@ -57,6 +68,11 @@ export default async function LessonPage({
           |
         </span>
         <p className="min-w-0 flex-1 truncate text-sm font-semibold">{course.title}</p>
+        {course.enrolled && (
+          <div className="hidden w-32 shrink-0 sm:block">
+            <Progress value={percent} label="Course progress" />
+          </div>
+        )}
         <p className="shrink-0 text-xs text-text-secondary">
           Lesson {index + 1} of {total}
         </p>
@@ -76,14 +92,13 @@ export default async function LessonPage({
           <h1 className="text-2xl font-bold tracking-tight">{lesson.title}</h1>
 
           {lesson.type === "video" && videoOk && (
-            <video
-              controls
-              preload="metadata"
+            <ResumableVideo
               src={lesson.videoUrl!}
-              className="aspect-video w-full rounded-card bg-black"
-            >
-              Your browser does not support video playback.
-            </video>
+              savedPosition={lessonProgress.positionSeconds}
+              onSavePosition={
+                course.enrolled ? saveVideoPosition.bind(null, slug, lessonId) : undefined
+              }
+            />
           )}
           {lesson.type === "video" && !videoOk && (
             <p className="rounded-card border border-dashed border-border bg-surface p-6 text-sm text-text-secondary">
@@ -95,6 +110,14 @@ export default async function LessonPage({
             <div
               className="prose-lesson space-y-3 text-text [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:text-lg [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:overflow-x-auto [&_pre]:rounded-control [&_pre]:bg-border-subtle [&_pre]:p-3 [&_ul]:list-disc [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: safeHtml }}
+            />
+          )}
+
+          {course.enrolled && (
+            <LessonControls
+              completed={lessonProgress.completed}
+              nextHref={next ? lessonHref(next.id) : null}
+              onComplete={completeLesson.bind(null, slug, lessonId)}
             />
           )}
 

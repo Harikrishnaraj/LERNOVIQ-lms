@@ -138,3 +138,21 @@ export async function getLessonContent(
     isPreview: data.is_preview,
   };
 }
+
+/** Saved resume position and completion for one lesson of the learner enrollment. */
+export async function getLessonProgress(
+  supabase: SupabaseClient,
+  enrollmentId: string,
+  lessonId: string,
+): Promise<{ completed: boolean; positionSeconds: number }> {
+  const { data } = await supabase
+    .from("lesson_progress")
+    .select("completed_at, last_position_seconds")
+    .eq("enrollment_id", enrollmentId)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+  return {
+    completed: Boolean(data?.completed_at),
+    positionSeconds: data?.last_position_seconds ?? 0,
+  };
+}
