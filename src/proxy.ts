@@ -1,21 +1,33 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { can } from "@/lib/permissions/can";
 
-// Authentication gate only — "is there a user at all". Role/permission
-// checks and the permission-denied page are T-019.
-const PROTECTED_PREFIXES = ["/learner", "/instructor", "/admin"];
+// Authentication ("is there a user") + portal-level authorization ("can this
+// user use this portal"). Finer-grained per-action permission checks inside
+// a portal are added as those features land.
+const PORTAL_PERMISSION: Record<string, string> = {
+  "/learner": "portal.learner.access",
+  "/instructor": "portal.instructor.access",
+  "/admin": "portal.admin.access",
+};
 
 export async function proxy(request: NextRequest) {
-  const { response, user } = await updateSession(request);
+  const { response, user, supabase } = await updateSession(request);
+  const pathname = request.nextUrl.pathname;
+  const portal = Object.keys(PORTAL_PERMISSION).find((prefix) => pathname.startsWith(prefix));
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix),
-  );
-  if (isProtected && !user) {
+  if (portal && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
+  }
+
+  if (portal && user) {
+    const allowed = await can(supabase, user.id, PORTAL_PERMISSION[portal]);
+    if (!allowed) {
+      return NextResponse.redirect(new URL("/permission-denied", request.url));
+    }
   }
 
   return response;

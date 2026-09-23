@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { loginAsRole } from "./support/role-user";
 
 // The e2e test user (see auth.setup.ts) only has the default "learner" role,
 // so "/" role-aware-redirects it there (T-018).
@@ -20,18 +21,24 @@ for (const [portal, target, heading] of [
   ["admin", "Audit Logs", "Audit Logs"],
 ] as const) {
   test(`${portal} shell navigates to ${target}`, async ({ page, isMobile }) => {
-    await page.goto(`/${portal}`);
-    if (isMobile) {
-      await page.getByRole("button", { name: "Open navigation" }).click();
-      await page
-        .getByRole("dialog", { name: "Navigation" })
-        .getByRole("link", { name: target })
-        .click();
-    } else {
-      await page.getByRole("complementary").getByRole("link", { name: target }).click();
+    // Instructor/admin shells need a user holding that role (T-019 guards).
+    const cleanup = portal === "learner" ? null : await loginAsRole(page, portal);
+    try {
+      await page.goto(`/${portal}`);
+      if (isMobile) {
+        await page.getByRole("button", { name: "Open navigation" }).click();
+        await page
+          .getByRole("dialog", { name: "Navigation" })
+          .getByRole("link", { name: target })
+          .click();
+      } else {
+        await page.getByRole("complementary").getByRole("link", { name: target }).click();
+      }
+      await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/${portal}/`));
+    } finally {
+      await cleanup?.();
     }
-    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/${portal}/`));
   });
 }
 
