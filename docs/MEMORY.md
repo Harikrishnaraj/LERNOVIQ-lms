@@ -17,7 +17,11 @@ This file records the current project state. It is intentionally different from 
 
 **Feature tracking:** 98 features in `docs/FEATURES.md`, 137 tasks across Phases 0–12 in `docs/TASKS.md` (ADR-028). Run `npm run features` for live coverage.
 
-**Next task:** T-012 (Supabase migration: profiles/roles/permissions + RLS). Needs a Supabase dev project and keys in `.env.local` — none exists yet, so T-012's migration can be written but not applied/verified until the user provides a project.
+**Next task:** T-013 (Signup UI).
+
+**Supabase project:** `modern-lms` (`ctrizucnfaqescligsuu`, ap-south-1) — created for this repo via the Supabase MCP. The account's two other projects (`trenning-lms`, and the account default project, now paused) have unrelated pre-existing schemas/data and must not be touched by this repo's migrations. `.env.local` (gitignored) points at `modern-lms`.
+
+**Auth setting to revert before T-014:** "Confirm email" is OFF on the `modern-lms` project's Auth settings, so `tests/integration/profiles-roles.test.ts` can sign in immediately after `signUp()` without a service-role key. T-014 implements real email verification and TEST_PLAN §3 checks "Verification flow works" — turn "Confirm email" back on (Dashboard → Authentication → Sign In / Up → Email) before or during that task, or switch the integration test to the admin API with a service-role key first.
 
 ### What exists (Phase 0)
 
@@ -33,7 +37,7 @@ This file records the current project state. It is intentionally different from 
 ### What exists (Phase 1, in progress)
 
 - `src/lib/supabase/{env,client,server,middleware}.ts` (T-011): `client.ts` for Client Components (`createBrowserClient`), `server.ts` for Server Components/Actions/Route Handlers (`createServerClient` + `next/headers` cookies), `middleware.ts` exports `updateSession(request)` for session refresh — not yet wired into a root `middleware.ts` (that lands with route guards, T-016/T-019). `env.ts` zod-validates `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` and throws a clear error if missing, rather than connecting to `undefined`.
-- **Known issue:** no `.env.local` / Supabase project exists yet, so the Supabase clients are untested against a live backend — only the env-validation error path has a unit test (`tests/unit/supabase-env.test.ts`). T-012 (DB migration) needs real project credentials to apply and verify.
+- `supabase/migrations/20260923102957_profiles_roles_permissions.sql` (T-012): `profiles` (`id` → `auth.users`, `full_name`, `avatar_url`, `status` active/suspended, timestamps) auto-populated on signup via a `SECURITY DEFINER` trigger (execute revoked from `public`/`anon`/`authenticated` — it must only run as a trigger); `roles`/`permissions`/`role_permissions`/`user_roles` (text-slug PKs). RLS on all 5 tables: `profiles`/`user_roles` are select-own-row only, `roles`/`permissions`/`role_permissions` are select-all-for-`authenticated` (non-sensitive reference data). No client-side insert/update/delete policies anywhere. Seeded the 7 roles from SECURITY §3; `permissions`/`role_permissions` are left empty until a task needs specific grants. Verified via `tests/integration/profiles-roles.test.ts` (skipped automatically when `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` aren't set) and the Supabase security advisor (0 findings).
 
 ## Source Prototypes Reviewed
 
