@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { SignUpForm } from "@/components/forms/signup-form";
-import { signUp } from "@/features/auth/sign-up";
+import { LoginForm } from "@/components/forms/login-form";
+import { login } from "@/features/auth/login";
 
-export const metadata = { title: "Sign up" };
+export const metadata = { title: "Log in" };
 
-export default function SignUpPage() {
+export default function LoginPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-16">
       <div className="mb-8 flex items-center gap-3">
@@ -17,16 +17,16 @@ export default function SignUpPage() {
       </div>
 
       <Card>
-        <CardHeader title="Create your account" description="Start learning in minutes." />
+        <CardHeader title="Welcome back" description="Log in to continue learning." />
         <CardContent>
-          <SignUpForm onSubmit={signUp} />
+          <LoginForm onSubmit={login} />
         </CardContent>
       </Card>
 
       <p className="mt-6 text-center text-sm text-text-secondary">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Log in
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="font-medium text-primary hover:underline">
+          Sign up
         </Link>
       </p>
     </main>
