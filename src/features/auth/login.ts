@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema, type LoginInput } from "./schemas";
 import { getPortalPathForUser } from "./roles";
@@ -24,6 +25,10 @@ export async function login(
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return { error: "Please check your details and try again." };
+  }
+
+  if (!(await rateLimit("login", await clientIp(), parsed.data.email))) {
+    return { error: RATE_LIMITED_MESSAGE };
   }
 
   const supabase = await createClient();

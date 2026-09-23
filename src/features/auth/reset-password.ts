@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { resetPasswordSchema, type ResetPasswordInput } from "./schemas";
 
@@ -10,6 +11,10 @@ export async function resetPassword(input: ResetPasswordInput): Promise<{ error?
   const parsed = resetPasswordSchema.safeParse(input);
   if (!parsed.success) {
     return { error: "Please check your details and try again." };
+  }
+
+  if (!(await rateLimit("password-reset", await clientIp()))) {
+    return { error: RATE_LIMITED_MESSAGE };
   }
 
   const supabase = await createClient();

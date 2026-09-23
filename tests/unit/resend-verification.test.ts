@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resendVerification } from "@/features/auth/resend-verification";
+import { rateLimit } from "@/services/rate-limit";
 
 const { resendMock } = vi.hoisted(() => ({ resendMock: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
@@ -26,5 +27,12 @@ describe("resendVerification server action", () => {
     const result = await resendVerification("test@example.com");
     expect(result).toEqual({});
     expect(resendMock).toHaveBeenCalledWith({ type: "signup", email: "test@example.com" });
+  });
+
+  it("is rate limited", async () => {
+    vi.mocked(rateLimit).mockResolvedValueOnce(false);
+    const result = await resendVerification("test@example.com");
+    expect(result).toEqual({ error: "Too many attempts. Please wait a while and try again." });
+    expect(resendMock).not.toHaveBeenCalled();
   });
 });

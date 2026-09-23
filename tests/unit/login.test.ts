@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { login } from "@/features/auth/login";
+import { rateLimit } from "@/services/rate-limit";
 
 const { redirectMock, signInMock, signOutMock, singleMock, userRolesMock, aalMock } = vi.hoisted(
   () => ({
@@ -87,5 +88,12 @@ describe("login server action", () => {
     singleMock.mockResolvedValue({ data: { status: "active" } });
     userRolesMock.mockResolvedValueOnce({ data: [{ role_id: "admin" }] });
     await expect(login(null, validInput)).rejects.toThrow("REDIRECT:/mfa?next=%2Fadmin");
+  });
+
+  it("returns a rate-limit error without touching Supabase when limited", async () => {
+    vi.mocked(rateLimit).mockResolvedValueOnce(false);
+    const result = await login(null, validInput);
+    expect(result).toEqual({ error: "Too many attempts. Please wait a while and try again." });
+    expect(signInMock).not.toHaveBeenCalled();
   });
 });

@@ -36,7 +36,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-018** Server-side role lookup + role-aware redirect after login; remove temporary landing links. — F-006
 - [x] **T-019** Route guards for `/learner`, `/instructor`, `/admin` (middleware + layout) + permission-denied page; `can(user, permission)` helper with tests. — F-006, F-007
 - [x] **T-020** Admin MFA (TOTP enrol + challenge; admin routes require AAL2). — F-005
-- [ ] **T-021** Rate-limit login/reset/verify endpoints. — F-941
+- [x] **T-021** Rate-limit login/reset/verify endpoints. — F-941
 - [ ] **T-022** Learner onboarding (interests, goals) after first login. — F-008
 - [ ] **T-023** Tests: auth unit + E2E (TEST_PLAN §3, §4). — F-001…F-007
 

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { forgotPassword } from "@/features/auth/forgot-password";
+import { rateLimit } from "@/services/rate-limit";
 
 const { resetMock } = vi.hoisted(() => ({ resetMock: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
@@ -29,5 +30,12 @@ describe("forgotPassword server action", () => {
     expect(result).toEqual({
       error: "We couldn't send the reset email. Please try again shortly.",
     });
+  });
+
+  it("is rate limited", async () => {
+    vi.mocked(rateLimit).mockResolvedValueOnce(false);
+    const result = await forgotPassword({ email: "test@example.com" });
+    expect(result).toEqual({ error: "Too many attempts. Please wait a while and try again." });
+    expect(resetMock).not.toHaveBeenCalled();
   });
 });
