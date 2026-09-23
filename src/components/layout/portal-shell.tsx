@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
-import { GraduationCap, Menu, MoreHorizontal, X } from "lucide-react";
+import { GraduationCap, LogOut, Menu, MoreHorizontal, X } from "lucide-react";
 import { NAVIGATION, activeNavHref, allNavItems, type NavItem } from "@/config/navigation";
 import type { Portal } from "@/types/portal";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
 
 /* Per-portal visual treatment (DESIGN.md §5). Structure is shared; only density and palette differ. */
@@ -235,7 +234,36 @@ function LearnerBottomBar({ onOpenMore }: { onOpenMore: () => void }) {
   );
 }
 
-export function PortalShell({ portal, children }: { portal: Portal; children: ReactNode }) {
+function UserMenu({ email, onLogout }: { email: string; onLogout: () => Promise<void> }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden max-w-[180px] truncate text-sm text-text-secondary sm:inline">
+        {email}
+      </span>
+      <form action={onLogout}>
+        <button
+          type="submit"
+          className="rounded-control p-2 text-text-secondary hover:bg-border-subtle hover:text-text"
+          aria-label="Log out"
+        >
+          <LogOut className="size-4" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export function PortalShell({
+  portal,
+  user,
+  onLogout,
+  children,
+}: {
+  portal: Portal;
+  user: { email: string } | null;
+  onLogout: () => Promise<void>;
+  children: ReactNode;
+}) {
   const t = THEME[portal];
   const drawerRef = useRef<HTMLDialogElement>(null);
   const openDrawer = () => drawerRef.current?.showModal();
@@ -273,9 +301,7 @@ export function PortalShell({ portal, children }: { portal: Portal; children: Re
             <span className="font-display text-[15px] font-bold">Modern LMS</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Badge tone="warning" dot>
-              Preview · no auth yet
-            </Badge>
+            {user && <UserMenu email={user.email} onLogout={onLogout} />}
           </div>
         </header>
 

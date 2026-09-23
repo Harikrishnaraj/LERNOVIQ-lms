@@ -1,11 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { User } from "@supabase/supabase-js";
 
 import { getSupabaseEnv } from "./env";
 
 // Refreshes the auth session and syncs cookies onto the response. Call from
-// the root middleware.ts (route guards land in T-016/T-019).
-export async function updateSession(request: NextRequest) {
+// the root proxy.ts. Returns the (possibly null) user so the caller can gate
+// routes; role/permission checks on top of "is there a user" are T-019.
+export async function updateSession(
+  request: NextRequest,
+): Promise<{ response: NextResponse; user: User | null }> {
   let response = NextResponse.next({ request });
   const { url, anonKey } = getSupabaseEnv();
 
@@ -22,7 +26,9 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  return { response, user };
 }
