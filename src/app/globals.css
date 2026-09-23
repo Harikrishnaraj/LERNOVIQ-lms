@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Modern LMS design tokens — source of truth is docs/DESIGN.md.
+ * Use these via Tailwind utilities (bg-surface, text-text-secondary, border-border, bg-primary …).
+ * Do not use raw hex values in components.
+ */
+@theme {
+  /* Core */
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+
+  /* Brand */
+  --color-primary: #4f46e5;
+  --color-primary-dark: #3730a3;
+  --color-primary-light: #eef2ff;
+  --color-blue: #2563eb;
+  --color-blue-light: #eff6ff;
+
+  /* Semantic (meaning only — never decoration) */
+  --color-success: #10b981;
+  --color-success-text: #047857;
+  --color-success-light: #ecfdf5;
+  --color-warning: #f59e0b;
+  --color-warning-text: #b45309;
+  --color-warning-light: #fffbeb;
+  --color-danger: #ef4444;
+  --color-danger-text: #b91c1c;
+  --color-danger-light: #fef2f2;
+  --color-info: #0ea5e9;
+  --color-info-text: #0369a1;
+  --color-info-light: #f0f9ff;
+  --color-ai: #7c3aed;
+  --color-ai-light: #f5f3ff;
+
+  /* Instructor dark sidebar */
+  --color-sidebar-dark: #0f172a;
+  --color-sidebar-dark-border: #1e293b;
+  --color-sidebar-dark-text: #cbd5e1;
+  --color-sidebar-dark-muted: #64748b;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Radius (DESIGN.md §7) */
+  --radius-control: 8px;
+  --radius-input: 10px;
+  --radius-card: 14px;
+  --radius-hero: 20px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    color-scheme: light;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
