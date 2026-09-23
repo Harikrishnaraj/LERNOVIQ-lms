@@ -155,6 +155,10 @@ export async function cleanup(
   opts: { learnerIds?: string[]; courseIds?: string[]; userIds?: string[] },
 ) {
   await Promise.all((opts.learnerIds ?? []).map((id) => svc.auth.admin.deleteUser(id)));
-  if (opts.courseIds?.length) await svc.from("courses").delete().in("id", opts.courseIds);
+  if (opts.courseIds?.length) {
+    // enrollments.course_id has no cascade
+    await svc.from("enrollments").delete().in("course_id", opts.courseIds);
+    await svc.from("courses").delete().in("id", opts.courseIds);
+  }
   await Promise.all((opts.userIds ?? []).map((id) => svc.auth.admin.deleteUser(id)));
 }

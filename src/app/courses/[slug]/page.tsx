@@ -15,6 +15,7 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
+import { EnrollmentPanel } from "@/components/courses/enrollment-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -226,6 +227,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
               <p className="text-3xl font-bold">
                 {formatPrice(course.priceCents, course.currency)}
               </p>
+              <EnrollmentPanel
+                courseId={course.id}
+                slug={course.slug}
+                priceCents={course.priceCents}
+              />
               <ul className="space-y-2 text-sm text-text-secondary">
                 <li className="flex items-center gap-2">
                   <BookOpen className="size-4" aria-hidden="true" />
