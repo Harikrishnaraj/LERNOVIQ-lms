@@ -162,3 +162,81 @@ export async function cleanup(
   }
   await Promise.all((opts.userIds ?? []).map((id) => svc.auth.admin.deleteUser(id)));
 }
+
+export interface FixtureQuestion {
+  type: "mcq" | "multi" | "true_false" | "short_answer" | "essay" | "coding";
+  prompt: string;
+  points?: number;
+  /** Option labels; indexes listed in `correct` are the answer key. */
+  options?: string[];
+  correct?: number[];
+  acceptedAnswers?: string[];
+  explanation?: string;
+}
+
+export interface CreatedAssessment {
+  assessmentId: string;
+  questions: { id: string; optionIds: string[]; correctOptionIds: string[] }[];
+}
+
+/** Creates an assessment with questions, options and answer keys via the service role. */
+export async function createAssessment(
+  svc: SupabaseClient,
+  versionId: string,
+  a: {
+    title: string;
+    passMark?: number;
+    maxAttempts?: number | null;
+    timeLimitMinutes?: number | null;
+    lessonId?: string | null;
+    questions: FixtureQuestion[];
+  },
+): Promise<CreatedAssessment> {
+  const { data: assessment, error } = await svc
+    .from("assessments")
+    .insert({
+      version_id: versionId,
+      lesson_id: a.lessonId ?? null,
+      title: a.title,
+      pass_mark: a.passMark ?? 70,
+      max_attempts: a.maxAttempts ?? null,
+      time_limit_minutes: a.timeLimitMinutes ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  const questions: CreatedAssessment["questions"] = [];
+  for (const [qi, q] of a.questions.entries()) {
+    const { data: question, error: qError } = await svc
+      .from("assessment_questions")
+      .insert({
+        assessment_id: assessment.id,
+        type: q.type,
+        prompt: q.prompt,
+        points: q.points ?? 1,
+        position: qi,
+      })
+      .select("id")
+      .single();
+    if (qError) throw qError;
+
+    let optionIds: string[] = [];
+    if (q.options?.length) {
+      const { data: options } = await svc
+        .from("assessment_options")
+        .insert(q.options.map((label, position) => ({ question_id: question.id, label, position })))
+        .select("id, position");
+      optionIds = options!.sort((x, y) => x.position - y.position).map((o) => o.id);
+    }
+    const correctOptionIds = (q.correct ?? []).map((i) => optionIds[i]);
+    await svc.from("assessment_answer_keys").insert({
+      question_id: question.id,
+      correct_option_ids: correctOptionIds,
+      accepted_answers: q.acceptedAnswers ?? [],
+      explanation: q.explanation ?? "",
+    });
+    questions.push({ id: question.id, optionIds, correctOptionIds });
+  }
+  return { assessmentId: assessment.id, questions };
+}
