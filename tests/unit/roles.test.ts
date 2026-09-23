@@ -28,9 +28,7 @@ describe("getPortalPathForUser", () => {
   });
 
   it("prefers /admin when a user holds both an admin and instructor role", async () => {
-    expect(await getPortalPathForUser(fakeSupabase(["instructor", "admin"]), "u1")).toBe(
-      "/admin",
-    );
+    expect(await getPortalPathForUser(fakeSupabase(["instructor", "admin"]), "u1")).toBe("/admin");
   });
 
   it("defaults to /learner when the user has no roles", async () => {

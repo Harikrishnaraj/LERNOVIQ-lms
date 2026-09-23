@@ -19,9 +19,7 @@ describe("ResetPasswordForm", () => {
     render(<ResetPasswordForm onSubmit={onSubmit} />);
     fill("short1", "short1");
     submit();
-    expect(
-      await screen.findByText("Password must be at least 8 characters"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Password must be at least 8 characters")).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

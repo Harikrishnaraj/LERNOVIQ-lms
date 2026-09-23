@@ -29,9 +29,7 @@ describe("SignUpForm", () => {
     render(<SignUpForm onSubmit={onSubmit} />);
     fill("test@example.com", "short1", "short1");
     submit();
-    expect(
-      await screen.findByText("Password must be at least 8 characters"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Password must be at least 8 characters")).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

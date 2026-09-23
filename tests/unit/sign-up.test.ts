@@ -38,7 +38,9 @@ describe("signUp server action", () => {
 
   it("redirects to /verify-email with the email on success", async () => {
     signUpMock.mockResolvedValue({ error: null });
-    await expect(signUp(validInput)).rejects.toThrow("REDIRECT:/verify-email?email=test%40example.com");
+    await expect(signUp(validInput)).rejects.toThrow(
+      "REDIRECT:/verify-email?email=test%40example.com",
+    );
     expect(signUpMock).toHaveBeenCalledWith(
       expect.objectContaining({ email: validInput.email, password: validInput.password }),
     );

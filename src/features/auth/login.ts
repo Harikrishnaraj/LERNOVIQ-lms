@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema, type LoginInput } from "./schemas";
 import { getPortalPathForUser } from "./roles";
+import { needsMfa } from "@/lib/permissions/mfa";
 
 // Only redirect to a same-origin relative path the middleware itself set
 // (?next=) — never follow an attacker-supplied absolute/protocol-relative
@@ -45,5 +46,11 @@ export async function login(
     return { error: "Your account has been suspended. Contact support." };
   }
 
-  redirect(safeNext(next) ?? (await getPortalPathForUser(supabase, data.user.id)));
+  const destination = safeNext(next) ?? (await getPortalPathForUser(supabase, data.user.id));
+  // Go straight to the second-factor step (the proxy would also enforce it,
+  // but a proxy redirect after a Server Action leaves the URL bar stale).
+  if (destination.startsWith("/admin") && (await needsMfa(supabase))) {
+    redirect(`/mfa?next=${encodeURIComponent(destination)}`);
+  }
+  redirect(destination);
 }

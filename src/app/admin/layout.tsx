@@ -4,6 +4,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { logout } from "@/features/auth/logout";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/permissions/can";
+import { needsMfa } from "@/lib/permissions/mfa";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s · Admin · Modern LMS" },
@@ -19,6 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   if (!(await can(supabase, user.id, "portal.admin.access"))) redirect("/permission-denied");
+  if (await needsMfa(supabase)) redirect("/mfa");
 
   return (
     <PortalShell portal="admin" user={user && { email: user.email! }} onLogout={logout}>

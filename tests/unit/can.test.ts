@@ -39,7 +39,11 @@ describe("can", () => {
 
   it("returns true when one of the user's roles grants the permission", async () => {
     expect(
-      await can(fakeSupabase(["learner", "instructor"], ["portal.instructor.access"]), "u1", "portal.instructor.access"),
+      await can(
+        fakeSupabase(["learner", "instructor"], ["portal.instructor.access"]),
+        "u1",
+        "portal.instructor.access",
+      ),
     ).toBe(true);
   });
 });

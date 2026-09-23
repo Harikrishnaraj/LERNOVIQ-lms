@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { can } from "@/lib/permissions/can";
+import { needsMfa } from "@/lib/permissions/mfa";
 
 // Authentication ("is there a user") + portal-level authorization ("can this
 // user use this portal"). Finer-grained per-action permission checks inside
@@ -27,6 +28,12 @@ export async function proxy(request: NextRequest) {
     const allowed = await can(supabase, user.id, PORTAL_PERMISSION[portal]);
     if (!allowed) {
       return NextResponse.redirect(new URL("/permission-denied", request.url));
+    }
+    // Admin console requires a second factor (F-005): send to enrol/challenge.
+    if (portal === "/admin" && (await needsMfa(supabase))) {
+      const url = new URL("/mfa", request.url);
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
     }
   }
 

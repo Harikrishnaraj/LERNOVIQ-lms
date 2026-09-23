@@ -58,6 +58,47 @@ describe("proxy", () => {
     expect(new URL(result.headers.get("location")!).pathname).toBe("/permission-denied");
   });
 
+  it("redirects /admin to /mfa when the session is not AAL2", async () => {
+    const supabase = {
+      auth: {
+        mfa: {
+          getAuthenticatorAssuranceLevel: vi
+            .fn()
+            .mockResolvedValue({ data: { currentLevel: "aal1" }, error: null }),
+        },
+      },
+    };
+    updateSessionMock.mockResolvedValue({
+      response: NextResponse.next(),
+      user: { id: "u1" },
+      supabase,
+    });
+    canMock.mockResolvedValue(true);
+    const result = await proxy(makeRequest("/admin/users"));
+    const location = new URL(result.headers.get("location")!);
+    expect(location.pathname).toBe("/mfa");
+    expect(location.searchParams.get("next")).toBe("/admin/users");
+  });
+
+  it("lets an AAL2 admin through", async () => {
+    const passThrough = NextResponse.next();
+    updateSessionMock.mockResolvedValue({
+      response: passThrough,
+      user: { id: "u1" },
+      supabase: {
+        auth: {
+          mfa: {
+            getAuthenticatorAssuranceLevel: vi
+              .fn()
+              .mockResolvedValue({ data: { currentLevel: "aal2" }, error: null }),
+          },
+        },
+      },
+    });
+    canMock.mockResolvedValue(true);
+    expect(await proxy(makeRequest("/admin"))).toBe(passThrough);
+  });
+
   it("does not gate an unprotected route", async () => {
     const passThrough = NextResponse.next();
     updateSessionMock.mockResolvedValue({ response: passThrough, user: null, supabase: {} });

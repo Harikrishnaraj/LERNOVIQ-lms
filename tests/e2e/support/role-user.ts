@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { loadEnvLocal } from "./env";
+import { totp } from "./totp";
 
 loadEnvLocal();
 
@@ -13,7 +14,10 @@ const admin = () =>
 
 // Creates a confirmed user whose only role is `role`, logs in through the UI
 // and returns a cleanup function that deletes the user.
-export async function loginAsRole(page: Page, role: string) {
+// Back-office logins land on /mfa; by default the helper enrols an authenticator
+// and completes the challenge. Pass { mfa: false } to stop at the /mfa page.
+// The returned cleanup fn also carries { email, secret, login() } for re-logins.
+export async function loginAsRole(page: Page, role: string, opts: { mfa?: boolean } = {}) {
   const db = admin();
   const email = `e2e-${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
   const { data, error } = await db.auth.admin.createUser({
@@ -31,12 +35,27 @@ export async function loginAsRole(page: Page, role: string) {
     .insert({ user_id: userId, role_id: role });
   if (roleError) throw roleError;
 
-  await page.context().clearCookies();
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL(/\/(learner|instructor|admin)$/);
+  const state = { secret: "" };
+  const login = async () => {
+    await page.context().clearCookies();
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await page.waitForURL(/\/(learner|instructor|admin|mfa)(\?.*)?$/);
+    if (page.url().includes("/mfa") && opts.mfa !== false) {
+      const secretEl = page.getByTestId("mfa-secret");
+      if (await secretEl.count()) state.secret = (await secretEl.innerText()).trim();
+      await page.getByLabel("Authentication code").fill(totp(state.secret));
+      await page.getByRole("button", { name: "Verify" }).click();
+      await page.waitForURL(/\/admin$/);
+    }
+  };
+  await login();
 
-  return () => db.auth.admin.deleteUser(userId);
+  return Object.assign(() => db.auth.admin.deleteUser(userId), {
+    email,
+    login,
+    secret: () => state.secret,
+  });
 }

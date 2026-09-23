@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { login } from "@/features/auth/login";
 
-const { redirectMock, signInMock, signOutMock, singleMock, userRolesMock } = vi.hoisted(() => ({
-  redirectMock: vi.fn((url: string) => {
-    throw new Error(`REDIRECT:${url}`);
+const { redirectMock, signInMock, signOutMock, singleMock, userRolesMock, aalMock } = vi.hoisted(
+  () => ({
+    aalMock: vi.fn(async () => ({ data: { currentLevel: "aal1" }, error: null })),
+    redirectMock: vi.fn((url: string) => {
+      throw new Error(`REDIRECT:${url}`);
+    }),
+    signInMock: vi.fn(),
+    signOutMock: vi.fn(),
+    singleMock: vi.fn(),
+    userRolesMock: vi.fn(async () => ({ data: [{ role_id: "learner" }] })),
   }),
-  signInMock: vi.fn(),
-  signOutMock: vi.fn(),
-  singleMock: vi.fn(),
-  userRolesMock: vi.fn(async () => ({ data: [{ role_id: "learner" }] })),
-}));
+);
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
-    auth: { signInWithPassword: signInMock, signOut: signOutMock },
+    auth: {
+      signInWithPassword: signInMock,
+      signOut: signOutMock,
+      mfa: { getAuthenticatorAssuranceLevel: aalMock },
+    },
     from: vi.fn((table: string) =>
       table === "user_roles"
         ? { select: vi.fn(() => ({ eq: userRolesMock })) }
@@ -73,5 +80,12 @@ describe("login server action", () => {
     signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     singleMock.mockResolvedValue({ data: { status: "active" } });
     await expect(login("//evil.example.com", validInput)).rejects.toThrow("REDIRECT:/learner");
+  });
+
+  it("sends an admin without a second factor to /mfa", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    singleMock.mockResolvedValue({ data: { status: "active" } });
+    userRolesMock.mockResolvedValueOnce({ data: [{ role_id: "admin" }] });
+    await expect(login(null, validInput)).rejects.toThrow("REDIRECT:/mfa?next=%2Fadmin");
   });
 });
