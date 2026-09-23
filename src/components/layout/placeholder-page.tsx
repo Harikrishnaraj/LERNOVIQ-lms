@@ -16,18 +16,13 @@ export function PlaceholderPage({ portal, href }: { portal: Portal; href: string
   const item = findNavItem(portal, href);
   if (!item) notFound();
 
-  const deferred = item.task === "later";
   return (
     <>
       <PageHeader title={item.label} description={item.description} />
       <EmptyState
         icon={Construction}
-        title={deferred ? "Planned for a later phase" : `Coming in ${item.task}`}
-        description={
-          deferred
-            ? "This area is deferred until the core learning loop is stable (ADR-025)."
-            : `This screen is scheduled in docs/TASKS.md as ${item.task}. The route and navigation are in place.`
-        }
+        title={`Coming in ${item.task}`}
+        description={`This screen is built by ${item.task} in docs/TASKS.md. The route and navigation are in place.`}
         action={
           href !== NAVIGATION[portal].home ? (
             <Link

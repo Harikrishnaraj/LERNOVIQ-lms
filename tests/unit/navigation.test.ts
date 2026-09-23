@@ -11,7 +11,7 @@ describe("navigation config", () => {
   });
 
   it.each(PORTALS)("%s: every item references a task", (portal) => {
-    for (const i of allNavItems(portal)) expect(i.task).toMatch(/^(T-\d{3}|later)$/);
+    for (const i of allNavItems(portal)) expect(i.task).toMatch(/^T-\d{3}[a-z]?$/);
   });
 
   it("learner mobile bar has at most 4 links (+ More) that exist in the nav", () => {

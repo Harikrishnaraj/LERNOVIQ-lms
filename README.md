@@ -33,6 +33,7 @@ Portals: `/learner`, `/instructor`, `/admin` (open without login until Phase 1).
 | `npm run build`     | Production build                                                                   |
 | `npm run check`     | typecheck → lint → test → build (the gate before any commit)                       |
 | `npm run format`    | Prettier (sorts Tailwind classes)                                                  |
+| `npm run features`  | Feature coverage report + next task (`features:strict` fails until all are built)  |
 
 ## Project docs — read before changing code
 
@@ -42,6 +43,7 @@ Portals: `/learner`, `/instructor`, `/admin` (open without login until Phase 1).
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How is it built?               |
 | [`docs/DESIGN.md`](docs/DESIGN.md)             | How should it look and feel?   |
 | [`docs/RULES.md`](docs/RULES.md)               | How should humans and AI code? |
+| [`docs/FEATURES.md`](docs/FEATURES.md)         | What must ship? (all features) |
 | [`docs/TASKS.md`](docs/TASKS.md)               | What do we build next?         |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md)       | Why was it decided this way?   |
 | [`docs/MEMORY.md`](docs/MEMORY.md)             | What is the current state?     |
@@ -67,14 +69,13 @@ tests/
 └── e2e/
 ```
 
-## Working with an AI coding agent
+## Working with Claude Code
 
-Start every session with:
+Open the folder in Claude Code. It reads `CLAUDE.md` automatically. Then, for every task:
 
 ```text
-Read docs/PRD.md, ARCHITECTURE.md, DESIGN.md, RULES.md, TASKS.md, MEMORY.md and DECISIONS.md.
-Do not modify anything yet. Explain your plan for <TASK-ID>, list the files you will touch,
-and identify missing information.
+/next-task
 ```
 
-Then implement one task, run `npm run check`, update `TASKS.md` / `MEMORY.md`, and commit.
+It picks the next task from `npm run features`, plans, implements, tests, ticks and commits.
+To audit a feature: `/verify-feature F-105`. The project is finished when `npm run features:strict` passes.

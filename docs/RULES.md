@@ -10,7 +10,7 @@ Before any non-trivial change, read:
 2. `docs/ARCHITECTURE.md` — how, folder structure, layering rules
 3. `docs/DESIGN.md` — tokens, components, states
 4. `docs/RULES.md` — this file
-5. `docs/TASKS.md` — the one task you are working on
+5. `docs/TASKS.md` — the one task you are working on, and `docs/FEATURES.md` — the features it implements
 6. `docs/MEMORY.md` — current state
 7. `docs/DECISIONS.md` — settled choices. Do not re-litigate an accepted ADR; propose a new ADR instead.
 
@@ -66,10 +66,7 @@ Then search the codebase for anything similar before creating a new file.
 - Gate before marking a task done:
 
   ```
-  npm run typecheck
-  npm run lint
-  npm test
-  npm run build
+  npm run check   # typecheck → lint → unit tests → feature registry → build
   ```
 
 - Do not move to the next task with a failing gate. Do not delete or skip a test to make the gate pass.
@@ -82,6 +79,8 @@ Then search the codebase for anything similar before creating a new file.
 - Never commit generated build output, `node_modules`, or secrets.
 
 ## 9. Done means
+
+The project is done only when `npm run features:strict` passes (every feature in `FEATURES.md` implemented).
 
 A task is done only when its acceptance criteria pass, the gate passes, authorization is verified, loading/empty/error states exist, responsive behaviour is checked, `TASKS.md` and `MEMORY.md` are updated, and the change is committed. (Mirrors `TEST_PLAN.md` §24.)
 

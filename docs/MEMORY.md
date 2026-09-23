@@ -15,6 +15,8 @@ This file records the current project state. It is intentionally different from 
 
 **Production implementation:** Scaffold, design tokens, base UI components and the three portal shells are in place. No auth, database or real data yet.
 
+**Feature tracking:** 98 features in `docs/FEATURES.md`, 137 tasks across Phases 0–12 in `docs/TASKS.md` (ADR-028). Run `npm run features` for live coverage.
+
 **Next task:** T-011 (Supabase client setup). Needs a Supabase dev project and keys in `.env.local`.
 
 ### What exists (Phase 0)

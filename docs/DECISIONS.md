@@ -235,3 +235,11 @@ Improve:
 **Reason:** Real URL routing and navigation exist from day one without shipping fake prototype data (ADR-023). Every nav item carries the TASKS.md ID that builds it.
 
 **Status:** Accepted.
+
+## ADR-028 — Feature Registry Is the Definition of Done
+
+**Decision:** `docs/FEATURES.md` lists every feature from the PRD and the three prototypes. Every task in `TASKS.md` names the features it implements, and `scripts/check-features.mjs` checks both files and the navigation config against each other. `npm run features:strict` must pass before the project is called complete.
+
+**Reason:** AI-assisted builds tend to drop or quietly shrink features. A machine-checked link between features and tasks makes gaps visible, and a feature can only be removed through an explicit ADR. This supersedes the "Later" bucket in the original task list: deferred features are now scheduled in Phases 5–12, not dropped.
+
+**Status:** Accepted.

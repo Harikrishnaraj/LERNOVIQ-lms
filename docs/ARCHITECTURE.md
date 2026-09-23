@@ -263,6 +263,7 @@ The supplied guide recommends separating app, components, features, services, li
 /instructor/earnings
 /instructor/certificates
 /instructor/resources
+/instructor/question-bank
 /instructor/ai
 /instructor/settings
 ```
@@ -273,6 +274,8 @@ The supplied guide recommends separating app, components, features, services, li
 /admin
 /admin/users
 /admin/users/[userId]
+/admin/roles
+/admin/profile
 /admin/instructors
 /admin/instructors/[instructorId]
 /admin/organizations

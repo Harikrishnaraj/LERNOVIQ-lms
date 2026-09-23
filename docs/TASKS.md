@@ -1,80 +1,188 @@
 # Modern LMS — Tasks
 
-Work one task at a time: **implement → test → review → mark complete → commit → next**.
-Each task should be describable in a few sentences with a clear "done" condition. If it isn't, split it.
+Work one task at a time, **top to bottom**: implement → test → review → tick → commit → next.
+Every task implements one or more features in `docs/FEATURES.md` (the `F-` IDs). A feature is
+**complete** only when every task that lists it is ticked. `npm run features` shows coverage;
+`npm run features:strict` fails until every feature is complete.
 
 Legend: `[x]` done · `[ ]` todo · `[~]` in progress
+Rules for editing this file: never delete a task or a feature reference to "finish faster";
+if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a).
 
 ---
 
-## Phase 0 — Foundation
+## Phase 0 — Foundation ✅
 
-- [x] **T-001** Create Next.js app (App Router, `src/`, TypeScript strict, Tailwind v4, ESLint).
-- [x] **T-002** Add Prettier (+ Tailwind class sorting), `typecheck`, `format`, `test` scripts.
-- [x] **T-003** Add `.env.example`, `.gitignore` for secrets, README with setup steps.
-- [x] **T-004** Design tokens from `DESIGN.md` in `globals.css` (`@theme`): colors, radii, fonts (Plus Jakarta Sans / Inter / JetBrains Mono), reduced-motion.
-- [x] **T-005** Base UI components: `Button`, `Input`, `Card`, `Badge`/`StatusBadge`, `EmptyState`, `Skeleton`, `ErrorState`, `PageHeader`.
-- [x] **T-006** Portal shells with real URL routing and lucide icons: Learner (light + mobile bottom nav), Instructor (dark sidebar), Admin (grouped console). Placeholder pages show an EmptyState, not fake data.
-- [x] **T-007** Public landing page linking to the three portals (temporary until auth).
-- [x] **T-008** Vitest set up with unit tests for `cn()`, nav config integrity and course status transitions.
-- [x] **T-009** Playwright config + smoke test (each portal renders, nav works at 375px and 1440px).
-- [x] **T-010** Domain seed: `courseStatus` state machine (ADR-010) as a pure function with tests.
+- [x] **T-001** Next.js app (App Router, `src/`, TS strict, Tailwind v4, ESLint). — F-900
+- [x] **T-002** Prettier, typecheck/format/test scripts. — F-900
+- [x] **T-003** `.env.example`, secret-safe `.gitignore`, README. — F-900
+- [x] **T-004** Design tokens from DESIGN.md, self-hosted fonts, reduced motion. — F-901
+- [x] **T-005** Base UI components (Button, Input, Card, Badge, StatusBadge, Skeleton, states, PageHeader). — F-901
+- [x] **T-006** Three portal shells with URL routing + lucide icons. — F-902
+- [x] **T-007** Temporary landing page. — F-902
+- [x] **T-008** Vitest + unit tests. — F-900
+- [x] **T-009** Playwright config + smoke tests (375 / 1440). — F-900
+- [x] **T-010** Course status state machine (ADR-010) + tests. — F-310
 
-## Phase 1 — Authentication (Supabase)
+## Phase 1 — Authentication & roles
 
-> Needs: a Supabase project (dev), URL + anon key in `.env.local`.
+- [ ] **T-011** Add `@supabase/ssr`, `@supabase/supabase-js`, `zod`; `src/lib/supabase/{server,client,middleware}.ts`. — F-001
+- [ ] **T-012** Migration: `profiles`, `roles`, `permissions`, `role_permissions`, `user_roles` + RLS "read own profile"; seed the 7 roles (SECURITY §3). — F-006
+- [ ] **T-013** Signup UI (email, password, confirm) with zod validation, loading/error states. — F-001
+- [ ] **T-014** Signup → Supabase Auth + `/verify-email`. — F-001, F-002
+- [ ] **T-015** Login UI + wiring; safe error on bad credentials; suspended users blocked. — F-001
+- [ ] **T-016** Logout + session refresh in middleware; expired session redirects to login. — F-004
+- [ ] **T-017** Forgot/reset password. — F-003
+- [ ] **T-018** Server-side role lookup + role-aware redirect after login; remove temporary landing links. — F-006
+- [ ] **T-019** Route guards for `/learner`, `/instructor`, `/admin` (middleware + layout) + permission-denied page; `can(user, permission)` helper with tests. — F-006, F-007
+- [ ] **T-020** Admin MFA (TOTP enrol + challenge; admin routes require AAL2). — F-005
+- [ ] **T-021** Rate-limit login/reset/verify endpoints. — F-941
+- [ ] **T-022** Learner onboarding (interests, goals) after first login. — F-008
+- [ ] **T-023** Tests: auth unit + E2E (TEST_PLAN §3, §4). — F-001…F-007
 
-- [ ] **T-011** Add `@supabase/ssr` + `@supabase/supabase-js` + `zod`; create `src/lib/supabase/{server,client,middleware}.ts`.
-- [ ] **T-012** DB migration: `profiles`, `roles`, `organization_members` (minimal) + RLS "user reads own profile".
-- [ ] **T-013** Signup UI (email, password, confirm) with validation, loading, error states. No auth call yet.
-- [ ] **T-014** Wire signup to Supabase Auth + email verification page.
-- [ ] **T-015** Login UI + wiring; safe error for invalid credentials.
-- [ ] **T-016** Logout + session refresh in middleware.
-- [ ] **T-017** Forgot/reset password flow.
-- [ ] **T-018** Role-aware redirect after login (learner/instructor/admin) using server-side role lookup.
-- [ ] **T-019** Protect `/learner`, `/instructor`, `/admin` in middleware + server layout guard; add permission-denied page.
-- [ ] **T-020** Admin MFA (TOTP enrol + challenge); admin routes require AAL2.
-- [ ] **T-021** Tests: unit (validators, role guard), E2E (signup → login → dashboard, role boundaries, logged-out redirect).
+## Phase 2 — Learner core loop
 
-## Phase 2 — Learner vertical slice
+- [ ] **T-030** Migration: `courses`, `course_versions`, `course_sections`, `lessons`, `lesson_assets`, `categories`, `enrollments`, `lesson_progress` + RLS. — F-101
+- [ ] **T-031** Dev seed script (fixtures only, never imported by app code). — F-903
+- [ ] **T-032** Public catalog `/courses`: Postgres full-text search, filters (category, level, language, duration, price, rating), sort, pagination. — F-101
+- [ ] **T-033** Course detail `/courses/[slug]`: outcomes, curriculum preview, instructor, reviews summary. — F-102
+- [ ] **T-034** `enrollInCourse` service + Enroll button (free courses). — F-103
+- [ ] **T-035** My Learning (in progress / completed / saved) with empty state. — F-104
+- [ ] **T-036** Course player: curriculum sidebar, lesson content, prev/next, locked lessons, distraction-free layout. — F-105
+- [ ] **T-037** `completeLesson` + progress persistence; video resume position. — F-105, F-106
+- [ ] **T-038** Assessments schema (`assessments`, `assessment_questions`, `assessment_options`, `assessment_attempts`); learner API never returns answer keys. — F-107
+- [ ] **T-039** Assessment player (MCQ, multi-select, true/false, short answer), timer, server grading, pass/fail, retry rules. — F-107
+- [ ] **T-040** Course completion rule + `issueCertificate` (unique immutable ID). — F-109
+- [ ] **T-041** Learner Certificates page + public `/certificates/verify/[id]` (no private data). — F-109, F-110
+- [ ] **T-042** Learner dashboard from real data: greeting, continue learning, today's learning, active path, upcoming assessments, recommendations. — F-100
+- [ ] **T-043** Learner Assessments list (upcoming / completed / results). — F-107
+- [ ] **T-044** E2E: full learner journey (TEST_PLAN §5–§7, §9). — F-100…F-110
 
-- [ ] **T-030** Schema: `courses`, `course_versions`, `course_sections`, `lessons`, `enrollments`, `lesson_progress` + RLS.
-- [ ] **T-031** Dev seed script (fixtures, clearly separated from production code).
-- [ ] **T-032** Public course catalog with Postgres search + filters (category, level).
-- [ ] **T-033** Course detail page.
-- [ ] **T-034** `enrollInCourse` service + Enroll button (free courses only for now).
-- [ ] **T-035** My Learning list (active/completed) with empty state.
-- [ ] **T-036** Course player: curriculum sidebar, lesson content, prev/next.
-- [ ] **T-037** `completeLesson` + progress bar persistence.
-- [ ] **T-038** Assessment schema + learner attempt API (answer key never returned).
-- [ ] **T-039** Assessment UI + server-side grading + pass/fail.
-- [ ] **T-040** Course completion rule + `issueCertificate`.
-- [ ] **T-041** Certificates page + public `/certificates/verify/[id]`.
-- [ ] **T-042** Learner dashboard (continue learning, progress) from real data.
-- [ ] **T-043** E2E: full learner journey (TEST_PLAN §5).
+## Phase 3 — Instructor core loop
 
-## Phase 3 — Instructor vertical slice
+- [ ] **T-050** Instructor Overview + My Courses (own courses only, by status, filters). — F-200, F-201
+- [ ] **T-051** Create Course step 1 — Basics (title, subtitle, category, level, language, thumbnail) → draft. — F-202
+- [ ] **T-052** Curriculum Builder: sections + lessons/quiz/assignment items CRUD, drag reorder + keyboard/menu alternative. — F-203
+- [ ] **T-053** Lesson Editor: sanitized rich text, video (upload via storage adapter or URL), attachments, preview flag. — F-204
+- [ ] **T-054** Assessment Builder: question types incl. essay/coding, points, pass mark, attempts, time limit. — F-205
+- [ ] **T-055** Pricing & Settings step (free/paid, certificate on/off, prerequisites, visibility). — F-202
+- [ ] **T-056** Course Preview as learner. — F-208
+- [ ] **T-057** Readiness checklist (pure rules + UI linking to failing sections). — F-209
+- [ ] **T-058** `submitCourseForReview` + submission screen with notes to reviewer. — F-210
+- [ ] **T-059** Course Overview page (status, stats, quick links to every builder step). — F-201
+- [ ] **T-060** E2E: instructor journey (TEST_PLAN §10). — F-200…F-210
 
-- [ ] **T-050** Instructor dashboard (own courses only).
-- [ ] **T-051** Create course: Basics step (draft).
-- [ ] **T-052** Curriculum builder: sections + lessons CRUD, keyboard reorder.
-- [ ] **T-053** Lesson editor (text + video URL/asset) with sanitized rich text.
-- [ ] **T-054** Assessment builder (MCQ, multi-select, true/false).
-- [ ] **T-055** Learner preview mode.
-- [ ] **T-056** Readiness checklist (pure rules + UI).
-- [ ] **T-057** `submitCourseForReview` transition + review status view.
-- [ ] **T-058** E2E: instructor journey (TEST_PLAN §10).
+## Phase 4 — Admin core loop
 
-## Phase 4 — Admin vertical slice
+- [ ] **T-070** `audit_logs` (append-only; insert-only RLS) + `recordAudit()` used by every privileged action. — F-414
+- [ ] **T-071** Admin Overview: KPIs, pending actions, platform activity. — F-400
+- [ ] **T-072** Courses list (status tabs, table/grid, search, filters, bulk actions). — F-405
+- [ ] **T-073** Course Review screen: inspect version, review checklist, reviewer notes per section. — F-406
+- [ ] **T-074** Approve / request changes / reject / publish / archive transitions (audited). — F-406, F-310
+- [ ] **T-075** Instructor sees review status + section-linked feedback; resubmit; previous versions auditable. — F-211
+- [ ] **T-076** Users list: search, filters, add, invite, suspend, role change (audited). — F-401
+- [ ] **T-077** Basic platform analytics (enrollments, completions over time). — F-412
+- [ ] **T-078** Audit Log screen: filter by actor/action/resource/date, export. — F-414
+- [ ] **T-079** E2E: admin review + user management (TEST_PLAN §13). — F-400…F-414
 
-- [ ] **T-070** Admin overview with pending actions.
-- [ ] **T-071** Course review queue + review screen.
-- [ ] **T-072** Approve / request changes / reject transitions + reviewer feedback.
-- [ ] **T-073** `audit_logs` table (append-only) + audit on every privileged action.
-- [ ] **T-074** User management: search, filter, suspend, role change (audited).
-- [ ] **T-075** Basic analytics (enrollments, completions).
-- [ ] **T-076** E2E: admin review journey (TEST_PLAN §13).
+## Phase 5 — Learner complete
 
-## Later (explicitly deferred — ADR-025)
+- [ ] **T-080** Learning Paths: schema (`learning_paths`, `learning_path_courses`), catalog, detail, enroll in path, path progress. — F-111
+- [ ] **T-081** Assignments: `assignments`, `assignment_submissions`; learner list, submit (validated upload), status, feedback, lock after deadline. — F-108
+- [ ] **T-082** Calendar: deadlines, assessments, sessions (month/week/agenda). — F-112
+- [ ] **T-083** Discussions: `discussions`, `discussion_posts`; per-course threads, reply, upvote, mark answered, report. — F-113
+- [ ] **T-084** My Progress: hours, streak, completion by course, skills. — F-114
+- [ ] **T-085** Notifications: `notifications` model, bell + page, read/unread, preferences. — F-115
+- [ ] **T-086** Learner profile & settings (name, avatar, password, notification preferences). — F-116
+- [ ] **T-087** Course reviews: rate/review a completed course. — F-117
+- [ ] **T-088** E2E: paths, assignments, discussions, notifications (TEST_PLAN §8). — F-108, F-111…F-117
 
-Commerce, organizations/enterprise, AI Tutor, Instructor AI, RAG, discussions, messaging, calendar, earnings, integrations, notifications centre. Each gets its own phase once Phases 1–4 are stable and deployed.
+## Phase 6 — Instructor complete
+
+- [ ] **T-100** Assignment Builder (instructions, rubric, due date, file rules) + grading queue. — F-206
+- [ ] **T-101** Question Bank: reusable questions, tags, import into assessments. — F-207
+- [ ] **T-102** Publish approved course + new draft version from published (ADR-011). — F-212
+- [ ] **T-103** Students: list across courses, filters, progress segments (just enrolled / started / on track / at risk / completed). — F-213
+- [ ] **T-104** Student Detail: progress by lesson, attempts, submissions, message. — F-213
+- [ ] **T-105** Instructor Discussions: queue of unanswered, reply, pin, moderate. — F-214
+- [ ] **T-106** Messaging: 1:1 threads with learners, unread counts. — F-215
+- [ ] **T-107** Analytics overview: enrollments, completion rate, active learners, revenue KPIs, date + course filters. — F-216
+- [ ] **T-108** Learner, video (watch time, replay, drop-off by lesson) and assessment analytics (pass rate, avg attempts, question difficulty) + CSV export scoped to own courses. — F-216
+- [ ] **T-109** Reviews: ratings list, distribution, reply to review. — F-217
+- [ ] **T-110** Certificates: issued for my courses, certificate template settings. — F-218
+- [ ] **T-111** Resource Library: reusable media/documents with usage. — F-219
+- [ ] **T-112** Instructor Settings: public profile, payout details (via provider), notifications. — F-220
+- [ ] **T-113** E2E: instructor extended (TEST_PLAN §11, §12). — F-206…F-220
+
+## Phase 7 — Admin complete
+
+- [ ] **T-130** User Detail: account, roles, progress by course, skills, sessions & devices, login history, actions. — F-402
+- [ ] **T-131** Instructors: list, verification queue (approve/reject applications), top instructors. — F-403
+- [ ] **T-132** Instructor Detail: courses, revenue, rating distribution, payouts. — F-403
+- [ ] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404
+- [ ] **T-134** Categories management. — F-405
+- [ ] **T-135** Enrollments & cohorts: search, manual enroll/unenroll, cohort create, bulk assign. — F-407
+- [ ] **T-136** Assessments: averages, question-quality flags, attempt investigation/reset. — F-408
+- [ ] **T-137** Certificates: search, revoke (audited), reissue. — F-409
+- [ ] **T-138** Content: media, documents, SCORM package upload + launch (validated). — F-410
+- [ ] **T-139** Moderation: reported posts/reviews queue, hide/restore, ban. — F-411
+- [ ] **T-140** Analytics: platform dashboards, saved reports, scheduled export. — F-412
+- [ ] **T-141** Communication: announcements (targeted), email templates, delivery log. — F-413
+- [ ] **T-142** Integrations & API: API keys (hashed, scoped), webhooks, rate limits, request log. — F-415
+- [ ] **T-143** Settings & Security: platform settings, password/MFA policy, session policy, security events. — F-416
+- [ ] **T-144** Admin profile: personal info, security, notification preferences, my recent actions. — F-417
+- [ ] **T-145** E2E: admin extended. — F-402…F-417
+
+## Phase 8 — Organizations / enterprise
+
+- [ ] **T-160** `organizations`, `departments`, `teams`, `organization_members` + RLS isolation tests. — F-500
+- [ ] **T-161** Admin Organizations screen: create, members, learning hours. — F-500
+- [ ] **T-162** Org Admin scoped portal access (own org only). — F-501
+- [ ] **T-163** Assigned courses/paths + required completion + due dates. — F-502
+- [ ] **T-164** Organization reports (completion, overdue, hours) + export. — F-503
+- [ ] **T-165** Organization SSO (SAML/OIDC via Supabase). — F-504
+- [ ] **T-166** E2E: org isolation (TEST_PLAN §4, §13). — F-500…F-504
+
+## Phase 9 — Commerce
+
+- [ ] **T-180** Payment adapter interface + provider implementation (ADR-015). — F-600
+- [ ] **T-181** `orders`, `payments`: checkout for paid course; enrollment only after verified webhook. — F-600
+- [ ] **T-182** Webhook handler: signature, event ID idempotency, success/failure/refund events. — F-600
+- [ ] **T-183** Subscriptions (plans, entitlement checks, cancel). — F-601
+- [ ] **T-184** Coupons (percent/fixed, limits, expiry). — F-602
+- [ ] **T-185** Refunds (admin-initiated, audited, revokes access per policy). — F-603
+- [ ] **T-186** Instructor earnings + payouts (`instructor_payouts`). — F-604
+- [ ] **T-187** Admin Commerce/Revenue: net revenue, by channel, orders table. — F-605
+- [ ] **T-188** Tests: TEST_PLAN §14. — F-600…F-605
+
+## Phase 10 — AI
+
+- [ ] **T-200** AI provider adapter + policy service + usage/cost recording (`ai_conversations`, `ai_messages`, `ai_generation_jobs`). — F-700
+- [ ] **T-201** Learner AI Tutor: contextual to current course/lesson, shows sources, refuses unsupported, hint-only during graded assessments, escalate to discussion. — F-701
+- [ ] **T-202** Instructor AI: outline, objectives, summaries, quiz questions, assignment ideas — editable drafts, never auto-published. — F-702
+- [ ] **T-203** Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. — F-703
+- [ ] **T-204** Admin AI management: model/policy config, safety controls, usage & cost, generation job history. — F-704
+- [ ] **T-205** Tests: TEST_PLAN §15, §16. — F-700…F-704
+
+## Phase 11 — Knowledge base / RAG
+
+- [ ] **T-220** `knowledge_documents`, `knowledge_chunks` (pgvector) + RLS by org/course. — F-800
+- [ ] **T-221** Upload + background pipeline: validate → extract → chunk → embed; status + failed documents view. — F-800
+- [ ] **T-222** Permission-aware retrieval service (search constrained to allowed IDs before ranking). — F-801
+- [ ] **T-223** Admin Knowledge Base: sources, test retrieval, re-index, delete removes from retrieval. — F-802
+- [ ] **T-224** Wire AI Tutor to retrieval. — F-701, F-801
+- [ ] **T-225** Tests: TEST_PLAN §17. — F-800…F-802
+
+## Phase 12 — Production hardening & launch
+
+- [ ] **T-240** Security headers + CSP (SECURITY §22). — F-940
+- [ ] **T-241** Rate limiting for public/AI/upload/assessment endpoints. — F-941
+- [ ] **T-242** Structured logging + correlation IDs + error tracking. — F-942
+- [ ] **T-243** Privacy: data export, account deletion workflow, retention jobs. — F-943
+- [ ] **T-244** Accessibility audit (WCAG 2.2 AA) + fixes. — F-944
+- [ ] **T-245** Responsive audit at 375 / 768 / 1024 / 1440 for every screen. — F-945
+- [ ] **T-246** Performance pass (bundle size, LCP, query counts, lazy chart/editor loading). — F-946
+- [ ] **T-247** Upgrade to Next.js 16 / ESLint 10 when stable for this stack. — F-900
+- [ ] **T-248** CI (GitHub Actions: check + E2E) + Vercel preview deployments. — F-947
+- [ ] **T-249** Backups + tested restore runbook. — F-948
+- [ ] **T-250** Production deploy + full production QA checklist (TEST_PLAN §23). — F-947
