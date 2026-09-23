@@ -29,7 +29,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-011** Add `@supabase/ssr`, `@supabase/supabase-js`, `zod`; `src/lib/supabase/{server,client,middleware}.ts`. — F-001
 - [x] **T-012** Migration: `profiles`, `roles`, `permissions`, `role_permissions`, `user_roles` + RLS "read own profile"; seed the 7 roles (SECURITY §3). — F-006
 - [x] **T-013** Signup UI (email, password, confirm) with zod validation, loading/error states. — F-001
-- [ ] **T-014** Signup → Supabase Auth + `/verify-email`. — F-001, F-002
+- [x] **T-014** Signup → Supabase Auth + `/verify-email`. — F-001, F-002
 - [ ] **T-015** Login UI + wiring; safe error on bad credentials; suspended users blocked. — F-001
 - [ ] **T-016** Logout + session refresh in middleware; expired session redirects to login. — F-004
 - [ ] **T-017** Forgot/reset password. — F-003
