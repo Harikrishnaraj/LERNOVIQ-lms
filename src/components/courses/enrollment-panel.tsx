@@ -44,8 +44,14 @@ export async function EnrollmentPanel({
           You are enrolled in this course.
         </p>
         <Link
-          href="/learner/my-learning"
+          href={`/learner/courses/${slug}`}
           className={buttonClasses({ size: "lg", className: "w-full" })}
+        >
+          Continue learning
+        </Link>
+        <Link
+          href="/learner/my-learning"
+          className={buttonClasses({ variant: "secondary", className: "w-full" })}
         >
           Go to My Learning
         </Link>

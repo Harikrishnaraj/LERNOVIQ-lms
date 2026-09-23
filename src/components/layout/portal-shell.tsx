@@ -265,8 +265,15 @@ export function PortalShell({
   children: ReactNode;
 }) {
   const t = THEME[portal];
+  const pathname = usePathname();
   const drawerRef = useRef<HTMLDialogElement>(null);
   const openDrawer = () => drawerRef.current?.showModal();
+
+  // Course player is distraction-free: no sidebar or bottom bar, the page draws its own header.
+  if (portal === "learner" && /^\/learner\/courses\/[^/]+\/learn\//.test(pathname)) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex min-h-dvh">
       <a

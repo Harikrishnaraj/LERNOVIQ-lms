@@ -84,22 +84,30 @@ test.describe("My Learning", () => {
 
     await page.getByRole("link", { name: /Completed/ }).click();
     await expect(page.getByText(`${tag} finished`)).toBeVisible();
-    await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+    await expect(
+      page
+        .getByRole("listitem")
+        .filter({ hasText: `${tag} finished` })
+        .getByText("Completed", { exact: true }),
+    ).toBeVisible();
 
     // Save from the course page, then see it under Saved.
     await page.goto(`/courses/${tag}-save`);
-    await expect(async () => {
-      await page.getByRole("button", { name: "Save for later" }).click({ timeout: 2000 });
-      await expect(page.getByRole("button", { name: "Saved" })).toBeVisible({ timeout: 4000 });
-    }).toPass({ timeout: 20_000 });
+    // Save is a toggle (not idempotent): let hydration finish, then click exactly once.
+    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: "Save for later" }).click();
+    await expect(page.getByRole("button", { name: "Saved" })).toBeVisible({ timeout: 15_000 });
 
     await page.goto("/learner/my-learning?tab=saved");
     await expect(page.getByText(`${tag} to save`)).toBeVisible();
 
     // Unsave.
     await page.goto(`/courses/${tag}-save`);
+    await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: "Saved" }).click();
-    await expect(page.getByRole("button", { name: "Save for later" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save for later" })).toBeVisible({
+      timeout: 15_000,
+    });
     await page.goto("/learner/my-learning?tab=saved");
     await expect(page.getByText(`${tag} to save`)).toHaveCount(0);
   });

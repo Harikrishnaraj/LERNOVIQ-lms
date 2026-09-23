@@ -6,6 +6,8 @@ export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
   retries: process.env.CI ? 2 : 1,
+  // Pages read from a remote Supabase project; 5s is too tight under parallel load.
+  expect: { timeout: 10_000 },
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`,

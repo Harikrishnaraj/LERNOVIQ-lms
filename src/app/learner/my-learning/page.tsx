@@ -53,7 +53,7 @@ function LearningCard({ item }: { item: LearningItem }) {
       </div>
       <div>
         <Link
-          href={`/courses/${item.slug}`}
+          href={`/learner/courses/${item.slug}`}
           className={buttonClasses({ variant: done ? "secondary" : "primary", size: "sm" })}
         >
           {done ? "Review course" : item.completedLessons > 0 ? "Resume" : "Start learning"}
