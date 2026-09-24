@@ -3,6 +3,8 @@ import { createAdminClient } from "@/services/supabase/admin";
 /** Privileged actions that must leave a trail (SECURITY section 17). Add new ones here. */
 export const AUDIT_ACTIONS = [
   "course.submitted",
+  "course.review_started",
+  "course.reopened",
   "course.changes_requested",
   "course.approved",
   "course.rejected",
