@@ -261,3 +261,37 @@ export async function createPath(
   }
   return { pathId: data.id as string, slug: p.slug };
 }
+
+/** An assignment on a course version (service role). Times are ISO strings or null. */
+export async function createAssignment(
+  svc: SupabaseClient,
+  versionId: string,
+  a: {
+    title: string;
+    instructions?: string;
+    dueAt?: string | null;
+    allowLate?: boolean;
+    allowText?: boolean;
+    allowFile?: boolean;
+    maxFileMb?: number;
+    maxPoints?: number;
+  },
+): Promise<{ assignmentId: string }> {
+  const { data, error } = await svc
+    .from("assignments")
+    .insert({
+      version_id: versionId,
+      title: a.title,
+      instructions: a.instructions ?? "Do the work.",
+      due_at: a.dueAt ?? null,
+      allow_late: a.allowLate ?? false,
+      allow_text: a.allowText ?? true,
+      allow_file: a.allowFile ?? true,
+      max_file_mb: a.maxFileMb ?? 10,
+      max_points: a.maxPoints ?? 100,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return { assignmentId: data.id as string };
+}
