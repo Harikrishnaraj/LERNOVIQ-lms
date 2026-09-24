@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { can } from "@/lib/permissions/can";
 
-function fakeSupabase(roleIds: string[], grantedPermissionIds: string[]): SupabaseClient {
+function fakeSupabase(roleIds: string[], grantedPermissionIds: string[], status = "active"): SupabaseClient {
   return {
     from: (table: string) => {
+      if (table === "profiles") {
+        return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { status } }) }) }) };
+      }
       if (table === "user_roles") {
         return {
           select: () => ({
@@ -45,5 +48,11 @@ describe("can", () => {
         "portal.instructor.access",
       ),
     ).toBe(true);
+  });
+
+  it("returns false for a suspended user even when a role grants the permission", async () => {
+    expect(
+      await can(fakeSupabase(["instructor"], ["portal.instructor.access"], "suspended"), "u1", "portal.instructor.access"),
+    ).toBe(false);
   });
 });
