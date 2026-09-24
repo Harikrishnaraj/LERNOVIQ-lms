@@ -82,7 +82,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-075** Instructor sees review status + section-linked feedback; resubmit; previous versions auditable. — F-211
 - [x] **T-076** Users list: search, filters, add, invite, suspend, role change (audited). — F-401
 - [x] **T-077** Basic platform analytics (enrollments, completions over time). — F-412
-- [ ] **T-078** Audit Log screen: filter by actor/action/resource/date, export. — F-414
+- [x] **T-078** Audit Log screen: filter by actor/action/resource/date, export. — F-414
 - [ ] **T-079** E2E: admin review + user management (TEST_PLAN §13). — F-400…F-414
 
 ## Phase 5 — Learner complete

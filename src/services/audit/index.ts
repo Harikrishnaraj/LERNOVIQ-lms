@@ -18,6 +18,7 @@ export const AUDIT_ACTIONS = [
   "certificate.revoked",
   "auth.login_failed",
   "settings.changed",
+  "audit.exported",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
