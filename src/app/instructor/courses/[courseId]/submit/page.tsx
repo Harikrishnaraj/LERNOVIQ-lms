@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { CourseSteps } from "@/components/course-authoring/course-steps";
 import { SubmitForm } from "@/components/course-authoring/submit-form";
+import { ReviewFeedbackPanel } from "@/components/course-authoring/review-feedback-panel";
 import { PageHeader } from "@/components/layout/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { getReviewFeedback } from "@/features/course-authoring/feedback";
 import { getCourseForEditing } from "@/features/course-authoring/queries";
 import { evaluateReadiness, getReadinessSnapshot } from "@/features/course-authoring/readiness";
 import { isCourseStatus } from "@/features/courses/course-status";
@@ -34,6 +36,7 @@ export default async function SubmitPage({ params }: { params: Promise<{ courseI
 
   const snapshot = course.editable ? await getReadinessSnapshot(supabase, course.version.id, course.categorySlug) : null;
   const report = snapshot ? evaluateReadiness(snapshot) : null;
+  const feedback = await getReviewFeedback(supabase, course.courseId, course.version.id);
 
   return (
     <>
@@ -43,6 +46,8 @@ export default async function SubmitPage({ params }: { params: Promise<{ courseI
         actions={<StatusBadge kind="course" status={status} />}
       />
       <CourseSteps courseId={course.courseId} current="submit" />
+
+      <ReviewFeedbackPanel courseId={course.courseId} status={status} feedback={feedback} />
 
       {!course.editable ? (
         <section aria-label="Submission status" className="max-w-2xl space-y-3 rounded-card border border-border bg-surface p-5">
