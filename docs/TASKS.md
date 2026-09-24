@@ -67,7 +67,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-054** Assessment Builder: question types incl. essay/coding, points, pass mark, attempts, time limit. — F-205
 - [x] **T-055** Pricing & Settings step (free/paid, certificate on/off, prerequisites, visibility). — F-202
 - [x] **T-056** Course Preview as learner. — F-208
-- [ ] **T-057** Readiness checklist (pure rules + UI linking to failing sections). — F-209
+- [x] **T-057** Readiness checklist (pure rules + UI linking to failing sections). — F-209
 - [ ] **T-058** `submitCourseForReview` + submission screen with notes to reviewer. — F-210
 - [ ] **T-059** Course Overview page (status, stats, quick links to every builder step). — F-201
 - [ ] **T-060** E2E: instructor journey (TEST_PLAN §10). — F-200…F-210
