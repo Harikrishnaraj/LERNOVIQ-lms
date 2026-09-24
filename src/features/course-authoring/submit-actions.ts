@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { recordAudit } from "@/services/audit";
 import { createAdminClient } from "@/services/supabase/admin";
 import { MAX_SUBMISSION_NOTES, evaluateReadiness, getReadinessSnapshot } from "./readiness";
 import { getCourseForEditing } from "./queries";
@@ -52,6 +53,15 @@ export async function submitCourseForReview(courseId: string, notes: string): Pr
   });
   if (error) return { ok: false, error: "We could not submit your course. Please try again." };
   if (data !== true) return { ok: false, error: "This course has already been submitted." };
+
+  await recordAudit({
+    actorId: user.id,
+    actorEmail: user.email ?? null,
+    action: "course.submitted",
+    resourceType: "course",
+    resourceId: courseId,
+    metadata: { versionId: course.version.id, versionNumber: course.version.versionNumber, hasNotes: cleanNotes !== "" },
+  });
 
   revalidatePath(`/instructor/courses/${courseId}`, "layout");
   revalidatePath("/instructor/courses");

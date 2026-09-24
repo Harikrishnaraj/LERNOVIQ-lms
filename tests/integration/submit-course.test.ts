@@ -76,6 +76,8 @@ describe.skipIf(!hasLiveProject)("submit for review (T-058, live Supabase)", () 
     expect(v!.status).toBe("submitted");
     const { data: subs } = await svc.from("course_submissions").select("notes, submitted_by").eq("version_id", c.versionId);
     expect(subs).toEqual([{ notes: "Please check lesson 2", submitted_by: owner.id }]);
+    const { data: audit } = await svc.from("audit_logs").select("actor_id, action, metadata").eq("resource_id", c.courseId);
+    expect(audit).toEqual([{ actor_id: owner.id, action: "course.submitted", metadata: expect.objectContaining({ versionId: c.versionId, hasNotes: true }) }]);
     // The owner can read their own submission history; another instructor cannot.
     const mine = await owner.client.from("course_submissions").select("id").eq("version_id", c.versionId);
     expect(mine.data).toHaveLength(1);
