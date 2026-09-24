@@ -270,7 +270,7 @@ export function PortalShell({
   const openDrawer = () => drawerRef.current?.showModal();
 
   // Course player is distraction-free: no sidebar or bottom bar, the page draws its own header.
-  if (portal === "learner" && /^\/learner\/courses\/[^/]+\/learn\//.test(pathname)) {
+  if (portal === "learner" && /^\/learner\/courses\/[^/]+\/(learn|assessments)\//.test(pathname)) {
     return <>{children}</>;
   }
 

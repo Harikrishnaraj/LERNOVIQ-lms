@@ -8,6 +8,7 @@ const LIMITS = {
   login: { limit: 10, windowSeconds: 15 * 60 },
   "password-reset": { limit: 5, windowSeconds: 60 * 60 },
   "verify-email": { limit: 5, windowSeconds: 60 * 60 },
+  "assessment-submit": { limit: 30, windowSeconds: 60 * 60 },
 } as const;
 
 export type RateLimitedAction = keyof typeof LIMITS;

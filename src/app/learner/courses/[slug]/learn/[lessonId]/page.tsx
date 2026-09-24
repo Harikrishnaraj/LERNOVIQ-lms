@@ -50,6 +50,11 @@ export default async function LessonPage({
   const totalLessons = course.sections.reduce((n, sec) => n + sec.lessons.length, 0);
   const percent = progressPercent(course.completedLessonIds.size, totalLessons);
 
+  const { data: quiz } =
+    lesson.type === "quiz" && course.enrolled
+      ? await supabase.from("assessments").select("id, title").eq("lesson_id", lessonId).maybeSingle()
+      : { data: null };
+
   const safeHtml = sanitizeLessonHtml(lesson.content);
   const videoOk = lesson.videoUrl?.startsWith("https://") ?? false;
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
@@ -111,6 +116,15 @@ export default async function LessonPage({
               className="prose-lesson space-y-3 text-text [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:text-lg [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:overflow-x-auto [&_pre]:rounded-control [&_pre]:bg-border-subtle [&_pre]:p-3 [&_ul]:list-disc [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: safeHtml }}
             />
+          )}
+
+          {quiz && (
+            <Link
+              href={`/learner/courses/${slug}/assessments/${quiz.id}`}
+              className={buttonClasses({ size: "lg" })}
+            >
+              Open assessment: {quiz.title}
+            </Link>
           )}
 
           {course.enrolled && (
