@@ -52,7 +52,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-037** `completeLesson` + progress persistence; video resume position. — F-105, F-106
 - [x] **T-038** Assessments schema (`assessments`, `assessment_questions`, `assessment_options`, `assessment_attempts`); learner API never returns answer keys. — F-107
 - [x] **T-039** Assessment player (MCQ, multi-select, true/false, short answer), timer, server grading, pass/fail, retry rules. — F-107
-- [ ] **T-040** Course completion rule + `issueCertificate` (unique immutable ID). — F-109
+- [x] **T-040** Course completion rule + `issueCertificate` (unique immutable ID). — F-109
 - [ ] **T-041** Learner Certificates page + public `/certificates/verify/[id]` (no private data). — F-109, F-110
 - [ ] **T-042** Learner dashboard from real data: greeting, continue learning, today's learning, active path, upcoming assessments, recommendations. — F-100
 - [ ] **T-043** Learner Assessments list (upcoming / completed / results). — F-107

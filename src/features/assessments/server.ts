@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { tryEvaluateCompletion } from "@/features/completion/evaluate";
 import { sanitizeAnswers, type AnswerableQuestion } from "./answers";
 import { gradeAttempt, type Answers, type GradableQuestion, type GradeResult } from "./grading";
 import type { QuestionType } from "./learner";
@@ -104,5 +105,7 @@ export async function finalizeAttempt(
     .select(ATTEMPT_COLUMNS)
     .maybeSingle();
   if (error) throw new Error(`finalize failed: ${error.message}`);
+  // Passing an assessment can complete the course (and issue the certificate).
+  if (data && grade.passed === true) await tryEvaluateCompletion(admin, attempt.enrollment_id);
   return { attempt: (data as AttemptRow | null) ?? attempt, grade };
 }

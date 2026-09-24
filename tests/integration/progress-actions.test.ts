@@ -87,12 +87,12 @@ describe.skipIf(!hasLiveProject)("completeLesson / saveVideoPosition (T-037, liv
 
   it("completes a lesson, persists it, and keeps the first completion time when repeated", async () => {
     currentClient = learner;
-    expect(await completeLesson(`${tag}-c`, course.lessonIds[0])).toEqual({ completed: true });
+    expect(await completeLesson(`${tag}-c`, course.lessonIds[0])).toMatchObject({ completed: true });
     const first = await progressRow(course.lessonIds[0]);
     expect(first?.completed_at).toBeTruthy();
 
     await new Promise((r) => setTimeout(r, 20));
-    expect(await completeLesson(`${tag}-c`, course.lessonIds[0])).toEqual({ completed: true });
+    expect(await completeLesson(`${tag}-c`, course.lessonIds[0])).toMatchObject({ completed: true });
     expect((await progressRow(course.lessonIds[0]))?.completed_at).toBe(first?.completed_at);
   });
 

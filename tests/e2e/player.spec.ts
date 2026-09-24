@@ -199,11 +199,25 @@ test.describe("course player", () => {
     const card = page.getByRole("listitem").filter({ hasText: `${tag} Progress` });
     await expect(card).toContainText("1 of 3 lessons");
 
+    // Mark the middle lesson done out of band so the last lesson completes the whole course.
+    const { data: enr } = await svc
+      .from("enrollments")
+      .select("id")
+      .eq("user_id", learnerId)
+      .eq("course_id", progressCourse.courseId)
+      .single();
+    await svc.from("lesson_progress").upsert(
+      { enrollment_id: enr!.id, lesson_id: progressCourse.lessonIds[1], completed_at: new Date().toISOString() },
+      { onConflict: "enrollment_id,lesson_id" },
+    );
+
     // Finish the last lesson: there is no next lesson, so the page just refreshes to completed.
     await page.goto(`${base}/${progressCourse.lessonIds[2]}`);
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: "Mark complete" }).click();
-    await expect(page.getByText("Lesson completed")).toBeVisible();
+    // Last lesson of the course: completion banner and a certificate link.
+    await expect(page.getByText("You completed this course!")).toBeVisible();
+    await expect(page.getByRole("link", { name: "View certificates" })).toBeVisible();
   });
 
   test("works at 375px without horizontal scroll", async ({ page }) => {

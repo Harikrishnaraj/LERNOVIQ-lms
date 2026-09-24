@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,26 @@ export function LessonControls({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [finished, setFinished] = useState<{ certificate: boolean } | null>(null);
+
+  if (finished) {
+    return (
+      <div role="status" className="space-y-2 rounded-card border border-success bg-success-light p-4">
+        <p className="inline-flex items-center gap-2 font-semibold text-success-text">
+          <CheckCircle2 className="size-5" aria-hidden="true" />
+          You completed this course!
+        </p>
+        {finished.certificate && (
+          <p className="text-sm">
+            Your certificate is ready.{" "}
+            <Link href="/learner/certificates" className="font-semibold underline">
+              View certificates
+            </Link>
+          </p>
+        )}
+      </div>
+    );
+  }
 
   if (completed) {
     return (
@@ -36,6 +57,11 @@ export function LessonControls({
       const result = await onComplete();
       if ("error" in result) {
         setError(result.error);
+        return;
+      }
+      if (result.courseCompleted && !nextHref) {
+        setFinished({ certificate: result.certificateCode !== null });
+        router.refresh();
         return;
       }
       if (nextHref) router.push(nextHref);

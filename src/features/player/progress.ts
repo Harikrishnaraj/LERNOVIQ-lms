@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { tryEvaluateCompletion } from "@/features/completion/evaluate";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/services/supabase/admin";
 import { normalizePosition } from "./position";
 
-export type CompleteResult = { completed: true } | { error: string };
+export type CompleteResult =
+  | { completed: true; courseCompleted: boolean; certificateCode: string | null }
+  | { error: string };
 export type PositionResult = { saved: true } | { error: string };
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -66,9 +70,12 @@ export async function completeLesson(slug: string, lessonId: string): Promise<Co
         .insert({ enrollment_id: ctx.enrollmentId, lesson_id: lessonId, completed_at: now });
   if (error) return { error: "We could not save your progress. Please try again." };
 
+  // The course may now be complete: server-side check, issues the certificate if eligible.
+  const outcome = await tryEvaluateCompletion(createAdminClient(), ctx.enrollmentId);
+
   revalidatePath(`/learner/courses/${slug}`, "layout");
   revalidatePath("/learner/my-learning");
-  return { completed: true };
+  return { completed: true, courseCompleted: outcome.complete, certificateCode: outcome.certificateCode };
 }
 
 /** Persists the video resume position (whole seconds) for the signed-in learner. */
