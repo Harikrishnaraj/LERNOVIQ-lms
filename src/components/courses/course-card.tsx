@@ -10,9 +10,14 @@ export function CourseCard({ course }: { course: CourseCardData }) {
   const level = LEVEL_OPTIONS.find((l) => l.value === course.level)?.label ?? course.level;
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow focus-within:shadow-md hover:shadow-md">
-      <div className="flex h-28 items-center justify-center bg-primary-light text-primary">
-        <BookOpen className="size-9" aria-hidden="true" />
-      </div>
+      {course.thumbnailUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, remote storage host
+        <img src={course.thumbnailUrl} alt="" loading="lazy" className="h-28 w-full object-cover" />
+      ) : (
+        <div className="flex h-28 items-center justify-center bg-primary-light text-primary">
+          <BookOpen className="size-9" aria-hidden="true" />
+        </div>
+      )}
       <div className="flex flex-1 flex-col gap-2 p-4">
         {course.categoryName && (
           <span className="text-xs font-medium text-text-secondary">{course.categoryName}</span>
