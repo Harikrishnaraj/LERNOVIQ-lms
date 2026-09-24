@@ -27,4 +27,10 @@ describe("sanitizeLessonHtml", () => {
     expect(out).toContain('rel="noopener noreferrer nofollow"');
     expect(out).toContain('target="_blank"');
   });
+
+  it("normalises b and i to strong and em", () => {
+    expect(sanitizeLessonHtml("<p><b>bold</b> and <i>italic</i></p>")).toBe(
+      "<p><strong>bold</strong> and <em>italic</em></p>",
+    );
+  });
 });

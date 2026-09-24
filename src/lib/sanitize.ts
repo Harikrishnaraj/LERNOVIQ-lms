@@ -17,6 +17,9 @@ const OPTIONS: sanitizeHtml.IOptions = {
   allowedSchemesByTag: { img: ["http", "https"] },
   allowProtocolRelative: false,
   transformTags: {
+    // contentEditable editors emit <b>/<i>; store the semantic elements.
+    b: "strong",
+    i: "em",
     // Links from user content must not leak the opener or referrer.
     a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer nofollow", target: "_blank" }),
   },

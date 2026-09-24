@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowDown,
@@ -12,6 +13,7 @@ import {
   Pencil,
   PlayCircle,
   Plus,
+  SquarePen,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
@@ -264,6 +266,13 @@ export function CurriculumBuilder({
                               ))}
                             </select>
                           )}
+                          <Link
+                            href={`/instructor/courses/${courseId}/lessons/${lesson.id}`}
+                            className={iconBtn}
+                            aria-label={`Edit content of lesson ${lesson.title}`}
+                          >
+                            <SquarePen className="size-4" aria-hidden="true" />
+                          </Link>
                           <button type="button" className={iconBtn} aria-label={`Rename lesson ${lesson.title}`} disabled={locked} onClick={() => setEditing(lesson.id)}>
                             <Pencil className="size-4" aria-hidden="true" />
                           </button>

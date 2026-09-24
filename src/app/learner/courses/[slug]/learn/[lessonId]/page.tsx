@@ -13,6 +13,9 @@ import { progressPercent } from "@/features/my-learning/queries";
 import { adjacentLessons, isLessonLocked } from "@/features/player/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeLessonHtml } from "@/lib/sanitize";
+import { getAssetLinks, resolveVideoSrc } from "@/features/player/media";
+import { formatFileSize } from "@/lib/utils/format";
+import { Paperclip } from "lucide-react";
 
 export const metadata: Metadata = { title: "Lesson" };
 
@@ -56,7 +59,10 @@ export default async function LessonPage({
       : { data: null };
 
   const safeHtml = sanitizeLessonHtml(lesson.content);
-  const videoOk = lesson.videoUrl?.startsWith("https://") ?? false;
+  // Entitlement was proven by reading the lesson under this learner RLS above; only now sign URLs.
+  const videoSrc = lesson.type === "video" ? await resolveVideoSrc(lesson.videoUrl) : null;
+  const videoOk = videoSrc !== null;
+  const assets = await getAssetLinks(supabase, lessonId);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
 
   return (
@@ -98,7 +104,7 @@ export default async function LessonPage({
 
           {lesson.type === "video" && videoOk && (
             <ResumableVideo
-              src={lesson.videoUrl!}
+              src={videoSrc!}
               savedPosition={lessonProgress.positionSeconds}
               onSavePosition={
                 course.enrolled ? saveVideoPosition.bind(null, slug, lessonId) : undefined
@@ -116,6 +122,32 @@ export default async function LessonPage({
               className="prose-lesson space-y-3 text-text [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h3]:text-lg [&_h3]:font-semibold [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:overflow-x-auto [&_pre]:rounded-control [&_pre]:bg-border-subtle [&_pre]:p-3 [&_ul]:list-disc [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: safeHtml }}
             />
+          )}
+
+          {assets.length > 0 && (
+            <section aria-labelledby="downloads-heading" className="space-y-2">
+              <h2 id="downloads-heading" className="text-base font-semibold">
+                Downloads
+              </h2>
+              <ul className="divide-y divide-border-subtle rounded-card border border-border bg-surface">
+                {assets.map((a) => (
+                  <li key={a.id}>
+                    <a
+                      href={a.url}
+                      download={a.name}
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 text-sm hover:bg-border-subtle"
+                    >
+                      <Paperclip className="size-4 text-text-secondary" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate">{a.name}</span>
+                      {a.sizeBytes !== null && (
+                        <span className="text-xs text-text-secondary">{formatFileSize(a.sizeBytes)}</span>
+                      )}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
 
           {quiz && (
