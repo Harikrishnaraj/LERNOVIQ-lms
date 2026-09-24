@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CheckCircle2, ChevronLeft, XCircle } from "lucide-react";
+import { DecisionPanel } from "@/components/admin/decision-panel";
 import { ReviewNotes } from "@/components/admin/review-notes";
 import { PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getCourseForReview, notesFor } from "@/features/admin/review";
+import { allowedCourseActions } from "@/features/courses/course-status";
+import { isReviewerAction } from "@/features/courses/transition-rules";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils/format";
@@ -37,6 +40,7 @@ export default async function CourseReviewPage({ params }: { params: Promise<{ c
   const beingReviewed = course.status === "submitted" || course.status === "in_review";
   const canAddNotes = canReview && beingReviewed;
   const courseNotes = notesFor(course.notes, "course", null);
+  const decisions = allowedCourseActions(course.status).filter(isReviewerAction);
 
   return (
     <>
@@ -136,6 +140,14 @@ export default async function CourseReviewPage({ params }: { params: Promise<{ c
         </div>
 
         <aside className="space-y-6">
+          {canReview && (
+            <section aria-labelledby="decision-heading" className="rounded-card border border-border bg-surface p-5">
+              <h2 id="decision-heading" className="mb-3 text-base font-semibold">
+                Decision
+              </h2>
+              <DecisionPanel courseId={course.courseId} actions={decisions} failingChecks={course.report.missing.length} />
+            </section>
+          )}
           <section aria-labelledby="checklist-heading" className="rounded-card border border-border bg-surface p-5">
             <h2 id="checklist-heading" className="mb-3 text-base font-semibold">
               Review checklist

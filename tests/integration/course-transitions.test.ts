@@ -189,3 +189,36 @@ describe.skipIf(!hasLiveProject)("course transitions (T-072, live Supabase)", ()
     await expect(getAdminCourses(learner.client)).rejects.toThrow();
   });
 });
+
+// F-310: the DB copy of the state machine must equal the TypeScript one, and the RPC enforces it.
+import { COURSE_STATUSES, nextCourseStatus, allowedCourseActions } from "@/features/courses/course-status";
+
+describe.skipIf(!hasLiveProject)("course state machine in the database (T-074, live Supabase)", () => {
+  const svc = hasLiveProject ? serviceClient() : (null as never);
+
+  it("course_status_transitions equals the TypeScript state machine", async () => {
+    const { data } = await svc.from("course_status_transitions").select("from_status, action, to_status");
+    const db = (data ?? []).map((r) => `${r.from_status}|${r.action}|${r.to_status}`).sort();
+    const ts = COURSE_STATUSES.flatMap((from) =>
+      allowedCourseActions(from).map((action) => `${from}|${action}|${nextCourseStatus(from, action)}`),
+    ).sort();
+    expect(db).toEqual(ts);
+  });
+
+  it("apply_course_transition refuses an illegal triple even from the service role", async () => {
+    const tag = uniqueTag("dbm");
+    const u = await createUserWithRole(svc, `${tag}-ins`, "instructor");
+    const c = await createCourse(svc, u.id, { slug: `${tag}-c`, title: `${tag} c`, publish: false });
+    try {
+      const { data, error } = await svc.rpc("apply_course_transition", {
+        p_version_id: c.versionId, p_from: "draft", p_to: "published", p_actor: u.id, p_action: "publish", p_note: "",
+      });
+      expect(error).toBeNull();
+      expect(data).toBe(false);
+      const { data: v } = await svc.from("course_versions").select("status").eq("id", c.versionId).single();
+      expect(v!.status).toBe("draft");
+    } finally {
+      await cleanup(svc, { learnerIds: [], courseIds: [c.courseId], userIds: [u.id] });
+    }
+  });
+});
