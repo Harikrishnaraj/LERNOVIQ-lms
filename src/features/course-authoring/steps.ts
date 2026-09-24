@@ -24,7 +24,7 @@ export const COURSE_STEPS: readonly CourseStep[] = [
   { id: "pricing", label: "Pricing & settings", task: "T-055", built: true, href: (id) => `/instructor/courses/${id}/pricing` },
   { id: "preview", label: "Preview", task: "T-056", built: true, href: (id) => `/instructor/courses/${id}/preview` },
   { id: "readiness", label: "Readiness", task: "T-057", built: true, href: (id) => `/instructor/courses/${id}/readiness` },
-  { id: "submit", label: "Submit", task: "T-058", built: false, href: (id) => `/instructor/courses/${id}/submit` },
+  { id: "submit", label: "Submit", task: "T-058", built: true, href: (id) => `/instructor/courses/${id}/submit` },
 ];
 
 /** The next step after `current` whose screen exists, or null. */

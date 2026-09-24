@@ -44,6 +44,7 @@ export interface ReadinessReport {
 }
 
 export const MIN_DESCRIPTION_LENGTH = 50;
+export const MAX_SUBMISSION_NOTES = 2000;
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").trim();
 
