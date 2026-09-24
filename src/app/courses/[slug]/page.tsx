@@ -207,6 +207,20 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
             )}
           </section>
 
+          {course.prerequisites.length > 0 && (
+            <section aria-labelledby="prereq-heading" className="space-y-3">
+              <h2 id="prereq-heading" className="text-xl font-semibold">
+                Prerequisite courses
+              </h2>
+              <p className="text-sm text-text-secondary">Complete these courses before you can enroll:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                {course.prerequisites.map((p) => (
+                  <li key={p.id}>{p.title}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           {course.requirements.length > 0 && (
             <section aria-labelledby="requirements-heading" className="space-y-3">
               <h2 id="requirements-heading" className="text-xl font-semibold">

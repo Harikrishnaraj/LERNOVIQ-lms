@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { enrollInCourse } from "@/features/enrollment/enroll";
 
-const { getUserMock, insertMock, canMock, detailMock, revalidateMock } = vi.hoisted(() => ({
+const { getUserMock, insertMock, canMock, detailMock, revalidateMock, prereqMock } = vi.hoisted(() => ({
+  prereqMock: vi.fn(async () => ({ data: [] as { prerequisite_course_id: string }[] })),
   getUserMock: vi.fn(),
   insertMock: vi.fn(),
   canMock: vi.fn(),
@@ -12,7 +13,14 @@ vi.mock("next/cache", () => ({ revalidatePath: revalidateMock }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: getUserMock },
-    from: vi.fn(() => ({ insert: insertMock })),
+    from: vi.fn((table: string) =>
+      table === "course_prerequisites"
+        ? { select: () => ({ eq: prereqMock }) }
+        : table === "enrollments"
+          ? { insert: insertMock, select: () => ({ eq: () => ({ eq: () => ({ in: async () => ({ data: [] }) }) }) }) }
+          : { insert: insertMock },
+    ),
+    rpc: vi.fn(async () => ({ data: [{ title: "Basics 101" }] })),
   })),
 }));
 vi.mock("@/lib/permissions/can", () => ({ can: canMock }));
@@ -23,6 +31,7 @@ const freeCourse = { id: "c1", slug: "free-course", versionId: "v1", priceCents:
 describe("enrollInCourse", () => {
   beforeEach(() => {
     for (const m of [getUserMock, insertMock, canMock, detailMock, revalidateMock]) m.mockReset();
+    prereqMock.mockResolvedValue({ data: [] });
     getUserMock.mockResolvedValue({ data: { user: { id: "u1" } } });
     canMock.mockResolvedValue(true);
     detailMock.mockResolvedValue(freeCourse);
@@ -74,5 +83,12 @@ describe("enrollInCourse", () => {
     expect(await enrollInCourse("free-course")).toEqual({
       error: "We could not enroll you. Please try again.",
     });
+  });
+
+  it("refuses enrollment while a prerequisite course is not completed", async () => {
+    prereqMock.mockResolvedValue({ data: [{ prerequisite_course_id: "req1" }] });
+    const result = await enrollInCourse("free-course");
+    expect(result).toEqual({ error: "Complete these courses first: Basics 101." });
+    expect(insertMock).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCourseDetail } from "@/features/catalog/course-detail";
 import { can } from "@/lib/permissions/can";
+import { unmetPrerequisites } from "@/features/course-authoring/pricing-rules";
 import { createClient } from "@/lib/supabase/server";
 
 export type EnrollResult = { enrolled: true } | { error: string };
@@ -24,6 +25,27 @@ export async function enrollInCourse(slug: string): Promise<EnrollResult> {
   if (!course) return { error: "This course is not available." };
   if (course.priceCents > 0) {
     return { error: "This course requires payment, and checkout is not available yet." };
+  }
+
+  // Prerequisites: every required course must be completed first (server-side, never the UI).
+  const { data: reqRows } = await supabase
+    .from("course_prerequisites")
+    .select("prerequisite_course_id")
+    .eq("version_id", course.versionId);
+  const required = (reqRows ?? []).map((r) => r.prerequisite_course_id as string);
+  if (required.length > 0) {
+    const { data: done } = await supabase
+      .from("enrollments")
+      .select("course_id")
+      .eq("user_id", user.id)
+      .eq("status", "completed")
+      .in("course_id", required);
+    const missing = unmetPrerequisites(required, new Set((done ?? []).map((d) => d.course_id as string)));
+    if (missing.length > 0) {
+      const { data: titles } = await supabase.rpc("get_prerequisite_titles", { p_course_ids: missing });
+      const names = ((titles ?? []) as { title: string }[]).map((t) => t.title);
+      return { error: `Complete these courses first: ${names.length ? names.join(", ") : "the required prerequisites"}.` };
+    }
   }
 
   const { error } = await supabase

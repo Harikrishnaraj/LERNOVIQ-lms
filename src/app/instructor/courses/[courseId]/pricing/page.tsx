@@ -3,57 +3,52 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Lock } from "lucide-react";
 import { CourseSteps } from "@/components/course-authoring/course-steps";
-import { CurriculumBuilder } from "@/components/course-authoring/curriculum-builder";
+import { PricingForm } from "@/components/course-authoring/pricing-form";
 import { PageHeader } from "@/components/layout/page-header";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonClasses } from "@/components/ui/button";
-import { nextBuiltStep } from "@/features/course-authoring/steps";
-import { getCurriculum } from "@/features/course-authoring/curriculum";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { getPricingForEditing } from "@/features/course-authoring/pricing";
 import { getCourseForEditing } from "@/features/course-authoring/queries";
+import { nextBuiltStep } from "@/features/course-authoring/steps";
 import { isCourseStatus } from "@/features/courses/course-status";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Curriculum" };
+export const metadata: Metadata = { title: "Pricing & settings" };
 
-export default async function CurriculumPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default async function PricingPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   const course = user ? await getCourseForEditing(supabase, user.id, courseId) : null;
-  if (!course) notFound();
+  if (!course || !user) notFound();
+  const pricing = await getPricingForEditing(supabase, user.id, course.courseId, course.version.id);
+  if (!pricing) notFound();
 
-  const sections = await getCurriculum(supabase, course.version.id);
   const status = isCourseStatus(course.version.status) ? course.version.status : "draft";
-  const next = nextBuiltStep("curriculum");
+  const next = nextBuiltStep("pricing");
 
   return (
     <>
       <PageHeader
         title={course.version.title}
-        description="Step 2: organise your course into sections and lessons. Drag to reorder, or use the arrow buttons."
-        actions={
-          <>
-            <Link href={`/instructor/courses/${course.courseId}/assessments`} className={buttonClasses({ variant: "secondary", size: "sm" })}>
-              Assessments
-            </Link>
-            <StatusBadge kind="course" status={status} />
-          </>
-        }
+        description="Pricing, certificate, visibility and prerequisites."
+        actions={<StatusBadge kind="course" status={status} />}
       />
-      <CourseSteps courseId={course.courseId} current="curriculum" />
+      <CourseSteps courseId={course.courseId} current="pricing" />
 
       {!course.editable && (
         <p role="status" className="mb-6 flex items-start gap-2 rounded-card border border-warning bg-warning-light p-3 text-sm text-warning-text">
           <Lock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          This course is locked while it is in review or published, so the curriculum cannot be changed.
+          This course is locked while it is in review or published, so these settings cannot be changed.
         </p>
       )}
 
-      <CurriculumBuilder courseId={course.courseId} sections={sections} disabled={!course.editable} />
+      <PricingForm courseId={course.courseId} initial={pricing} disabled={!course.editable} />
+
       {next && (
-        <div className="mt-8 border-t border-border pt-6">
+        <div className="mt-8 max-w-2xl border-t border-border pt-6">
           <Link href={next.href(course.courseId)} className={buttonClasses({ variant: "secondary" })}>
             Next step: {next.label}
           </Link>

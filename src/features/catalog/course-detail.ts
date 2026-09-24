@@ -37,6 +37,8 @@ export interface CourseDetail {
   publishedAt: string | null;
   sections: OutlineSection[];
   lessonCount: number;
+  /** Courses a learner must complete before enrolling. */
+  prerequisites: { id: string; title: string }[];
 }
 
 interface DetailRow {
@@ -85,6 +87,15 @@ export async function getCourseDetail(
   if (error) throw new Error(`get_course_detail failed: ${error.message}`);
   const row = ((data ?? []) as DetailRow[])[0];
   if (!row) return null;
+
+  const { data: prereqRows } = await supabase
+    .from("course_prerequisites")
+    .select("prerequisite_course_id")
+    .eq("version_id", row.version_id);
+  const prereqIds = (prereqRows ?? []).map((r) => r.prerequisite_course_id as string);
+  const { data: prereqTitles } = prereqIds.length
+    ? await supabase.rpc("get_prerequisite_titles", { p_course_ids: prereqIds })
+    : { data: [] as { course_id: string; title: string }[] };
 
   const [sectionsRes, outlineRes] = await Promise.all([
     supabase
@@ -140,6 +151,10 @@ export async function getCourseDetail(
     publishedAt: row.published_at,
     sections,
     lessonCount: sections.reduce((n, s) => n + s.lessons.length, 0),
+    prerequisites: ((prereqTitles ?? []) as { course_id: string; title: string }[]).map((t) => ({
+      id: t.course_id,
+      title: t.title,
+    })),
   };
 }
 
