@@ -4,7 +4,6 @@ import {
   interestSlugs,
   pickRecommendations,
   startOfUtcDay,
-  upcomingAssessments,
 } from "@/features/dashboard/logic";
 
 describe("greetingName", () => {
@@ -39,37 +38,6 @@ describe("pickRecommendations", () => {
   it("returns fewer than the limit when candidates run out", () => {
     expect(pickRecommendations([[c("a")]], new Set(), 3)).toHaveLength(1);
     expect(pickRecommendations([], new Set(), 3)).toEqual([]);
-  });
-});
-
-describe("upcomingAssessments", () => {
-  const a = (id: string, maxAttempts: number | null = 2) => ({ id, maxAttempts });
-  it("hides passed, pending-review and exhausted assessments", () => {
-    const out = upcomingAssessments(
-      [a("passed"), a("pending"), a("exhausted"), a("fresh"), a("retry")],
-      [
-        { assessmentId: "passed", status: "graded", passed: true },
-        { assessmentId: "pending", status: "submitted", passed: null },
-        { assessmentId: "exhausted", status: "graded", passed: false },
-        { assessmentId: "exhausted", status: "graded", passed: false },
-        { assessmentId: "retry", status: "graded", passed: false },
-      ],
-    );
-    expect(out.map((x) => x.id)).toEqual(["fresh", "retry"]);
-  });
-  it("lists in-progress attempts first, even when attempts are used up", () => {
-    const out = upcomingAssessments(
-      [a("later"), a("now", 1)],
-      [{ assessmentId: "now", status: "in_progress", passed: null }],
-    );
-    expect(out.map((x) => [x.id, x.inProgress])).toEqual([
-      ["now", true],
-      ["later", false],
-    ]);
-  });
-  it("treats null max attempts as unlimited", () => {
-    const many = Array.from({ length: 9 }, () => ({ assessmentId: "u", status: "graded" as const, passed: false }));
-    expect(upcomingAssessments([a("u", null)], many)).toHaveLength(1);
   });
 });
 

@@ -48,37 +48,6 @@ export function pickRecommendations<T extends RecommendableCourse>(
   return out;
 }
 
-export interface AssessmentCandidate {
-  id: string;
-  maxAttempts: number | null;
-}
-export interface AttemptFact {
-  assessmentId: string;
-  status: "in_progress" | "submitted" | "graded";
-  passed: boolean | null;
-}
-
-/**
- * Assessments still worth surfacing: not yet passed, not awaiting review, and with attempts left
- * (or one already in progress). Attempts in progress come first.
- */
-export function upcomingAssessments<T extends AssessmentCandidate>(
-  assessments: T[],
-  attempts: AttemptFact[],
-): (T & { inProgress: boolean })[] {
-  const out: (T & { inProgress: boolean })[] = [];
-  for (const a of assessments) {
-    const mine = attempts.filter((x) => x.assessmentId === a.id);
-    if (mine.some((x) => x.passed === true)) continue;
-    if (mine.some((x) => x.status === "submitted")) continue; // waiting for manual review
-    const inProgress = mine.some((x) => x.status === "in_progress");
-    const exhausted = a.maxAttempts !== null && mine.length >= a.maxAttempts;
-    if (exhausted && !inProgress) continue;
-    out.push({ ...a, inProgress });
-  }
-  return out.sort((x, y) => Number(y.inProgress) - Number(x.inProgress));
-}
-
 /** Start of the given day in UTC, used to count "completed today". */
 export function startOfUtcDay(now: Date): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();

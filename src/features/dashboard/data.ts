@@ -1,16 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { searchCourses, type CourseCardData } from "@/features/catalog/search-courses";
 import { parseCatalogFilters } from "@/features/catalog/filters";
+import { isUpcoming, listMyAssessments } from "@/features/assessments/list";
 import { getMyLearning, splitLearning, type LearningItem } from "@/features/my-learning/queries";
 import { getPlayerCourse } from "@/features/player/data";
 import { resumeLessonId } from "@/features/player/navigation";
-import {
-  greetingName,
-  interestSlugs,
-  pickRecommendations,
-  startOfUtcDay,
-  upcomingAssessments,
-} from "./logic";
+import { greetingName, interestSlugs, pickRecommendations, startOfUtcDay } from "./logic";
 
 export interface NextUp {
   courseSlug: string;
@@ -103,59 +98,18 @@ async function loadUpcomingAssessments(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<UpcomingAssessment[]> {
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select("id, version_id, courses!inner(slug), course_versions!inner(title)")
-    .eq("user_id", userId)
-    .eq("status", "active");
-  if (!enrollments?.length) return [];
-
-  const versionIds = enrollments.map((e) => e.version_id as string);
-  const meta = new Map(
-    enrollments.map((e) => [
-      e.version_id as string,
-      {
-        slug: (e.courses as unknown as { slug: string }).slug,
-        title: (e.course_versions as unknown as { title: string }).title,
-      },
-    ]),
-  );
-
-  const { data: assessments } = await supabase
-    .from("assessments")
-    .select("id, title, version_id, max_attempts")
-    .in("version_id", versionIds);
-  if (!assessments?.length) return [];
-
-  const { data: attempts } = await supabase
-    .from("assessment_attempts")
-    .select("assessment_id, status, passed")
-    .in(
-      "assessment_id",
-      assessments.map((a) => a.id as string),
-    );
-
-  const open = upcomingAssessments(
-    assessments.map((a) => ({
-      id: a.id as string,
-      title: a.title as string,
-      versionId: a.version_id as string,
-      maxAttempts: (a.max_attempts as number | null) ?? null,
-    })),
-    (attempts ?? []).map((a) => ({
-      assessmentId: a.assessment_id as string,
-      status: a.status as "in_progress" | "submitted" | "graded",
-      passed: (a.passed as boolean | null) ?? null,
-    })),
-  );
-
-  return open.slice(0, ASSESSMENT_LIMIT).map((a) => ({
-    id: a.id,
-    title: a.title,
-    courseSlug: meta.get(a.versionId)!.slug,
-    courseTitle: meta.get(a.versionId)!.title,
-    inProgress: a.inProgress,
-  }));
+  const all = await listMyAssessments(supabase, userId);
+  return all
+    .filter((a) => isUpcoming(a.status))
+    .sort((x, y) => Number(y.status === "in_progress") - Number(x.status === "in_progress"))
+    .slice(0, ASSESSMENT_LIMIT)
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      courseSlug: a.courseSlug,
+      courseTitle: a.courseTitle,
+      inProgress: a.status === "in_progress",
+    }));
 }
 
 async function loadRecommendations(
