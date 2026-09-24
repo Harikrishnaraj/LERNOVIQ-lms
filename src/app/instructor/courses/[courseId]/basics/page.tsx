@@ -9,6 +9,9 @@ import { isCourseStatus } from "@/features/courses/course-status";
 import { listCategories } from "@/features/catalog/search-courses";
 import { updateBasicsAction } from "@/features/course-authoring/actions";
 import { getCourseForEditing } from "@/features/course-authoring/queries";
+import { nextBuiltStep } from "@/features/course-authoring/steps";
+import { buttonClasses } from "@/components/ui/button";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Course basics" };
@@ -31,6 +34,7 @@ export default async function CourseBasicsPage({
 
   const categories = await listCategories(supabase);
   const status = isCourseStatus(course.version.status) ? course.version.status : "draft";
+  const next = nextBuiltStep("basics");
 
   return (
     <>
@@ -70,6 +74,13 @@ export default async function CourseBasicsPage({
         }}
         onSubmit={updateBasicsAction.bind(null, course.courseId)}
       />
+      {next && (
+        <div className="mt-8 max-w-2xl border-t border-border pt-6">
+          <Link href={next.href(course.courseId)} className={buttonClasses({ variant: "secondary" })}>
+            Next step: {next.label}
+          </Link>
+        </div>
+      )}
     </>
   );
 }

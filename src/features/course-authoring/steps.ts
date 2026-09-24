@@ -20,7 +20,7 @@ export interface CourseStep {
 
 export const COURSE_STEPS: readonly CourseStep[] = [
   { id: "basics", label: "Basics", task: "T-051", built: true, href: (id) => `/instructor/courses/${id}/basics` },
-  { id: "curriculum", label: "Curriculum", task: "T-052", built: false, href: (id) => `/instructor/courses/${id}/curriculum` },
+  { id: "curriculum", label: "Curriculum", task: "T-052", built: true, href: (id) => `/instructor/courses/${id}/curriculum` },
   { id: "pricing", label: "Pricing & settings", task: "T-055", built: false, href: (id) => `/instructor/courses/${id}/pricing` },
   { id: "preview", label: "Preview", task: "T-056", built: false, href: (id) => `/instructor/courses/${id}/preview` },
   { id: "readiness", label: "Readiness", task: "T-057", built: false, href: (id) => `/instructor/courses/${id}/readiness` },
