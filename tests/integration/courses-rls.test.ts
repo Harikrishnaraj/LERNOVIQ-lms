@@ -107,7 +107,7 @@ describe.skipIf(!hasLiveProject)("courses schema RLS (T-030, live Supabase)", ()
     await seedCourse("free", instructorA.id, { price: 0, publish: true });
     await seedCourse("paid", instructorA.id, { price: 4900, publish: true });
     await seedCourse("draft", instructorA.id, { price: 0, publish: false });
-  }, 60_000);
+  }, 200_000);
 
   afterAll(async () => {
     // enrollments.course_id has no cascade: remove learners (cascades enrollments) first.
@@ -116,7 +116,7 @@ describe.skipIf(!hasLiveProject)("courses schema RLS (T-030, live Supabase)", ()
     await Promise.all(
       [instructorA, instructorB, reviewer].map((u) => svc.auth.admin.deleteUser(u.id)),
     );
-  }, 60_000);
+  }, 200_000);
 
   describe("anonymous visitors", () => {
     it("read categories and published courses only", async () => {

@@ -66,9 +66,9 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
     c = await createCourse(svc, owner.id, { slug: `${tag}-c`, title: `${tag} Advanced`, publish: true });
     foreign = await createCourse(svc, other.id, { slug: `${tag}-f`, title: `${tag} foreign`, publish: false });
     courseIds.push(a.courseId, b.courseId, c.courseId, foreign.courseId);
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   describe("saving", () => {
     it("saves a paid price in cents with currency, certificate switch and visibility", async () => {

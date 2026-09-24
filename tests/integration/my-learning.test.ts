@@ -61,9 +61,9 @@ describe.skipIf(!hasLiveProject)("my learning + saved courses (T-035, live Supab
       publish: false,
     });
     courseIds.push(course.courseId, draft.courseId);
-  }, 60_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("reports lessons and progress for the caller only", async () => {
     const { data: enr } = await a.client

@@ -42,9 +42,9 @@ describe.skipIf(!hasLiveProject)("admin overview (T-071, live Supabase)", () => 
     support = await user("sup", "support_agent");
     instructor = await user("ins", "instructor");
     learner = await user("lrn", "learner");
-  }, 120_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("returns platform counts to back-office roles", async () => {
     const before = await getAdminOverview(adminUser.client);

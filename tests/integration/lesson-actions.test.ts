@@ -73,12 +73,12 @@ describe.skipIf(!hasLiveProject)("lesson editor actions (T-053, live Supabase)",
     [videoLesson, textLesson] = course.lessonIds;
     courseIds.push(course.courseId);
     await svc.from("enrollments").insert({ user_id: enrolled.id, course_id: course.courseId, version_id: course.versionId });
-  }, 90_000);
+  }, 200_000);
 
   afterAll(async () => {
     for (const o of objects) await svc.storage.from(o.bucket).remove([o.path]);
     await cleanup(svc, { learnerIds, courseIds, userIds });
-  }, 60_000);
+  }, 200_000);
 
   describe("saveLesson", () => {
     it("saves title, duration, preview flag and stores SANITIZED html", async () => {

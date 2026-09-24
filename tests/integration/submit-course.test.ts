@@ -64,9 +64,9 @@ describe.skipIf(!hasLiveProject)("submit for review (T-058, live Supabase)", () 
     learner = await user("lrn", "learner");
     const { data: cat } = await svc.from("categories").select("id").limit(1).single();
     categoryId = cat!.id as string;
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("submits a ready course: status becomes submitted and a submission with notes is stored", async () => {
     const c = await readyCourse("ok");

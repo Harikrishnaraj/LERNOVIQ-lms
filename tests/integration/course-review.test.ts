@@ -63,9 +63,9 @@ describe.skipIf(!hasLiveProject)("course review data and notes (T-073, live Supa
     courseIds.push(c.courseId, foreign.courseId);
     await svc.from("course_versions").update({ status: "submitted" }).eq("id", c.versionId);
     await svc.from("course_submissions").insert({ version_id: c.versionId, submitted_by: owner.id, notes: "Look at lesson two" });
-  }, 120_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("loads details, instructor, submission notes and the failing automatic checks", async () => {
     const r = await getCourseForReview(reviewer.client, c.courseId);

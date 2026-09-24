@@ -152,8 +152,9 @@ export async function createCourse(
 /** Deletes users first (enrollments cascade), then the courses, in FK-safe order. */
 export async function cleanup(
   svc: SupabaseClient,
-  opts: { learnerIds?: string[]; courseIds?: string[]; userIds?: string[] },
+  opts: { learnerIds?: string[]; courseIds?: string[]; userIds?: string[]; pathIds?: string[] },
 ) {
+  if (opts.pathIds?.length) await svc.from("learning_paths").delete().in("id", opts.pathIds);
   await Promise.all((opts.learnerIds ?? []).map((id) => svc.auth.admin.deleteUser(id)));
   if (opts.courseIds?.length) {
     // enrollments.course_id has no cascade
@@ -239,4 +240,24 @@ export async function createAssessment(
     questions.push({ id: question.id, optionIds, correctOptionIds });
   }
   return { assessmentId: assessment.id, questions };
+}
+
+/** A learning path with its courses in the given order (service role). */
+export async function createPath(
+  svc: SupabaseClient,
+  p: { slug: string; title: string; description?: string; status?: "draft" | "published" | "archived"; courseIds: string[] },
+): Promise<{ pathId: string; slug: string }> {
+  const { data, error } = await svc
+    .from("learning_paths")
+    .insert({ slug: p.slug, title: p.title, description: p.description ?? "", status: p.status ?? "published" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  if (p.courseIds.length > 0) {
+    const { error: linkError } = await svc
+      .from("learning_path_courses")
+      .insert(p.courseIds.map((course_id, position) => ({ path_id: data.id, course_id, position })));
+    if (linkError) throw linkError;
+  }
+  return { pathId: data.id as string, slug: p.slug };
 }

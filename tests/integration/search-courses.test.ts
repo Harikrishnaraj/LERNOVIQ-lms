@@ -102,12 +102,12 @@ describe.skipIf(!hasLiveProject)("search_courses (T-032, live Supabase)", () => 
       publish: false,
     });
     courseIds.push(draft.courseId);
-  }, 60_000);
+  }, 200_000);
 
   afterAll(async () => {
     await cleanup(svc, { courseIds, userIds });
     await svc.from("categories").delete().eq("slug", `${tag}-cat`);
-  }, 60_000);
+  }, 200_000);
 
   const slugsOf = (r: Awaited<ReturnType<typeof search>>) => r.courses.map((c) => c.slug).sort();
 

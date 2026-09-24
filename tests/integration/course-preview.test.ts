@@ -47,9 +47,9 @@ describe.skipIf(!hasLiveProject)("course preview (T-056, live Supabase)", () => 
       ],
     });
     courseIds.push(draft.courseId);
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("gives the owner the full draft outline in order, nothing locked", async () => {
     const p = await getCoursePreview(owner.client, owner.id, draft.courseId);

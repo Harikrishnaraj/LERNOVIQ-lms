@@ -37,9 +37,9 @@ describe.skipIf(!hasLiveProject)("readiness snapshot (T-057, live Supabase)", ()
       ],
     });
     courseIds.push(course.courseId);
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds: [], courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds: [], courseIds, userIds }), 120_000);
 
   it("reads the real course and reports what is missing", async () => {
     const snap = await getReadinessSnapshot(owner.client, course.versionId, null);

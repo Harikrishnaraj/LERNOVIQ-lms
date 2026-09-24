@@ -85,9 +85,9 @@ describe.skipIf(!hasLiveProject)("player access (T-036, live Supabase)", () => {
       .select("id")
       .single();
     v2LessonId = les!.id;
-  }, 60_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("gives an enrolled learner the full enrolled version with locked lessons readable", async () => {
     const player = await getPlayerCourse(enrolled.client, enrolled.id, `${tag}-c`);

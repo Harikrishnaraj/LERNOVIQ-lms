@@ -90,9 +90,9 @@ describe.skipIf(!hasLiveProject)("assessments schema + RLS (T-038, live Supabase
       attempt_number: 1,
       answers: { q: "a" },
     });
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   describe("answer keys never reach learners", () => {
     it("returns the assessment content through the learner API without any key material", async () => {

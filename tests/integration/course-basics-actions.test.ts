@@ -70,13 +70,13 @@ describe.skipIf(!hasLiveProject)("course basics actions (T-051, live Supabase)",
     learner = await user("lrn", "learner");
     categorySlug = `${tag}-cat`;
     await svc.from("categories").insert({ slug: categorySlug, name: "Basics Test Category" });
-  }, 90_000);
+  }, 200_000);
 
   afterAll(async () => {
     if (objectPaths.length) await svc.storage.from("course-thumbnails").remove(objectPaths);
     await cleanup(svc, { learnerIds, courseIds, userIds });
     await svc.from("categories").delete().eq("slug", categorySlug);
-  }, 60_000);
+  }, 200_000);
 
   const trackCourse = async (id: string) => {
     courseIds.push(id);

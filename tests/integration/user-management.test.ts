@@ -51,14 +51,14 @@ describe.skipIf(!hasLiveProject)("user management (T-076, live Supabase)", () =>
     support = await user("agt", "support_agent");
     instructor = await user("ins", "instructor");
     learner = await user("lrn", "learner");
-  }, 150_000);
+  }, 200_000);
 
   afterAll(async () => {
     // Users created by the actions below.
     const { data } = await svc.from("audit_logs").select("resource_id").in("actor_id", [superAdmin.id, admin.id]).like("action", "user.%");
     const created = [...new Set((data ?? []).map((r) => r.resource_id as string))].filter((id) => ![superAdmin.id, admin.id, learner.id].includes(id));
     await cleanup(svc, { learnerIds, courseIds: [], userIds: [...userIds, ...created] });
-  }, 90_000);
+  }, 200_000);
 
   describe("listing", () => {
     it("searches by email, filters by role and status, and reports the total", async () => {

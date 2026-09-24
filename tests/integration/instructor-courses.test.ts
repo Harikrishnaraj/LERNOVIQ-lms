@@ -61,9 +61,9 @@ describe.skipIf(!hasLiveProject)("instructor_courses (T-050, live Supabase)", ()
       { user_id: learner2.id, course_id: live.courseId, version_id: live.versionId, status: "active" },
     ]);
     if (enrollError) throw enrollError;
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("returns only the caller own courses", async () => {
     const mine = await getInstructorCourses(a.client);

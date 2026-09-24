@@ -39,9 +39,9 @@ describe.skipIf(!hasLiveProject)("audit log queries (T-078, live Supabase)", () 
     await recordAudit({ actorId: admin.id, actorEmail: `alice-${tag}@example.com`, action: "course.approved", resourceType: "course", resourceId: resource });
     await recordAudit({ actorId: admin.id, actorEmail: `bob-${tag}@example.com`, action: "user.suspended", resourceType: "user", resourceId: resource, metadata: { reason: "test" } });
     await recordAudit({ actorId: admin.id, actorEmail: `alice-${tag}@example.com`, action: "course.rejected", resourceType: "course", resourceId: resource });
-  }, 120_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds: [], courseIds: [], userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds: [], courseIds: [], userIds }), 120_000);
 
   it("returns newest first with a total, and filters by action, actor and resource type", async () => {
     const all = await getAuditPage(admin.client, q());

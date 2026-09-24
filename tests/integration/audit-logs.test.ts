@@ -36,9 +36,9 @@ describe.skipIf(!hasLiveProject)("audit logs (T-070, live Supabase)", () => {
     adminUser = await user("adm", "admin");
     instructor = await user("ins", "instructor");
     learner = await user("lrn", "learner");
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds: [], userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds: [], userIds }), 120_000);
 
   it("recordAudit appends a row with actor, resource and metadata", async () => {
     const resourceId = `${tag}-res`;

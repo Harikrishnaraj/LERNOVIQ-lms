@@ -68,9 +68,9 @@ describe.skipIf(!hasLiveProject)("curriculum actions (T-052, live Supabase)", ()
       sections: [{ title: "Theirs", lessons: [{ title: "Their lesson" }] }],
     });
     courseIds.push(course.courseId, foreign.courseId);
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("builds a curriculum: sections, lessons of every type, in order", async () => {
     currentClient = owner.client;

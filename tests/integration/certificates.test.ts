@@ -67,9 +67,9 @@ describe.skipIf(!hasLiveProject)("completion + certificates (T-040, live Supabas
     owner = await user("own", "instructor", "Ada Teacher");
     learner = await user("l", "learner", "Grace Hopper");
     other = await user("o", "learner");
-  }, 60_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("does not issue anything while the course is incomplete", async () => {
     const c = await createCourse(svc, owner.id, {

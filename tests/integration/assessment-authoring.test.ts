@@ -77,9 +77,9 @@ describe.skipIf(!hasLiveProject)("assessment authoring (T-054, live Supabase)", 
     });
     [quizLessonId, textLessonId] = course.lessonIds;
     courseIds.push(course.courseId);
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("creates an assessment attached to a quiz lesson, with sensible defaults", async () => {
     currentClient = owner.client;

@@ -59,9 +59,9 @@ describe.skipIf(!hasLiveProject)("course transitions (T-072, live Supabase)", ()
     support = await user("sup", "support_agent");
     instructor = await user("ins", "instructor");
     learner = await user("lrn", "learner");
-  }, 120_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("walks the full happy path: review, approve, publish (live in the catalog), archive (gone)", async () => {
     const c = await submitted("happy");

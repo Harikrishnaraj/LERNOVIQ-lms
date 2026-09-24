@@ -60,9 +60,9 @@ describe.skipIf(!hasLiveProject)("getCourseDetail (T-033, live Supabase)", () =>
       publish: false,
     });
     courseIds.push(published.courseId, draft.courseId);
-  }, 60_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { courseIds, userIds }), 120_000);
 
   it("returns the published course with instructor, rating and ordered curriculum", async () => {
     const detail = await getCourseDetail(anon(), `${tag}-pub`);

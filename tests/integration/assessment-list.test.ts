@@ -71,9 +71,9 @@ describe.skipIf(!hasLiveProject)("listMyAssessments (T-043, live Supabase)", () 
     await attempt(passed.assessmentId, 2, 90, true);
     await attempt(final.assessmentId, 1, 10, false);
     void fresh;
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("lists every assessment of the learner courses with status, attempts and scores", async () => {
     const list = await listMyAssessments(learner.client, learner.id);

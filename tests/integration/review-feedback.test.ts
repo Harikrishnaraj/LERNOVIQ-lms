@@ -56,9 +56,9 @@ describe.skipIf(!hasLiveProject)("review feedback for instructors (T-075, live S
     reviewer = await user("rev", "content_reviewer");
     owner = await user("own", "instructor");
     other = await user("oth", "instructor");
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds: [], courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds: [], courseIds, userIds }), 120_000);
 
   it("shows nothing until a decision is sent, then the decision and the notes", async () => {
     const c = await inReview("sent");

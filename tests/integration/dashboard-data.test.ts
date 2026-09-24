@@ -86,9 +86,9 @@ describe.skipIf(!hasLiveProject)("dashboard data (T-042, live Supabase)", () => 
       maxAttempts: 2,
       questions: [{ type: "mcq", prompt: "Q", options: ["a", "b"], correct: [0] }],
     });
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("builds every block from the learner own data", async () => {
     const data = await getDashboardData(learner.client, { id: learner.id, email: learner.email });

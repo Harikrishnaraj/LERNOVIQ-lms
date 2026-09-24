@@ -87,7 +87,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 5 — Learner complete
 
-- [ ] **T-080** Learning Paths: schema (`learning_paths`, `learning_path_courses`), catalog, detail, enroll in path, path progress. — F-111
+- [x] **T-080** Learning Paths: schema (`learning_paths`, `learning_path_courses`), catalog, detail, enroll in path, path progress. — F-111
 - [ ] **T-081** Assignments: `assignments`, `assignment_submissions`; learner list, submit (validated upload), status, feedback, lock after deadline. — F-108
 - [ ] **T-082** Calendar: deadlines, assessments, sessions (month/week/agenda). — F-112
 - [ ] **T-083** Discussions: `discussions`, `discussion_posts`; per-course threads, reply, upvote, mark answered, report. — F-113

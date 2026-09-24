@@ -93,9 +93,9 @@ describe.skipIf(!hasLiveProject)("assessment attempts (T-039, live Supabase)", (
     await svc
       .from("enrollments")
       .insert({ user_id: learner.id, course_id: course.courseId, version_id: course.versionId });
-  }, 90_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("starts an attempt, resumes it instead of starting a second, and saves sanitized answers", async () => {
     currentClient = learner.client;

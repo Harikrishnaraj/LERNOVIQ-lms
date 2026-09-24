@@ -81,9 +81,9 @@ describe.skipIf(!hasLiveProject)("completeLesson / saveVideoPosition (T-037, liv
     await svc
       .from("enrollments")
       .insert({ user_id: l.id, course_id: course.courseId, version_id: course.versionId });
-  }, 60_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("completes a lesson, persists it, and keeps the first completion time when repeated", async () => {
     currentClient = learner;

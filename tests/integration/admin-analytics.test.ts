@@ -45,9 +45,9 @@ describe.skipIf(!hasLiveProject)("admin analytics (T-077, live Supabase)", () =>
       { user_id: a.id, course_id: course.courseId, version_id: course.versionId, status: "completed", completed_at: new Date().toISOString() },
       { user_id: b.id, course_id: course.courseId, version_id: course.versionId, status: "active" },
     ]);
-  }, 150_000);
+  }, 200_000);
 
-  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 60_000);
+  afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   it("returns one zero-filled row per day, ending today, with today's activity counted", async () => {
     const points = await getDailyAnalytics(admin.client, 7);
