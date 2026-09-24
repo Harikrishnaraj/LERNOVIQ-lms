@@ -18,12 +18,15 @@ export function PlayerSidebar({
   currentLessonId,
   completed,
   enrolled,
+  basePath = `/learner/courses/${courseSlug}/learn`,
 }: {
   courseSlug: string;
   sections: PlayerSection[];
   currentLessonId: string;
   completed: ReadonlySet<string>;
   enrolled: boolean;
+  /** Lesson links are `${basePath}/${lessonId}`; the instructor preview passes its own. */
+  basePath?: string;
 }) {
   return (
     <nav aria-label="Course content" className="space-y-4">
@@ -65,7 +68,7 @@ export function PlayerSidebar({
                     <span className={cn(cls, "cursor-not-allowed text-text-muted")}>{body}</span>
                   ) : (
                     <Link
-                      href={`/learner/courses/${courseSlug}/learn/${lesson.id}`}
+                      href={`${basePath}/${lesson.id}`}
                       aria-current={current ? "page" : undefined}
                       className={cn(cls, "hover:bg-border-subtle")}
                     >

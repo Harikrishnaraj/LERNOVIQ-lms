@@ -69,14 +69,8 @@ export async function getPlayerCourse(
   const versionId = enrollment?.version_id ?? course.published_version_id;
   if (!versionId) return null;
 
-  const [versionRes, sectionsRes, outlineRes, progressRes] = await Promise.all([
-    supabase.from("course_versions").select("title").eq("id", versionId).maybeSingle(),
-    supabase
-      .from("course_sections")
-      .select("id, title, position")
-      .eq("version_id", versionId)
-      .order("position"),
-    supabase.rpc("get_lesson_outline", { p_version_id: versionId }),
+  const [outline, progressRes] = await Promise.all([
+    loadOutline(supabase, versionId),
     enrollment
       ? supabase
           .from("lesson_progress")
@@ -84,6 +78,33 @@ export async function getPlayerCourse(
           .eq("enrollment_id", enrollment.id)
           .not("completed_at", "is", null)
       : Promise.resolve({ data: [] as { lesson_id: string }[], error: null }),
+  ]);
+  if (!outline) return null;
+
+  return {
+    courseId: course.id,
+    slug: course.slug,
+    title: outline.title,
+    versionId,
+    enrollmentId: enrollment?.id ?? null,
+    enrolled: enrollment !== null,
+    sections: outline.sections,
+    completedLessonIds: new Set((progressRes.data ?? []).map((r) => r.lesson_id as string)),
+  };
+}
+
+/**
+ * Title and section/lesson outline of one version, read under the viewer RLS. Null when the
+ * version is not visible. Shared by the learner player and the instructor preview.
+ */
+export async function loadOutline(
+  supabase: SupabaseClient,
+  versionId: string,
+): Promise<{ title: string; sections: PlayerSection[] } | null> {
+  const [versionRes, sectionsRes, outlineRes] = await Promise.all([
+    supabase.from("course_versions").select("title").eq("id", versionId).maybeSingle(),
+    supabase.from("course_sections").select("id, title, position").eq("version_id", versionId).order("position"),
+    supabase.rpc("get_lesson_outline", { p_version_id: versionId }),
   ]);
   if (!versionRes.data) return null;
   if (sectionsRes.error || outlineRes.error) throw new Error("player outline failed");
@@ -100,20 +121,13 @@ export async function getPlayerCourse(
     });
     lessonsBySection.set(l.section_id, list);
   }
-
   return {
-    courseId: course.id,
-    slug: course.slug,
     title: versionRes.data.title as string,
-    versionId,
-    enrollmentId: enrollment?.id ?? null,
-    enrolled: enrollment !== null,
     sections: (sectionsRes.data ?? []).map((s) => ({
       id: s.id as string,
       title: s.title as string,
       lessons: lessonsBySection.get(s.id as string) ?? [],
     })),
-    completedLessonIds: new Set((progressRes.data ?? []).map((r) => r.lesson_id as string)),
   };
 }
 
