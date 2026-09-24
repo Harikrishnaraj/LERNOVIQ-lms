@@ -4,12 +4,27 @@ import { isEditableStatus, pickEditableVersion } from "@/features/course-authori
 import { nextBuiltStep } from "@/features/course-authoring/steps";
 import { sniffImage } from "@/lib/image";
 
-const valid = { title: "Intro to Python", subtitle: "", categorySlug: "", level: "beginner", language: "en" };
+const valid = { title: "Intro to Python", subtitle: "", categorySlug: "", description: "", outcomes: "", requirements: "", level: "beginner", language: "en" };
+
+describe("basicsSchema description, outcomes and requirements", () => {
+  it("splits lines, trims, drops blanks and duplicates", () => {
+    const r = basicsSchema.parse({ ...valid, description: " About ", outcomes: " Build apps \r\n\n build apps\nShip it ", requirements: "Laptop" });
+    expect(r.description).toBe("About");
+    expect(r.outcomes).toEqual(["Build apps", "Ship it"]);
+    expect(r.requirements).toEqual(["Laptop"]);
+  });
+  it("caps counts and lengths", () => {
+    const nine = Array.from({ length: 9 }, (_, i) => "o" + i).join("\n");
+    expect(basicsSchema.safeParse({ ...valid, outcomes: nine }).success).toBe(false);
+    expect(basicsSchema.safeParse({ ...valid, requirements: "x".repeat(201) }).success).toBe(false);
+    expect(basicsSchema.safeParse({ ...valid, description: "x".repeat(5001) }).success).toBe(false);
+  });
+});
 
 describe("basicsSchema", () => {
   it("accepts valid basics and turns empty optionals into null", () => {
     const r = basicsSchema.parse(valid);
-    expect(r).toEqual({ title: "Intro to Python", subtitle: null, categorySlug: null, level: "beginner", language: "en" });
+    expect(r).toEqual({ title: "Intro to Python", subtitle: null, categorySlug: null, description: "", outcomes: [], requirements: [], level: "beginner", language: "en" });
   });
 
   it("trims the title and keeps a subtitle and category slug", () => {

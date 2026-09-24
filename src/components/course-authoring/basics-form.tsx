@@ -13,6 +13,9 @@ export interface BasicsFormValues {
   title: string;
   subtitle: string;
   categorySlug: string;
+  description: string;
+  outcomes: string;
+  requirements: string;
   level: string;
   language: string;
   thumbnailUrl: string | null;
@@ -110,6 +113,25 @@ export function BasicsForm({
         error={fieldErrors.subtitle}
         hint="One sentence on what the course helps someone do."
       />
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        Description
+        <textarea name="description" defaultValue={initial.description} rows={5} maxLength={5000} disabled={busy} className="rounded-input border border-border bg-surface px-3 py-2 text-sm font-normal" />
+        <span className="text-xs font-normal text-text-secondary">What the course covers and who it is for. Separate paragraphs with a blank line.</span>
+        {fieldErrors.description && <span role="alert" className="text-xs text-danger-text">{fieldErrors.description}</span>}
+      </label>
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        What learners will achieve
+        <textarea name="outcomes" defaultValue={initial.outcomes} rows={4} disabled={busy} className="rounded-input border border-border bg-surface px-3 py-2 text-sm font-normal" />
+        <span className="text-xs font-normal text-text-secondary">One outcome per line, up to 8.</span>
+        {fieldErrors.outcomes && <span role="alert" className="text-xs text-danger-text">{fieldErrors.outcomes}</span>}
+      </label>
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        Requirements
+        <textarea name="requirements" defaultValue={initial.requirements} rows={3} disabled={busy} className="rounded-input border border-border bg-surface px-3 py-2 text-sm font-normal" />
+        <span className="text-xs font-normal text-text-secondary">What learners should know or have first, one per line.</span>
+        {fieldErrors.requirements && <span role="alert" className="text-xs text-danger-text">{fieldErrors.requirements}</span>}
+      </label>
 
       <div className="grid gap-5 sm:grid-cols-3">
         <div>

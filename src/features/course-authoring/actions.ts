@@ -20,6 +20,9 @@ function fields(formData: FormData) {
     title: text("title"),
     subtitle: text("subtitle"),
     categorySlug: text("categorySlug"),
+    description: text("description"),
+    outcomes: text("outcomes"),
+    requirements: text("requirements"),
     level: text("level"),
     language: text("language"),
   };
@@ -109,6 +112,9 @@ export async function createCourseAction(formData: FormData): Promise<BasicsResu
     version_number: 1,
     title: parsed.data.title,
     subtitle: parsed.data.subtitle,
+    description: parsed.data.description,
+    outcomes: parsed.data.outcomes,
+    requirements: parsed.data.requirements,
     level: parsed.data.level,
     language: parsed.data.language,
   });
@@ -166,6 +172,9 @@ export async function updateBasicsAction(courseId: string, formData: FormData): 
   const patch: Record<string, unknown> = {
     title: parsed.data.title,
     subtitle: parsed.data.subtitle,
+    description: parsed.data.description,
+    outcomes: parsed.data.outcomes,
+    requirements: parsed.data.requirements,
     level: parsed.data.level,
     language: parsed.data.language,
   };

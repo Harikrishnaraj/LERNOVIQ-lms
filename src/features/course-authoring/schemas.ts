@@ -4,6 +4,26 @@ import { LANGUAGE_OPTIONS, LEVEL_OPTIONS } from "@/features/catalog/filters";
 const levels = LEVEL_OPTIONS.map((o) => o.value) as [string, ...string[]];
 const languages = LANGUAGE_OPTIONS.map((o) => o.value) as [string, ...string[]];
 
+/** One item per line: trimmed, blanks and duplicates dropped, capped in number and length. */
+function linesSchema(noun: string) {
+  return z
+    .string()
+    .max(4000, `Keep the ${noun}s shorter.`)
+    .transform((raw) => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const line of raw.split(/\r?\n/)) {
+        const t = line.trim();
+        if (t === "" || seen.has(t.toLowerCase())) continue;
+        seen.add(t.toLowerCase());
+        out.push(t);
+      }
+      return out;
+    })
+    .refine((v) => v.length <= 8, `Add at most 8 ${noun}s.`)
+    .refine((v) => v.every((l) => l.length <= 200), `Keep each ${noun} under 200 characters.`);
+}
+
 /** Course basics (wizard step 1, F-202). Empty strings from form fields are treated as absent. */
 export const basicsSchema = z.object({
   title: z
@@ -24,6 +44,9 @@ export const basicsSchema = z.object({
     .or(z.literal(""))
     .transform((v) => (v === "" ? null : v))
     .nullable(),
+  description: z.string().trim().max(5000, "Keep the description under 5000 characters."),
+  outcomes: linesSchema("outcome"),
+  requirements: linesSchema("requirement"),
   level: z.enum(levels, { message: "Choose a level." }),
   language: z.enum(languages, { message: "Choose a language." }),
 });

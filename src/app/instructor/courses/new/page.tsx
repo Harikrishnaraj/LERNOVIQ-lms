@@ -17,7 +17,7 @@ export default async function NewCoursePage() {
       <BasicsForm
         mode="create"
         categories={categories}
-        initial={{ title: "", subtitle: "", categorySlug: "", level: "beginner", language: "en", thumbnailUrl: null }}
+        initial={{ title: "", subtitle: "", categorySlug: "", description: "", outcomes: "", requirements: "", level: "beginner", language: "en", thumbnailUrl: null }}
         onSubmit={createCourseAction}
         createdRedirectTemplate="/instructor/courses/{id}/basics"
       />

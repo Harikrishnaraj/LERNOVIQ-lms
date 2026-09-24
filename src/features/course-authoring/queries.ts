@@ -12,6 +12,9 @@ export interface CourseForEditing {
     status: string;
     title: string;
     subtitle: string | null;
+    description: string;
+    outcomes: string[];
+    requirements: string[];
     level: string;
     language: string;
     thumbnailUrl: string | null;
@@ -41,7 +44,7 @@ export async function getCourseForEditing(
 
   const { data: versions } = await supabase
     .from("course_versions")
-    .select("id, version_number, status, title, subtitle, level, language, thumbnail_url")
+    .select("id, version_number, status, title, subtitle, description, outcomes, requirements, level, language, thumbnail_url")
     .eq("course_id", courseId)
     .order("version_number", { ascending: false });
   const latest = versions?.[0];
@@ -62,6 +65,9 @@ export async function getCourseForEditing(
       status: latest.status as string,
       title: latest.title as string,
       subtitle: (latest.subtitle as string | null) ?? null,
+      description: (latest.description as string) ?? "",
+      outcomes: (latest.outcomes as string[]) ?? [],
+      requirements: (latest.requirements as string[]) ?? [],
       level: latest.level as string,
       language: latest.language as string,
       thumbnailUrl: (latest.thumbnail_url as string | null) ?? null,
