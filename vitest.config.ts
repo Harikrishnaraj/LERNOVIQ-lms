@@ -13,5 +13,8 @@ export default defineConfig({
     env: loadEnv("", process.cwd(), ""),
     include: ["tests/unit/**/*.test.{ts,tsx}", "tests/integration/**/*.test.{ts,tsx}"],
     setupFiles: ["tests/setup.ts"],
+    // Integration tests talk to a remote Supabase project; 5s is too tight under load.
+    testTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 });

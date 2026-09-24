@@ -74,7 +74,7 @@ export default async function LessonPage({
         </span>
         <p className="min-w-0 flex-1 truncate text-sm font-semibold">{course.title}</p>
         {course.enrolled && (
-          <div className="hidden w-32 shrink-0 sm:block">
+          <div className="w-16 shrink-0 sm:w-32">
             <Progress value={percent} label="Course progress" />
           </div>
         )}
