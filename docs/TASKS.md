@@ -64,7 +64,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-051** Create Course step 1 — Basics (title, subtitle, category, level, language, thumbnail) → draft. — F-202
 - [x] **T-052** Curriculum Builder: sections + lessons/quiz/assignment items CRUD, drag reorder + keyboard/menu alternative. — F-203
 - [x] **T-053** Lesson Editor: sanitized rich text, video (upload via storage adapter or URL), attachments, preview flag. — F-204
-- [ ] **T-054** Assessment Builder: question types incl. essay/coding, points, pass mark, attempts, time limit. — F-205
+- [x] **T-054** Assessment Builder: question types incl. essay/coding, points, pass mark, attempts, time limit. — F-205
 - [ ] **T-055** Pricing & Settings step (free/paid, certificate on/off, prerequisites, visibility). — F-202
 - [ ] **T-056** Course Preview as learner. — F-208
 - [ ] **T-057** Readiness checklist (pure rules + UI linking to failing sections). — F-209

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Lock } from "lucide-react";
 import { CourseSteps } from "@/components/course-authoring/course-steps";
 import { CurriculumBuilder } from "@/components/course-authoring/curriculum-builder";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { buttonClasses } from "@/components/ui/button";
 import { getCurriculum } from "@/features/course-authoring/curriculum";
 import { getCourseForEditing } from "@/features/course-authoring/queries";
 import { isCourseStatus } from "@/features/courses/course-status";
@@ -29,7 +31,14 @@ export default async function CurriculumPage({ params }: { params: Promise<{ cou
       <PageHeader
         title={course.version.title}
         description="Step 2: organise your course into sections and lessons. Drag to reorder, or use the arrow buttons."
-        actions={<StatusBadge kind="course" status={status} />}
+        actions={
+          <>
+            <Link href={`/instructor/courses/${course.courseId}/assessments`} className={buttonClasses({ variant: "secondary", size: "sm" })}>
+              Assessments
+            </Link>
+            <StatusBadge kind="course" status={status} />
+          </>
+        }
       />
       <CourseSteps courseId={course.courseId} current="curriculum" />
 

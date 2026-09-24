@@ -15,6 +15,6 @@ export default defineConfig({
     setupFiles: ["tests/setup.ts"],
     // Integration tests talk to a remote Supabase project; 5s is too tight under load.
     testTimeout: 30_000,
-    hookTimeout: 60_000,
+    hookTimeout: 200_000,
   },
 });
