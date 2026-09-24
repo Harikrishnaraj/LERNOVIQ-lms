@@ -403,6 +403,27 @@ async function main() {
       { onConflict: "enrollment_id,lesson_id" },
     );
 
+  // Demo learning path over three seeded courses (idempotent by slug).
+  const PATH_SLUG = "web-developer-path";
+  const { data: existingPath } = await db.from("learning_paths").select("id").eq("slug", PATH_SLUG).maybeSingle();
+  if (!existingPath) {
+    const { data: path, error: pathError } = await db
+      .from("learning_paths")
+      .insert({
+        slug: PATH_SLUG,
+        title: "Become a Web Developer",
+        description: "From the fundamentals to advanced TypeScript, in the order that works best.",
+        status: "published",
+      })
+      .select("id")
+      .single();
+    if (pathError) throw pathError;
+    const order = ["web-development-fundamentals", "advanced-typescript", "ui-design-essentials"];
+    await db
+      .from("learning_path_courses")
+      .insert(order.map((slug, position) => ({ path_id: path.id, course_id: courseIds[slug], position })));
+  }
+
   console.log(
     `Seed complete: ${created} new course(s), ${COURSES.length} total; ${CATEGORIES.length} categories.`,
   );
