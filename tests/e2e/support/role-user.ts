@@ -56,6 +56,7 @@ export async function loginAsRole(page: Page, role: string, opts: { mfa?: boolea
   return Object.assign(() => db.auth.admin.deleteUser(userId), {
     email,
     login,
+    userId,
     secret: () => state.secret,
   });
 }

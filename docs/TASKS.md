@@ -75,7 +75,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 ## Phase 4 — Admin core loop
 
 - [x] **T-070** `audit_logs` (append-only; insert-only RLS) + `recordAudit()` used by every privileged action. — F-414
-- [ ] **T-071** Admin Overview: KPIs, pending actions, platform activity. — F-400
+- [x] **T-071** Admin Overview: KPIs, pending actions, platform activity. — F-400
 - [ ] **T-072** Courses list (status tabs, table/grid, search, filters, bulk actions). — F-405
 - [ ] **T-073** Course Review screen: inspect version, review checklist, reviewer notes per section. — F-406
 - [ ] **T-074** Approve / request changes / reject / publish / archive transitions (audited). — F-406, F-310
