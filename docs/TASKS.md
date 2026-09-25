@@ -102,7 +102,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-100** Assignment Builder (instructions, rubric, due date, file rules) + grading queue. — F-206
 - [x] **T-101** Question Bank: reusable questions, tags, import into assessments. — F-207
 - [x] **T-102** Publish approved course + new draft version from published (ADR-011). — F-212
-- [ ] **T-103** Students: list across courses, filters, progress segments (just enrolled / started / on track / at risk / completed). — F-213
+- [x] **T-103** Students: list across courses, filters, progress segments (just enrolled / started / on track / at risk / completed). — F-213
 - [ ] **T-104** Student Detail: progress by lesson, attempts, submissions, message. — F-213
 - [ ] **T-105** Instructor Discussions: queue of unanswered, reply, pin, moderate. — F-214
 - [ ] **T-106** Messaging: 1:1 threads with learners, unread counts. — F-215
