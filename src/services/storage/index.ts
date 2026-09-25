@@ -21,6 +21,7 @@ export const THUMBNAIL_BUCKET = "course-thumbnails";
 export const VIDEO_BUCKET = "course-videos";
 export const ASSET_BUCKET = "lesson-assets";
 export const SUBMISSION_BUCKET = "assignment-submissions";
+export const AVATAR_BUCKET = "avatars";
 
 export const supabaseStorage: StorageAdapter = {
   async uploadPublic(bucket, path, bytes, contentType) {

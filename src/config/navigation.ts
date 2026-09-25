@@ -157,6 +157,13 @@ const learner: PortalNav = {
           description: "Updates about your courses and deadlines.",
           task: "T-085",
         },
+        {
+          label: "Settings",
+          href: "/learner/settings",
+          icon: Settings,
+          description: "Your profile, password and notification preferences.",
+          task: "T-086",
+        },
       ],
     },
   ],

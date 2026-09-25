@@ -93,7 +93,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-083** Discussions: `discussions`, `discussion_posts`; per-course threads, reply, upvote, mark answered, report. — F-113
 - [x] **T-084** My Progress: hours, streak, completion by course, skills. — F-114
 - [x] **T-085** Notifications: `notifications` model, bell + page, read/unread, preferences. — F-115
-- [ ] **T-086** Learner profile & settings (name, avatar, password, notification preferences). — F-116
+- [x] **T-086** Learner profile & settings (name, avatar, password, notification preferences). — F-116
 - [ ] **T-087** Course reviews: rate/review a completed course. — F-117
 - [ ] **T-088** E2E: paths, assignments, discussions, notifications (TEST_PLAN §8). — F-108, F-111…F-117
 
