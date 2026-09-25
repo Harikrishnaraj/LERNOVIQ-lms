@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Lock } from "lucide-react";
 import { AssessmentBuilder } from "@/components/course-authoring/assessment-builder";
+import { BankPanel } from "@/components/course-authoring/bank-panel";
 import { PageHeader } from "@/components/layout/page-header";
 import { getAssessmentForAuthoring } from "@/features/course-authoring/assessments";
 import { getCourseForEditing } from "@/features/course-authoring/queries";
+import { listBankItems, parseBankQuery } from "@/features/question-bank/bank";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Assessment builder" };
@@ -24,6 +26,7 @@ export default async function AssessmentBuilderPage({
   if (!course) notFound();
   const assessment = await getAssessmentForAuthoring(supabase, course.version.id, assessmentId);
   if (!assessment) notFound();
+  const bankItems = await listBankItems(supabase, parseBankQuery({}));
 
   return (
     <>
@@ -41,6 +44,13 @@ export default async function AssessmentBuilderPage({
       )}
 
       <AssessmentBuilder courseId={course.courseId} assessment={assessment} disabled={!course.editable} />
+      <BankPanel
+        courseId={course.courseId}
+        assessmentId={assessment.id}
+        bankItems={bankItems}
+        questions={assessment.questions.map((q) => ({ id: q.id, prompt: q.prompt }))}
+        disabled={!course.editable}
+      />
     </>
   );
 }
