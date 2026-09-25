@@ -25,7 +25,11 @@ async function authed() {
 
 function paths(id?: string) {
   revalidatePath("/learner/discussions");
-  if (id) revalidatePath(`/learner/discussions/${id}`);
+  revalidatePath("/instructor/discussions");
+  if (id) {
+    revalidatePath(`/learner/discussions/${id}`);
+    revalidatePath(`/instructor/discussions/${id}`);
+  }
 }
 
 /** Starts a thread in a course the learner is enrolled in (RLS enforces access and authorship). */
