@@ -24,6 +24,18 @@ export async function messageStudent(enrollmentId: string, message: string): Pro
   if (!student) return { ok: false, error: "This student is not available." };
   if (!(await rateLimit("instructor-message", await clientIp(), user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
 
+  const { data: threadId } = await supabase.rpc("get_or_create_thread", {
+    p_course_id: student.courseId,
+    p_learner_id: student.userId,
+  });
+  if (threadId) {
+    await supabase.from("direct_messages").insert({
+      thread_id: threadId,
+      sender_id: user.id,
+      body: parsed.text,
+    });
+  }
+
   const sent = await notify({
     userId: student.userId,
     category: "course",
