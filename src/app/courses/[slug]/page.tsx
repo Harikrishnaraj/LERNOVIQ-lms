@@ -15,6 +15,7 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
+import { CourseReviewsSection } from "@/components/courses/course-reviews";
 import { EnrollmentPanel } from "@/components/courses/enrollment-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -24,6 +25,7 @@ import {
   type OutlineLesson,
 } from "@/features/catalog/course-detail";
 import { LANGUAGE_OPTIONS, LEVEL_OPTIONS } from "@/features/catalog/filters";
+import { getCourseReviews } from "@/features/reviews/reviews";
 import { createClient } from "@/lib/supabase/server";
 import { formatDuration, formatPrice } from "@/lib/utils/format";
 
@@ -52,8 +54,10 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function CourseDetailPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const course = await getCourseDetail(await createClient(), slug);
+  const supabase = await createClient();
+  const course = await getCourseDetail(supabase, slug);
   if (!course) notFound();
+  const [reviews, { data: auth }] = await Promise.all([getCourseReviews(supabase, slug), supabase.auth.getUser()]);
 
   const level = LEVEL_OPTIONS.find((l) => l.value === course.level)?.label ?? course.level;
   const language =
@@ -220,6 +224,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
               </ul>
             </section>
           )}
+
+          {reviews && <CourseReviewsSection data={reviews} signedIn={Boolean(auth.user)} />}
 
           {course.requirements.length > 0 && (
             <section aria-labelledby="requirements-heading" className="space-y-3">
