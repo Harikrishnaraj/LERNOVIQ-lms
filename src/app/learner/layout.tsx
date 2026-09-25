@@ -4,6 +4,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { logout } from "@/features/auth/logout";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/permissions/can";
+import { getUnreadCount } from "@/features/notifications/notifications";
 import { hasCompletedOnboarding } from "@/features/onboarding/status";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
   if (!(await hasCompletedOnboarding(supabase, user.id))) redirect("/onboarding");
 
   return (
-    <PortalShell portal="learner" user={user && { email: user.email! }} onLogout={logout}>
+    <PortalShell portal="learner" user={user && { email: user.email! }} onLogout={logout} unreadNotifications={await getUnreadCount(supabase)}>
       {children}
     </PortalShell>
   );

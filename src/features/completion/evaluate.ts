@@ -1,3 +1,4 @@
+import { notify } from "@/services/notifications";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { summarizeCompletion } from "./rules";
 
@@ -116,6 +117,12 @@ export async function evaluateCompletion(
     if (again.data) return { complete: true, certificateCode: again.data.code as string };
     throw new Error(`issueCertificate failed: ${error.message}`);
   }
+  await notify({
+    userId: enrollment.user_id as string,
+    category: "course",
+    title: `You earned a certificate for ${versionRes.data.title as string}`,
+    href: "/learner/certificates",
+  });
   return { complete: true, certificateCode: cert.code as string };
 }
 

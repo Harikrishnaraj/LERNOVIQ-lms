@@ -4,6 +4,7 @@ import { PortalShell } from "@/components/layout/portal-shell";
 import { logout } from "@/features/auth/logout";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/permissions/can";
+import { getUnreadCount } from "@/features/notifications/notifications";
 
 export const metadata: Metadata = {
   title: { default: "Instructor", template: "%s · Instructor · Modern LMS" },
@@ -21,7 +22,7 @@ export default async function InstructorLayout({ children }: { children: React.R
   if (!(await can(supabase, user.id, "portal.instructor.access"))) redirect("/permission-denied");
 
   return (
-    <PortalShell portal="instructor" user={user && { email: user.email! }} onLogout={logout}>
+    <PortalShell portal="instructor" user={user && { email: user.email! }} onLogout={logout} unreadNotifications={await getUnreadCount(supabase)}>
       {children}
     </PortalShell>
   );

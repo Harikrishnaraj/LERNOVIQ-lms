@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
-import { GraduationCap, LogOut, Menu, MoreHorizontal, X } from "lucide-react";
+import { Bell, GraduationCap, LogOut, Menu, MoreHorizontal, X } from "lucide-react";
 import { NAVIGATION, activeNavHref, allNavItems, type NavItem } from "@/config/navigation";
 import type { Portal } from "@/types/portal";
 import { cn } from "@/lib/utils/cn";
@@ -253,15 +253,38 @@ function UserMenu({ email, onLogout }: { email: string; onLogout: () => Promise<
   );
 }
 
+function NotificationBell({ href, unread }: { href: string; unread: number }) {
+  return (
+    <Link
+      href={href}
+      className="relative rounded-control p-2 text-text-secondary hover:bg-border-subtle hover:text-text"
+      aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+    >
+      <Bell className="size-5" aria-hidden="true" />
+      {unread > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white"
+        >
+          {unread > 99 ? "99+" : unread}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export function PortalShell({
   portal,
   user,
   onLogout,
+  unreadNotifications,
   children,
 }: {
   portal: Portal;
   user: { email: string } | null;
   onLogout: () => Promise<void>;
+  /** When set, a bell linking to the portal notifications page is shown. */
+  unreadNotifications?: number;
   children: ReactNode;
 }) {
   const t = THEME[portal];
@@ -308,6 +331,7 @@ export function PortalShell({
             <span className="font-display text-[15px] font-bold">Modern LMS</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            {unreadNotifications !== undefined && <NotificationBell href={`/${portal}/notifications`} unread={unreadNotifications} />}
             {user && <UserMenu email={user.email} onLogout={onLogout} />}
           </div>
         </header>

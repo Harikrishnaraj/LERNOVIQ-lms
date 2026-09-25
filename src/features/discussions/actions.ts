@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notify } from "@/services/notifications";
 import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
 import { validateReason, validateReply, validateThread } from "./discussions";
 
@@ -56,6 +57,16 @@ export async function postReply(discussionId: string, body: string): Promise<Act
 
   const { error } = await supabase.from("discussion_posts").insert({ discussion_id: discussionId, author_id: user.id, body: parsed.body });
   if (error) return { ok: false, error: NOT_ALLOWED };
+  const { data: thread } = await supabase.from("discussions").select("author_id, title").eq("id", discussionId).maybeSingle();
+  if (thread && thread.author_id !== user.id) {
+    await notify({
+      userId: thread.author_id as string,
+      category: "discussion",
+      title: `New reply: ${thread.title}`,
+      body: parsed.body.slice(0, 200),
+      href: `/learner/discussions/${discussionId}`,
+    });
+  }
   paths(discussionId);
   return { ok: true };
 }

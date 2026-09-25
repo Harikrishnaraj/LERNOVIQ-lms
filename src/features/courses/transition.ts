@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { notify } from "@/services/notifications";
 import { recordAudit } from "@/services/audit";
 import { createAdminClient } from "@/services/supabase/admin";
 import { can } from "@/lib/permissions/can";
@@ -68,6 +69,27 @@ export async function transitionCourse(
       resourceId: courseId,
       metadata: { versionId: version.id as string, versionNumber: version.version_number as number, from, to, hasNote: note.trim() !== "" },
     });
+  }
+
+  // Tell the instructor about decisions that concern them (not the internal "start review").
+  const headline: Partial<Record<CourseAction, string>> = {
+    request_changes: "asked for changes on",
+    approve: "approved",
+    reject: "rejected",
+    publish: "published",
+    archive: "archived",
+  };
+  if (headline[action]) {
+    const { data: owner } = await supabase.from("courses").select("instructor_id").eq("id", courseId).maybeSingle();
+    if (owner?.instructor_id) {
+      await notify({
+        userId: owner.instructor_id as string,
+        category: "review",
+        title: `A reviewer ${headline[action]} your course`,
+        body: note.trim() ? note.trim().slice(0, 300) : undefined,
+        href: `/instructor/courses/${courseId}`,
+      });
+    }
   }
   return { ok: true, to };
 }
