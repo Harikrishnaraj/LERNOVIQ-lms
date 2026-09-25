@@ -11,7 +11,7 @@ import {
 loadEnvLocal();
 test.use({ storageState: { cookies: [], origins: [] } });
 
-// F-216: Instructor Analytics Overview (T-107, TEST_PLAN §12)
+// F-216: Instructor Analytics Overview & Extended (T-107, T-108, TEST_PLAN §12)
 test.describe("instructor analytics", () => {
   const svc = serviceClient();
   const tag = uniqueTag("ina");
@@ -43,8 +43,12 @@ test.describe("instructor analytics", () => {
       .update({ price_cents: 3500 })
       .eq("id", course.versionId);
 
-    const student1 = await createUserWithRole(svc, `${tag}-s1`, "learner");
-    const student2 = await createUserWithRole(svc, `${tag}-s2`, "learner");
+    const student1 = await createUserWithRole(svc, `${tag}-s1`, "learner", {
+      fullName: `${tag}-s1 Learner`,
+    });
+    const student2 = await createUserWithRole(svc, `${tag}-s2`, "learner", {
+      fullName: `${tag}-s2 Learner`,
+    });
     learnerIds.push(student1.id, student2.id);
 
     // Student 1 completed
@@ -76,9 +80,43 @@ test.describe("instructor analytics", () => {
       last_position_seconds: 60,
       updated_at: new Date().toISOString(),
     });
+
+    // Assessment & Questions (T-108)
+    const { data: ast } = await svc
+      .from("assessments")
+      .insert({
+        version_id: course.versionId,
+        title: `${tag} Quiz 1`,
+        pass_mark: 70,
+      })
+      .select("id")
+      .single();
+
+    await svc.from("assessment_questions").insert({
+      assessment_id: ast!.id,
+      type: "mcq",
+      prompt: `${tag} Question: What is 2 + 2?`,
+      points: 1,
+    });
+
+    await svc.from("assessment_attempts").insert({
+      assessment_id: ast!.id,
+      enrollment_id: e2!.id,
+      user_id: student2.id,
+      attempt_number: 1,
+      status: "graded",
+      percent: 90,
+      score: 90,
+      max_score: 100,
+      passed: true,
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+    });
   });
 
-  test.afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }));
+  test.afterAll(async () => {
+    await cleanup(svc, { learnerIds, courseIds, userIds });
+  });
 
   test("empty analytics state for teacher with no courses", async ({ page }) => {
     test.setTimeout(180_000);
@@ -94,7 +132,7 @@ test.describe("instructor analytics", () => {
     await expect(page.locator("main").getByRole("link", { name: "Create Course" })).toBeVisible();
   });
 
-  test("loads metrics, KPI cards, trend chart, and applies date and course filters", async ({
+  test("loads metrics, KPI cards, trend chart, and applies date and course filters (T-107)", async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -136,5 +174,71 @@ test.describe("instructor analytics", () => {
     await expect(
       page.getByText(`Performance for "${tag} Deep Learning Masterclass"`),
     ).toBeVisible();
+  });
+
+  test("video & lesson analytics tab shows watch time, completion, and drop-off (T-108)", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(teacher.email);
+    await page.getByLabel("Password").fill(teacher.password);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await page.waitForURL("/instructor");
+
+    // Click Video & Lessons tab
+    await page.goto("/instructor/analytics?tab=lessons");
+    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+    await expect(page.getByText("Lesson & Video Engagement")).toBeVisible();
+
+    // Verify lesson stats table headers and content
+    await expect(page.getByRole("columnheader", { name: "Lesson" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Drop-off Rate" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Avg Position / Watch" })).toBeVisible();
+    await expect(page.getByText("1m").first()).toBeVisible(); // 60s watch position = 1m
+  });
+
+  test("assessments tab shows pass rates, attempts, and question difficulty (T-108)", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(teacher.email);
+    await page.getByLabel("Password").fill(teacher.password);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await page.waitForURL("/instructor");
+
+    // Click Assessments tab
+    await page.goto("/instructor/analytics?tab=assessments");
+    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible();
+    await expect(page.getByText("Assessment Performance")).toBeVisible();
+    await expect(page.getByRole("cell", { name: `${tag} Quiz 1` }).first()).toBeVisible();
+
+    // Verify question difficulty
+    await expect(page.getByText("Question Difficulty & Quality")).toBeVisible();
+    await expect(page.getByText(`${tag} Question: What is 2 + 2?`)).toBeVisible();
+    await expect(page.getByText("easy").first()).toBeVisible();
+  });
+
+  test("csv export downloads scoped course analytics (T-108, TEST_PLAN §12)", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await page.goto("/login");
+    await page.getByLabel("Email").fill(teacher.email);
+    await page.getByLabel("Password").fill(teacher.password);
+    await page.getByRole("button", { name: "Log in" }).click();
+    await page.waitForURL("/instructor");
+
+    // Fetch the export endpoint with course scoping
+    const response = await page.request.get(`/instructor/analytics/export?course=${course.courseId}`);
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toContain("text/csv");
+
+    const text = await response.text();
+    expect(text).toContain("Learner Name,Course Title,Status");
+    expect(text).toContain(`${tag} Deep Learning Masterclass`);
+    expect(text).toContain(`${tag}-s1 Learner`);
+    expect(text).toContain(`${tag}-s2 Learner`);
   });
 });

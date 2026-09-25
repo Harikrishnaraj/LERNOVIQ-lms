@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  escapeCsv,
+  exportToCsv,
   formatCurrency,
+  formatDuration,
   parseAnalyticsRange,
   parseCourseFilter,
   scaleBars,
@@ -128,6 +131,58 @@ describe("instructor analytics feature", () => {
       expect(scaled[1][0]).toBe(100); // 20 / 20 = 100%
       expect(scaled[0][0]).toBe(50); // 10 / 20 = 50%
       expect(scaled[0][2]).toBe(0); // 0 stays 0
+    });
+  });
+
+  describe("formatDuration", () => {
+    it("handles zero and negative values", () => {
+      expect(formatDuration(0)).toBe("0s");
+      expect(formatDuration(-10)).toBe("0s");
+    });
+
+    it("formats seconds only", () => {
+      expect(formatDuration(45)).toBe("45s");
+    });
+
+    it("formats whole minutes", () => {
+      expect(formatDuration(120)).toBe("2m");
+    });
+
+    it("formats mixed minutes and seconds", () => {
+      expect(formatDuration(135)).toBe("2m 15s");
+    });
+  });
+
+  describe("CSV export utilities", () => {
+    it("escapes special characters correctly", () => {
+      expect(escapeCsv("simple")).toBe("simple");
+      expect(escapeCsv("with,comma")).toBe('"with,comma"');
+      expect(escapeCsv('with "quotes"')).toBe('"with ""quotes"""');
+      expect(escapeCsv("with\nnewline")).toBe('"with\nnewline"');
+      expect(escapeCsv(null)).toBe("");
+      expect(escapeCsv(undefined)).toBe("");
+    });
+
+    it("formats rows to CSV RFC 4180 format", () => {
+      const csv = exportToCsv([
+        {
+          learnerName: "Jane Doe",
+          courseTitle: "AI, ML & Deep Learning",
+          status: "active",
+          enrolledAt: "2026-09-01T10:00:00Z",
+          completedAt: null,
+          progressPercent: 45,
+          completedLessons: 4,
+          totalLessons: 10,
+          watchTimeMinutes: 72,
+          assessmentsPassed: 1,
+          lastActivityAt: "2026-09-20T12:00:00Z",
+        },
+      ]);
+
+      expect(csv).toContain("Learner Name,Course Title,Status");
+      expect(csv).toContain('Jane Doe,"AI, ML & Deep Learning",active');
+      expect(csv).toContain("45,4,10,72,1");
     });
   });
 });

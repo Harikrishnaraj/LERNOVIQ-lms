@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
+  getInstructorAssessmentAnalytics,
   getInstructorCourses,
   getInstructorCoursesBreakdown,
   getInstructorDailyAnalytics,
+  getInstructorExportRows,
+  getInstructorLessonAnalytics,
+  getInstructorQuestionAnalytics,
   summarizeInstructorAnalytics,
 } from "@/features/instructor/analytics";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
@@ -14,8 +18,8 @@ const hasLiveProject = Boolean(
     process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
-// F-216: Instructor analytics (TEST_PLAN §12: metrics load, date filters work, course filter works, unauthorized course data is not returned)
-describe.skipIf(!hasLiveProject)("instructor analytics (T-107, live Supabase)", () => {
+// F-216: Instructor analytics (T-107, T-108, TEST_PLAN §12)
+describe.skipIf(!hasLiveProject)("instructor analytics (T-107, T-108, live Supabase)", () => {
   const svc = hasLiveProject ? serviceClient() : (null as never);
   const tag = uniqueTag("ina");
   const userIds: string[] = [];
@@ -95,6 +99,38 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, live Supabase)", 
       last_position_seconds: 45,
       updated_at: new Date().toISOString(),
     });
+
+    // Assessment for courseA
+    const { data: ast } = await svc
+      .from("assessments")
+      .insert({
+        version_id: courseA.versionId,
+        title: `${tag} Quiz 1`,
+        pass_mark: 70,
+      })
+      .select("id")
+      .single();
+
+    await svc.from("assessment_questions").insert({
+      assessment_id: ast!.id,
+      type: "mcq",
+      prompt: "What is 2 + 2?",
+      points: 1,
+    });
+
+    await svc.from("assessment_attempts").insert({
+      assessment_id: ast!.id,
+      enrollment_id: e2!.id,
+      user_id: l2.id,
+      attempt_number: 1,
+      status: "graded",
+      percent: 85,
+      score: 85,
+      max_score: 100,
+      passed: true,
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+    });
   }, 200_000);
 
   afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
@@ -102,7 +138,6 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, live Supabase)", 
   it("lists courses owned by the authenticated instructor", async () => {
     const courses = await getInstructorCourses(teacherA.client);
     expect(courses.some((c) => c.id === courseA.courseId)).toBe(true);
-    // Should NOT contain teacherB's course
     expect(courses.some((c) => c.id === courseB.courseId)).toBe(false);
   });
 
@@ -135,7 +170,7 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, live Supabase)", 
     expect(item!.revenueCents).toBeGreaterThanOrEqual(5000);
   });
 
-  it("does NOT return unauthorized course data (TEST_PLAN §12)", async () => {
+  it("does NOT return unauthorized course data for overview (TEST_PLAN §12)", async () => {
     // Teacher B queries Teacher A's course ID
     const points = await getInstructorDailyAnalytics(teacherB.client, 7, courseA.courseId);
     expect(points).toHaveLength(0);
@@ -156,9 +191,50 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, live Supabase)", 
     expect(summary.totalRevenueCents).toBeGreaterThanOrEqual(5000);
   });
 
+  it("returns video/lesson analytics with starts, completions and watch time (T-108)", async () => {
+    const lessons = await getInstructorLessonAnalytics(teacherA.client, courseA.courseId);
+    expect(lessons.length).toBeGreaterThan(0);
+    const first = lessons[0];
+    expect(first.courseTitle).toBe(`${tag} Analytics 101`);
+    expect(first.starts).toBeGreaterThanOrEqual(1);
+    expect(first.avgWatchSeconds).toBeGreaterThanOrEqual(45);
+  });
+
+  it("returns assessment analytics with pass rate and avg attempts (T-108)", async () => {
+    const assessments = await getInstructorAssessmentAnalytics(teacherA.client, courseA.courseId);
+    expect(assessments.length).toBeGreaterThan(0);
+    const quiz = assessments.find((a) => a.assessmentTitle === `${tag} Quiz 1`);
+    expect(quiz).toBeDefined();
+    expect(quiz!.totalAttempts).toBeGreaterThanOrEqual(1);
+    expect(quiz!.passRate).toBe(100);
+    expect(quiz!.avgScore).toBe(85);
+  });
+
+  it("returns question difficulty analytics (T-108)", async () => {
+    const questions = await getInstructorQuestionAnalytics(teacherA.client, courseA.courseId);
+    expect(questions.length).toBeGreaterThan(0);
+    const q = questions.find((item) => item.prompt === "What is 2 + 2?");
+    expect(q).toBeDefined();
+    expect(q!.difficulty).toBe("easy");
+    expect(q!.passRate).toBe(100);
+  });
+
+  it("returns export rows for CSV and enforces permission scope (T-108, TEST_PLAN §12)", async () => {
+    const rows = await getInstructorExportRows(teacherA.client, courseA.courseId);
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows.some((r) => r.courseTitle === `${tag} Analytics 101`)).toBe(true);
+
+    // Unauthorized check: Teacher B cannot export Teacher A's course data
+    const unauthorized = await getInstructorExportRows(teacherB.client, courseA.courseId);
+    expect(unauthorized).toHaveLength(0);
+  });
+
   it("rejects anonymous callers", async () => {
     await expect(getInstructorCourses(anon())).rejects.toThrow();
     await expect(getInstructorDailyAnalytics(anon(), 7)).rejects.toThrow();
     await expect(getInstructorCoursesBreakdown(anon(), 7)).rejects.toThrow();
+    await expect(getInstructorLessonAnalytics(anon())).rejects.toThrow();
+    await expect(getInstructorAssessmentAnalytics(anon())).rejects.toThrow();
+    await expect(getInstructorExportRows(anon())).rejects.toThrow();
   });
 });

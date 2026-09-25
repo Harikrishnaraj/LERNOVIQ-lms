@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Download } from "lucide-react";
 import { ANALYTICS_RANGES, type AnalyticsRange, type InstructorAnalyticsCourse } from "@/features/instructor/analytics";
 import { cn } from "@/lib/utils/cn";
 
@@ -26,6 +28,14 @@ export function AnalyticsFilters({
     }
     router.push(`/instructor/analytics?${params.toString()}`);
   };
+
+  const exportParams = new URLSearchParams();
+  if (selectedCourseId) {
+    exportParams.set("course", selectedCourseId);
+  }
+  const exportUrl = exportParams.toString()
+    ? `/instructor/analytics/export?${exportParams.toString()}`
+    : "/instructor/analytics/export";
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -69,6 +79,16 @@ export function AnalyticsFilters({
           </button>
         ))}
       </nav>
+
+      {/* Export CSV Button */}
+      <Link
+        href={exportUrl}
+        download
+        className="inline-flex items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text hover:bg-surface-subtle transition-colors"
+      >
+        <Download className="size-3.5" aria-hidden="true" />
+        Export CSV
+      </Link>
     </div>
   );
 }
