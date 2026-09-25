@@ -1,5 +1,6 @@
 "use server";
 
+import { assetStillReferenced, videoStillReferenced } from "./shared-files";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -86,7 +87,9 @@ export async function saveLesson(
   // The replaced/removed uploaded video is no longer referenced.
   const before = storageVideoPath(ctx.lesson.videoRef ?? "");
   const after = storageVideoPath(patch.video_url ?? "");
-  if (before && before !== after) await supabaseStorage.remove(VIDEO_BUCKET, [before]).catch(() => {});
+  if (before && before !== after && !(await videoStillReferenced(ctx.supabase, before))) {
+    await supabaseStorage.remove(VIDEO_BUCKET, [before]).catch(() => {});
+  }
 
   revalidatePath(editorPath(courseId, lessonId));
   revalidatePath(`/instructor/courses/${courseId}/curriculum`);
@@ -159,7 +162,10 @@ export async function deleteAsset(courseId: string, lessonId: string, assetId: s
 
   const { error } = await ctx.supabase.from("lesson_assets").delete().eq("id", assetId);
   if (error) return FAILED;
-  await supabaseStorage.remove(ASSET_BUCKET, [asset.storagePath]).catch(() => {});
+  // A newer or older version of the course may still use the same file.
+  if (!(await assetStillReferenced(ctx.supabase, asset.storagePath))) {
+    await supabaseStorage.remove(ASSET_BUCKET, [asset.storagePath]).catch(() => {});
+  }
   revalidatePath(editorPath(courseId, lessonId));
   return { ok: true };
 }

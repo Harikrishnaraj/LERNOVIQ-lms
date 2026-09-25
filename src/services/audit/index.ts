@@ -4,6 +4,7 @@ import { createAdminClient } from "@/services/supabase/admin";
 export const AUDIT_ACTIONS = [
   "course.submitted",
   "course.review_started",
+  "course.version_created",
   "course.reopened",
   "course.changes_requested",
   "course.approved",

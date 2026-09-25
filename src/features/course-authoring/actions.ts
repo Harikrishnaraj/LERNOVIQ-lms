@@ -1,5 +1,6 @@
 "use server";
 
+import { thumbnailStillReferenced } from "./shared-files";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { MAX_THUMBNAIL_BYTES, sniffImage } from "@/lib/image";
@@ -213,7 +214,8 @@ export async function updateBasicsAction(courseId: string, formData: FormData): 
   if (categoryError) return { ok: false, error: "We could not save the category. Please try again." };
 
   // The replaced/removed file is no longer referenced.
-  if (oldPath && "thumbnail_url" in patch) {
+  // A newer or older version of the course may still show the same picture.
+  if (oldPath && "thumbnail_url" in patch && course.version.thumbnailUrl && !(await thumbnailStillReferenced(supabase, course.version.thumbnailUrl))) {
     await supabaseStorage.remove(THUMBNAIL_BUCKET, [oldPath]).catch(() => {});
   }
 

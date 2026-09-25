@@ -32,13 +32,31 @@ export async function transitionCourse(
   }
   if (!UUID.test(courseId)) return { ok: false, error: "Course not found." };
 
-  const { data: version } = await supabase
-    .from("course_versions")
-    .select("id, status, version_number")
-    .eq("course_id", courseId)
-    .order("version_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Archiving takes the LIVE version off the catalog even when a newer draft exists on top of it
+  // (ADR-011); every other decision concerns the newest version.
+  type VersionRow = { id: string; status: string; version_number: number };
+  let version = null as VersionRow | null;
+  if (action === "archive") {
+    const { data: course } = await supabase.from("courses").select("published_version_id").eq("id", courseId).maybeSingle();
+    if (course?.published_version_id) {
+      const { data } = await supabase
+        .from("course_versions")
+        .select("id, status, version_number")
+        .eq("id", course.published_version_id)
+        .maybeSingle();
+      version = data as VersionRow | null;
+    }
+  }
+  if (!version) {
+    const { data } = await supabase
+      .from("course_versions")
+      .select("id, status, version_number")
+      .eq("course_id", courseId)
+      .order("version_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    version = data as VersionRow | null;
+  }
   if (!version) return { ok: false, error: "Course not found." };
   const from = version.status as string;
   if (!isCourseStatus(from)) return { ok: false, error: "Course not found." };

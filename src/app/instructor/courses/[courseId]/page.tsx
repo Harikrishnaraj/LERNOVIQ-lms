@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink } from "lucide-react";
+import { NewVersionButton } from "@/components/course-authoring/new-version-button";
 import { ReviewFeedbackPanel } from "@/components/course-authoring/review-feedback-panel";
 import { PageHeader } from "@/components/layout/page-header";
 import { buttonClasses } from "@/components/ui/button";
@@ -92,7 +93,21 @@ export default async function CourseOverviewPage({ params }: { params: Promise<{
           </Link>
         </p>
       )}
-      {!course.editable && status !== "rejected" && (
+      {(status === "published" || status === "archived") && (
+        <section aria-labelledby="version-heading" className="mb-6 space-y-3 rounded-card border border-info bg-info-light p-4 text-info-text">
+          <h2 id="version-heading" className="text-base font-semibold">
+            {status === "published" ? `Version ${course.version.versionNumber} is live` : `Version ${course.version.versionNumber} is archived`}
+          </h2>
+          <p className="text-sm">
+            {status === "published"
+              ? "Learners see this version, and anyone already enrolled keeps it. To change the course, start a new draft version: it is a copy that goes through review before it replaces the live one."
+              : "This version is no longer in the catalog. Start a new draft version to change it and submit it for review again."}
+          </p>
+          <NewVersionButton courseId={course.courseId} nextVersion={course.version.versionNumber + 1} />
+        </section>
+      )}
+
+      {!course.editable && status !== "rejected" && status !== "published" && status !== "archived" && (
         <p role="status" className="mb-6 rounded-card border border-border bg-surface p-3 text-sm text-text-secondary">
           This course is {status.replace("_", " ")}, so it is read-only for now.
         </p>
