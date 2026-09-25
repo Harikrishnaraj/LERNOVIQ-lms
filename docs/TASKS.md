@@ -91,7 +91,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-081** Assignments: `assignments`, `assignment_submissions`; learner list, submit (validated upload), status, feedback, lock after deadline. — F-108
 - [x] **T-082** Calendar: deadlines, assessments, sessions (month/week/agenda). — F-112
 - [x] **T-083** Discussions: `discussions`, `discussion_posts`; per-course threads, reply, upvote, mark answered, report. — F-113
-- [ ] **T-084** My Progress: hours, streak, completion by course, skills. — F-114
+- [x] **T-084** My Progress: hours, streak, completion by course, skills. — F-114
 - [ ] **T-085** Notifications: `notifications` model, bell + page, read/unread, preferences. — F-115
 - [ ] **T-086** Learner profile & settings (name, avatar, password, notification preferences). — F-116
 - [ ] **T-087** Course reviews: rate/review a completed course. — F-117
