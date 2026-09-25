@@ -215,6 +215,13 @@ const instructor: PortalNav = {
           task: "T-103",
         },
         {
+          label: "Grading",
+          href: "/instructor/grading",
+          icon: ClipboardCheck,
+          description: "Grade submitted assignments and give feedback.",
+          task: "T-100",
+        },
+        {
           label: "Discussions",
           href: "/instructor/discussions",
           icon: MessagesSquare,

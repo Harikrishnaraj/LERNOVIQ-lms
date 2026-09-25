@@ -138,6 +138,18 @@ export default async function CourseOverviewPage({ params }: { params: Promise<{
               <ArrowRight className="size-4 text-text-secondary" aria-hidden="true" />
             </Link>
           </li>
+          <li>
+            <Link
+              href={`/instructor/courses/${course.courseId}/assignments`}
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 hover:bg-border-subtle"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">Assignments</span>
+                <span className="block text-xs text-text-secondary">Work to hand in, rubrics and grading</span>
+              </span>
+              <ArrowRight className="size-4 text-text-secondary" aria-hidden="true" />
+            </Link>
+          </li>
         </ul>
       </section>
 

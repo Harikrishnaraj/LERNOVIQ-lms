@@ -38,6 +38,9 @@ export default async function CurriculumPage({ params }: { params: Promise<{ cou
             <Link href={`/instructor/courses/${course.courseId}/assessments`} className={buttonClasses({ variant: "secondary", size: "sm" })}>
               Assessments
             </Link>
+            <Link href={`/instructor/courses/${course.courseId}/assignments`} className={buttonClasses({ variant: "secondary", size: "sm" })}>
+              Assignments
+            </Link>
             <StatusBadge kind="course" status={status} />
           </>
         }

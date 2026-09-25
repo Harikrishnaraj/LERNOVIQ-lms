@@ -99,7 +99,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 6 — Instructor complete
 
-- [ ] **T-100** Assignment Builder (instructions, rubric, due date, file rules) + grading queue. — F-206
+- [x] **T-100** Assignment Builder (instructions, rubric, due date, file rules) + grading queue. — F-206
 - [ ] **T-101** Question Bank: reusable questions, tags, import into assessments. — F-207
 - [ ] **T-102** Publish approved course + new draft version from published (ADR-011). — F-212
 - [ ] **T-103** Students: list across courses, filters, progress segments (just enrolled / started / on track / at risk / completed). — F-213
