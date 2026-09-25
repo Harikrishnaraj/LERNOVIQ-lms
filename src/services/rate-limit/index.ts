@@ -10,6 +10,8 @@ const LIMITS = {
   "verify-email": { limit: 5, windowSeconds: 60 * 60 },
   "assessment-submit": { limit: 30, windowSeconds: 60 * 60 },
   "certificate-verify": { limit: 10, windowSeconds: 10 * 60 },
+  "discussion-post": { limit: 20, windowSeconds: 10 * 60 },
+  "discussion-react": { limit: 60, windowSeconds: 10 * 60 },
 } as const;
 
 export type RateLimitedAction = keyof typeof LIMITS;
