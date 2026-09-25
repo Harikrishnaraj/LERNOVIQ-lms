@@ -138,7 +138,11 @@ export default async function InstructorStudentsPage({
               <tbody className="divide-y divide-border-subtle">
                 {rows.map((s) => (
                   <tr key={s.enrollmentId}>
-                    <td className="p-3 font-medium">{s.name}</td>
+                    <td className="p-3 font-medium">
+                      <Link href={`/instructor/students/${s.enrollmentId}`} className="text-primary underline">
+                        {s.name}
+                      </Link>
+                    </td>
                     <td className="p-3">{s.courseTitle}</td>
                     <td className="w-48 p-3">
                       <Progress value={s.percent} label={`${s.name} progress in ${s.courseTitle}`} />
