@@ -106,7 +106,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-104** Student Detail: progress by lesson, attempts, submissions, message. — F-213
 - [x] **T-105** Instructor Discussions: queue of unanswered, reply, pin, moderate. — F-214
 - [x] **T-106** Messaging: 1:1 threads with learners, unread counts. — F-215
-- [ ] **T-107** Analytics overview: enrollments, completion rate, active learners, revenue KPIs, date + course filters. — F-216
+- [x] **T-107** Analytics overview: enrollments, completion rate, active learners, revenue KPIs, date + course filters. — F-216
 - [ ] **T-108** Learner, video (watch time, replay, drop-off by lesson) and assessment analytics (pass rate, avg attempts, question difficulty) + CSV export scoped to own courses. — F-216
 - [ ] **T-109** Reviews: ratings list, distribution, reply to review. — F-217
 - [ ] **T-110** Certificates: issued for my courses, certificate template settings. — F-218

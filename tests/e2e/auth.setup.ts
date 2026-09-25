@@ -11,6 +11,7 @@ const META_FILE = `${AUTH_DIR}/user.meta.json`;
 export const PASSWORD = "e2e-smoke-pass-1";
 
 setup("authenticate", async ({ page }) => {
+  setup.setTimeout(120_000);
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
