@@ -16,6 +16,8 @@ export const AUDIT_ACTIONS = [
   "user.reinstated",
   "user.invited",
   "user.created",
+  "instructor.application_approved",
+  "instructor.application_rejected",
   "certificate.revoked",
   "auth.login_failed",
   "settings.changed",
