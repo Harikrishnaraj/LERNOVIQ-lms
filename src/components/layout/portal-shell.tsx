@@ -37,6 +37,14 @@ const THEME: Record<
     active: "bg-primary-light text-primary-dark font-semibold",
     idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
   },
+  org_admin: {
+    aside: "bg-surface border-r border-border",
+    brand: "text-text",
+    groupLabel: "text-text-muted",
+    item: "gap-2.5 px-2.5 py-1.5 text-[13px]",
+    active: "bg-primary-light text-primary-dark font-semibold",
+    idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
+  },
 };
 
 function Brand({ portal }: { portal: Portal }) {

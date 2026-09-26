@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { OrganizationDetailPanel } from "@/components/admin/organization-detail-panel";
+import { AssignedLearningPanel } from "@/components/admin/assigned-learning-panel";
 import { PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { getOrgAssignedLearning } from "@/features/admin/assigned-learning";
 import { getOrganizationDetail, getOrganizationMembers } from "@/features/admin/organizations";
+import { listPaths } from "@/features/paths/paths";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,7 +32,8 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
 
   const org = await getOrganizationDetail(supabase, orgId);
   if (!org) notFound();
-  const members = await getOrganizationMembers(supabase, orgId);
+  const [members, assignments, paths] = await Promise.all([getOrganizationMembers(supabase, orgId), getOrgAssignedLearning(supabase, orgId), listPaths(supabase)]);
+  const revalidateHref = `/admin/organizations/${orgId}`;
 
   return (
     <>
@@ -42,7 +46,20 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
           </Link>
         }
       />
-      <OrganizationDetailPanel org={org} members={members} />
+      <div className="space-y-10">
+        <OrganizationDetailPanel org={org} members={members} />
+        <section aria-labelledby="assigned-heading" className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="assigned-heading" className="text-base font-semibold">
+              Assigned learning
+            </h2>
+            <a href={`/admin/organizations/${orgId}/report/export`} className="text-sm text-primary hover:underline">
+              Export report (CSV)
+            </a>
+          </div>
+          <AssignedLearningPanel orgId={orgId} revalidateHref={revalidateHref} assignments={assignments} members={members} paths={paths.map((p) => ({ id: p.pathId, title: p.title }))} />
+        </section>
+      </div>
     </>
   );
 }

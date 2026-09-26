@@ -46,6 +46,9 @@ export const AUDIT_ACTIONS = [
   "organization.member_added",
   "organization.member_removed",
   "organization.member_role_changed",
+  "organization.learning_assigned",
+  "organization.learning_unassigned",
+  "organization.report_exported",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

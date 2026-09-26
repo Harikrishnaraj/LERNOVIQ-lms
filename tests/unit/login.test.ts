@@ -16,6 +16,9 @@ const { redirectMock, signInMock, signOutMock, singleMock, userRolesMock, aalMoc
   }),
 );
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
+vi.mock("@/services/settings", () => ({
+  getPlatformSettings: vi.fn(async () => ({ minPasswordLength: 8, mfaRequiredPortals: ["admin", "org_admin"], sessionIdleTimeoutMinutes: null })),
+}));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: {
@@ -91,6 +94,13 @@ describe("login server action", () => {
     singleMock.mockResolvedValue({ data: { status: "active" } });
     userRolesMock.mockResolvedValueOnce({ data: [{ role_id: "admin" }] });
     await expect(login(null, validInput)).rejects.toThrow("REDIRECT:/mfa?next=%2Fadmin");
+  });
+
+  it("sends an org_admin without a second factor to /mfa too (T-162)", async () => {
+    signInMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    singleMock.mockResolvedValue({ data: { status: "active" } });
+    userRolesMock.mockResolvedValueOnce({ data: [{ role_id: "org_admin" }] });
+    await expect(login(null, validInput)).rejects.toThrow("REDIRECT:/mfa?next=%2Forg_admin");
   });
 
   it("returns a rate-limit error without touching Supabase when limited", async () => {
