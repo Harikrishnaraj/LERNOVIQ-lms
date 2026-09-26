@@ -122,7 +122,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404
 - [x] **T-134** Categories management. — F-405
 - [x] **T-135** Enrollments & cohorts: search, manual enroll/unenroll, cohort create, bulk assign. — F-407
-- [ ] **T-136** Assessments: averages, question-quality flags, attempt investigation/reset. — F-408
+- [x] **T-136** Assessments: averages, question-quality flags, attempt investigation/reset. — F-408
 - [ ] **T-137** Certificates: search, revoke (audited), reissue. — F-409
 - [ ] **T-138** Content: media, documents, SCORM package upload + launch (validated). — F-410
 - [ ] **T-139** Moderation: reported posts/reviews queue, hide/restore, ban. — F-411
