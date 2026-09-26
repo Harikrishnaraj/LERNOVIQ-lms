@@ -135,7 +135,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 8 — Organizations / enterprise
 
-- [ ] **T-160** `organizations`, `departments`, `teams`, `organization_members` + RLS isolation tests. — F-500
+- [x] **T-160** `organizations`, `departments`, `teams`, `organization_members` + RLS isolation tests. — F-500
 - [ ] **T-161** Admin Organizations screen: create, members, learning hours. — F-500
 - [ ] **T-162** Org Admin scoped portal access (own org only). — F-501
 - [ ] **T-163** Assigned courses/paths + required completion + due dates. — F-502
