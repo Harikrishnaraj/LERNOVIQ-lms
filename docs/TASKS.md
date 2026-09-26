@@ -119,7 +119,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-130** User Detail: account, roles, progress by course, skills, sessions & devices, login history, actions. — F-402
 - [x] **T-131** Instructors: list, verification queue (approve/reject applications), top instructors. — F-403
 - [x] **T-132** Instructor Detail: courses, revenue, rating distribution, payouts. — F-403
-- [ ] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404
+- [x] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404
 - [ ] **T-134** Categories management. — F-405
 - [ ] **T-135** Enrollments & cohorts: search, manual enroll/unenroll, cohort create, bulk assign. — F-407
 - [ ] **T-136** Assessments: averages, question-quality flags, attempt investigation/reset. — F-408
