@@ -15,6 +15,8 @@ export interface StorageAdapter {
   createSignedUrl(bucket: string, path: string, expiresInSeconds: number): Promise<string>;
   /** Whether an object exists at `path` (used to verify a completed direct upload). */
   exists(bucket: string, path: string): Promise<boolean>;
+  /** Copies an object, optionally into a different bucket, without a client round-trip. */
+  copy(fromBucket: string, fromPath: string, toBucket: string, toPath: string): Promise<void>;
 }
 
 export const THUMBNAIL_BUCKET = "course-thumbnails";
@@ -22,6 +24,7 @@ export const VIDEO_BUCKET = "course-videos";
 export const ASSET_BUCKET = "lesson-assets";
 export const SUBMISSION_BUCKET = "assignment-submissions";
 export const AVATAR_BUCKET = "avatars";
+export const RESOURCE_LIBRARY_BUCKET = "resource-library";
 
 export const supabaseStorage: StorageAdapter = {
   async uploadPublic(bucket, path, bytes, contentType) {
@@ -59,5 +62,12 @@ export const supabaseStorage: StorageAdapter = {
       .storage.from(bucket)
       .list(i === -1 ? "" : path.slice(0, i), { search: path.slice(i + 1), limit: 1 });
     return (data ?? []).some((o) => o.name === path.slice(i + 1));
+  },
+
+  async copy(fromBucket, fromPath, toBucket, toPath) {
+    const { error } = await createAdminClient()
+      .storage.from(fromBucket)
+      .copy(fromPath, toPath, { destinationBucket: toBucket });
+    if (error) throw new Error(`storage copy failed: ${error.message}`);
   },
 };

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sanitizeLessonHtml } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
-import { ASSET_BUCKET, VIDEO_BUCKET, supabaseStorage } from "@/services/storage";
+import { ASSET_BUCKET, RESOURCE_LIBRARY_BUCKET, VIDEO_BUCKET, supabaseStorage } from "@/services/storage";
 import { getCourseForEditing } from "./queries";
 import { getLessonForEditing } from "./lessons";
 import {
@@ -167,5 +167,61 @@ export async function deleteAsset(courseId: string, lessonId: string, assetId: s
     await supabaseStorage.remove(ASSET_BUCKET, [asset.storagePath]).catch(() => {});
   }
   revalidatePath(editorPath(courseId, lessonId));
+  return { ok: true };
+}
+
+/**
+ * Attaches a resource-library item (T-111) to this lesson: the storage object is copied into the
+ * lesson-assets bucket (so the existing attachment/download code needs no changes) and a
+ * lesson_assets row is created from it. Deleting that attachment later, through the existing
+ * deleteAsset above, automatically clears the resource's usage count via a DB cascade.
+ */
+export async function attachLibraryResource(courseId: string, lessonId: string, resourceId: string): Promise<LessonResult> {
+  const ctx = await authorize(courseId, lessonId);
+  if (!ctx.ok) return ctx.result;
+  if (ctx.lesson.assets.length >= MAX_ASSETS) return { ok: false, error: `A lesson can have at most ${MAX_ASSETS} attachments.` };
+
+  const { data: resource } = await ctx.supabase
+    .from("resource_library_items")
+    .select("name, storage_path, mime_type, size_bytes")
+    .eq("id", resourceId)
+    .maybeSingle();
+  if (!resource) return { ok: false, error: "That resource is not available." };
+
+  const ext = resource.storage_path.includes(".") ? resource.storage_path.split(".").pop() : "bin";
+  const newPath = `${ctx.courseId}/${lessonId}/${randomUUID()}.${ext}`;
+  try {
+    await supabaseStorage.copy(RESOURCE_LIBRARY_BUCKET, resource.storage_path, ASSET_BUCKET, newPath);
+  } catch {
+    return FAILED;
+  }
+
+  const { data: inserted, error } = await ctx.supabase
+    .from("lesson_assets")
+    .insert({
+      lesson_id: lessonId,
+      name: resource.name,
+      storage_path: newPath,
+      mime_type: resource.mime_type,
+      size_bytes: resource.size_bytes,
+    })
+    .select("id")
+    .single();
+  if (error || !inserted) {
+    await supabaseStorage.remove(ASSET_BUCKET, [newPath]).catch(() => {});
+    return FAILED;
+  }
+
+  const { error: usageError } = await ctx.supabase
+    .from("resource_library_usages")
+    .insert({ resource_id: resourceId, lesson_asset_id: inserted.id });
+  if (usageError) {
+    await ctx.supabase.from("lesson_assets").delete().eq("id", inserted.id);
+    await supabaseStorage.remove(ASSET_BUCKET, [newPath]).catch(() => {});
+    return FAILED;
+  }
+
+  revalidatePath(editorPath(courseId, lessonId));
+  revalidatePath("/instructor/resources");
   return { ok: true };
 }
