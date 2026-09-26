@@ -9,7 +9,7 @@
  * Idempotent: anything that already exists (matched by slug / email) is left alone.
  * Nothing under src/ may import this file (enforced by tests/unit/seed-isolation.test.ts).
  *
- * Demo logins (dev only):  seed-instructor@example.com / seed-learner@example.com
+ * Demo logins (dev only):  seed-instructor@example.com / seed-learner@example.com / seed-admin@example.com / seed-superadmin@example.com
  * Password for both:       seed-password-1
  */
 import { readFileSync } from "node:fs";
@@ -287,6 +287,8 @@ async function main() {
     "Demo Instructor",
   );
   const learnerId = await ensureUser("seed-learner@example.com", "learner", "Demo Learner");
+  await ensureUser("seed-admin@example.com", "admin", "Demo Admin");
+  await ensureUser("seed-superadmin@example.com", "super_admin", "Demo Super Admin");
   await db
     .from("learner_onboarding")
     .upsert({
@@ -428,7 +430,7 @@ async function main() {
     `Seed complete: ${created} new course(s), ${COURSES.length} total; ${CATEGORIES.length} categories.`,
   );
   console.log(
-    "Logins: seed-instructor@example.com, seed-learner@example.com  (password: " + PASSWORD + ")",
+    "Logins: seed-instructor@example.com, seed-learner@example.com, seed-admin@example.com, seed-superadmin@example.com  (password: " + PASSWORD + ")",
   );
 }
 
