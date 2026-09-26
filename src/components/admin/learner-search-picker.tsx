@@ -6,9 +6,14 @@ import { searchLearnersAction, type LearnerOption } from "@/features/admin/enrol
 export function LearnerSearchPicker({
   onSelect,
   selected,
+  search = searchLearnersAction,
+  placeholder = "Search learner by name or email…",
 }: {
   onSelect: (learner: LearnerOption | null) => void;
   selected: LearnerOption | null;
+  /** Defaults to learners only; pass a different search action for a broader picker (e.g. any user). */
+  search?: (q: string) => Promise<LearnerOption[]>;
+  placeholder?: string;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<LearnerOption[]>([]);
@@ -23,7 +28,7 @@ export function LearnerSearchPicker({
       return;
     }
     startTransition(async () => {
-      setResults(await searchLearnersAction(value));
+      setResults(await search(value));
     });
   }
 
@@ -57,7 +62,7 @@ export function LearnerSearchPicker({
         type="text"
         value={query}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search learner by name or email…"
+        placeholder={placeholder}
         className="w-full rounded-control border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {results.length > 0 && (
