@@ -116,7 +116,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 7 — Admin complete
 
-- [ ] **T-130** User Detail: account, roles, progress by course, skills, sessions & devices, login history, actions. — F-402
+- [x] **T-130** User Detail: account, roles, progress by course, skills, sessions & devices, login history, actions. — F-402
 - [ ] **T-131** Instructors: list, verification queue (approve/reject applications), top instructors. — F-403
 - [ ] **T-132** Instructor Detail: courses, revenue, rating distribution, payouts. — F-403
 - [ ] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
+import { RATE_LIMITED_MESSAGE, clientIp, rateLimit, userAgent } from "@/services/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema, type LoginInput } from "./schemas";
 import { getPortalPathForUser } from "./roles";
@@ -38,6 +38,13 @@ export async function login(
   // distinguishing them would let an attacker enumerate registered emails.
   if (error) {
     return { error: "Invalid email or password." };
+  }
+
+  // Best effort: a login history hiccup must never block a successful sign-in.
+  try {
+    await supabase.rpc("record_login", { p_ip: await clientIp(), p_user_agent: await userAgent() });
+  } catch {
+    // ignore
   }
 
   const { data: profile } = await supabase

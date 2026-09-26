@@ -24,6 +24,11 @@ export async function clientIp(): Promise<string> {
   return h.get("x-forwarded-for")?.split(",")[0].trim() || h.get("x-real-ip") || "unknown";
 }
 
+export async function userAgent(): Promise<string | null> {
+  const h = await headers();
+  return h.get("user-agent");
+}
+
 // Shared NATs/offices sit behind one IP, so the per-IP bucket is looser than
 // the per-subject (email) one.
 const IP_LIMIT_MULTIPLIER = 30;
