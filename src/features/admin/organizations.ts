@@ -107,6 +107,13 @@ interface MemberRow {
   created_at: string;
 }
 
+/** The organization the signed-in user belongs to, or null if they aren't a member of one (T-162). */
+export async function getMyOrganizationId(supabase: SupabaseClient): Promise<string | null> {
+  const { data, error } = await supabase.rpc("my_organization_id");
+  if (error) throw new Error(`my_organization_id failed: ${error.message}`);
+  return (data as string | null) ?? null;
+}
+
 export async function getOrganizationMembers(supabase: SupabaseClient, orgId: string): Promise<OrganizationMember[]> {
   const { data, error } = await supabase.rpc("admin_organization_members", { p_org_id: orgId });
   if (error) throw new Error(`admin_organization_members failed: ${error.message}`);

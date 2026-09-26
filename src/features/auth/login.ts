@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loginSchema, type LoginInput } from "./schemas";
 import { getPortalPathForUser } from "./roles";
 import { needsMfa } from "@/lib/permissions/mfa";
+import { getPlatformSettings } from "@/services/settings";
 
 // Only redirect to a same-origin relative path the middleware itself set
 // (?next=) — never follow an attacker-supplied absolute/protocol-relative
@@ -61,7 +62,10 @@ export async function login(
   const destination = safeNext(next) ?? (await getPortalPathForUser(supabase, data.user.id));
   // Go straight to the second-factor step (the proxy would also enforce it,
   // but a proxy redirect after a Server Action leaves the URL bar stale).
-  if (destination.startsWith("/admin") && (await needsMfa(supabase))) {
+  // T-143/T-162: which portals require MFA is configurable; this must agree with src/proxy.ts.
+  const portalName = destination.split("/")[1] ?? "";
+  const settings = await getPlatformSettings(supabase);
+  if (settings.mfaRequiredPortals.includes(portalName) && (await needsMfa(supabase))) {
     redirect(`/mfa?next=${encodeURIComponent(destination)}`);
   }
   redirect(destination);

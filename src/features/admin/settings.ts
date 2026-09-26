@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AuditAction } from "@/services/audit";
+import { PORTALS } from "@/types/portal";
 
-export const PORTAL_NAMES = ["learner", "instructor", "admin"] as const;
+// T-162: org_admin has its own portal too, so it must be a valid MFA-policy entry and a real
+// checkbox in the settings UI, not silently dropped like it would be with a separate, stale list.
+export const PORTAL_NAMES = PORTALS;
 export type PortalName = (typeof PORTAL_NAMES)[number];
 
 /** The audit actions this screen surfaces as "security events" (SECURITY.md §17's login/security list). */

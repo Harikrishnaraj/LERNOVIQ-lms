@@ -12,6 +12,7 @@ const PORTAL_PERMISSION: Record<string, string> = {
   "/learner": "portal.learner.access",
   "/instructor": "portal.instructor.access",
   "/admin": "portal.admin.access",
+  "/org_admin": "portal.org_admin.access",
 };
 
 export async function proxy(request: NextRequest) {
@@ -70,5 +71,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/learner/:path*", "/instructor/:path*", "/admin/:path*", "/courses/:path*", "/certificates/:path*"],
+  matcher: ["/learner/:path*", "/instructor/:path*", "/admin/:path*", "/org_admin/:path*", "/courses/:path*", "/certificates/:path*"],
 };
