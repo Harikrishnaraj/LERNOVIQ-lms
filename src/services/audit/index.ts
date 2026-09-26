@@ -27,6 +27,7 @@ export const AUDIT_ACTIONS = [
   "enrollment.bulk_enroll",
   "certificate.revoked",
   "assessment.attempt_reset",
+  "certificate.reissued",
   "auth.login_failed",
   "settings.changed",
   "audit.exported",

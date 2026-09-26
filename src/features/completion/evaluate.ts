@@ -84,12 +84,21 @@ export async function evaluateCompletion(
 
   if (!versionRes.data?.certificate_enabled) return { complete: true, certificateCode: null };
 
+  // A revoked certificate can be reissued (T-137), which leaves both a revoked history row and a
+  // live one for the same enrollment, so this can no longer assume at most one row.
   const existing = await admin
     .from("certificates")
-    .select("code")
+    .select("code, status")
     .eq("enrollment_id", enrollmentId)
+    .order("issued_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
-  if (existing.data) return { complete: true, certificateCode: existing.data.code as string };
+  if (existing.data) {
+    return {
+      complete: true,
+      certificateCode: existing.data.status === "revoked" ? null : (existing.data.code as string),
+    };
+  }
 
   const { data: instructor } = await admin
     .from("profiles")
@@ -121,8 +130,19 @@ export async function evaluateCompletion(
 
   if (error) {
     // Unique violation = a parallel evaluation issued it first: return that one.
-    const again = await admin.from("certificates").select("code").eq("enrollment_id", enrollmentId).maybeSingle();
-    if (again.data) return { complete: true, certificateCode: again.data.code as string };
+    const again = await admin
+      .from("certificates")
+      .select("code, status")
+      .eq("enrollment_id", enrollmentId)
+      .order("issued_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (again.data) {
+      return {
+        complete: true,
+        certificateCode: again.data.status === "revoked" ? null : (again.data.code as string),
+      };
+    }
     throw new Error(`issueCertificate failed: ${error.message}`);
   }
   await notify({
