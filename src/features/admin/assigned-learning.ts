@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { csvCell } from "./audit";
 
 export interface OrgAssignedLearning {
   id: string;
@@ -43,6 +44,17 @@ export async function getOrgAssignedLearning(supabase: SupabaseClient, orgId: st
     completedCount: Number(r.completed_count),
     overdueCount: Number(r.overdue_count),
   }));
+}
+
+/** F-503: the organization report -- every assignment's completion/overdue status, plus the
+ * organization's total learning hours as a header line above the table. */
+export function organizationReportToCsv(orgName: string, learningHours: number, rows: OrgAssignedLearning[]): string {
+  const summary = [csvCell("organization"), csvCell(orgName), csvCell("total_learning_hours"), csvCell(learningHours)].join(",");
+  const header = ["content_type", "title", "assigned_to", "due_at", "total_assigned", "completed", "overdue"];
+  const lines = rows.map((r) =>
+    [r.contentType, r.title, r.targetLabel, r.dueAt ?? "", r.totalAssigned, r.completedCount, r.overdueCount].map(csvCell).join(","),
+  );
+  return [summary, header.map(csvCell).join(","), ...lines].join("\r\n") + "\r\n";
 }
 
 /**

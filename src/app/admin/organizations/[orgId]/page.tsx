@@ -49,9 +49,14 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
       <div className="space-y-10">
         <OrganizationDetailPanel org={org} members={members} />
         <section aria-labelledby="assigned-heading" className="space-y-3">
-          <h2 id="assigned-heading" className="text-base font-semibold">
-            Assigned learning
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="assigned-heading" className="text-base font-semibold">
+              Assigned learning
+            </h2>
+            <a href={`/admin/organizations/${orgId}/report/export`} className="text-sm text-primary hover:underline">
+              Export report (CSV)
+            </a>
+          </div>
           <AssignedLearningPanel orgId={orgId} revalidateHref={revalidateHref} assignments={assignments} members={members} paths={paths.map((p) => ({ id: p.pathId, title: p.title }))} />
         </section>
       </div>
