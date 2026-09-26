@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ShieldAlert } from "lucide-react";
 import { PlatformSettingsForm } from "@/components/admin/platform-settings-form";
-import { PermissionDeniedState } from "@/components/feedback/states";
+import { EmptyState, PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
-import { getRecentSecurityEvents } from "@/features/admin/platform-settings";
-import { getPlatformSettings } from "@/services/settings";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { getRecentSecurityEvents } from "@/features/admin/settings";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
+import { getPlatformSettings } from "@/services/settings";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -23,7 +26,7 @@ export default async function AdminSettingsPage() {
     return (
       <>
         <PageHeader title="Settings" />
-        <PermissionDeniedState title="You cannot manage platform settings" description="Ask an administrator if you need access." />
+        <PermissionDeniedState title="You cannot view platform settings" description="Ask an administrator if you need access." />
       </>
     );
   }
@@ -33,35 +36,37 @@ export default async function AdminSettingsPage() {
   return (
     <>
       <PageHeader title="Settings" description="Password, MFA and session policy for the whole platform." />
-      <div className="space-y-10">
-        <section aria-labelledby="policy-heading" className="space-y-4">
-          <h2 id="policy-heading" className="text-base font-semibold">
-            Security policy
-          </h2>
-          <PlatformSettingsForm settings={settings} />
-        </section>
 
-        <section aria-labelledby="events-heading" className="space-y-3">
-          <h2 id="events-heading" className="text-base font-semibold">
-            Security events
-          </h2>
+      <Card className="mb-6">
+        <CardHeader title="Password, MFA & session policy" />
+        <CardContent>
+          <PlatformSettingsForm settings={settings} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader title="Security events" description="Login failures, suspensions, role and permission changes, and settings changes." action={<Link href="/admin/audit" className="text-sm font-medium text-primary hover:underline">View full audit log</Link>} />
+        <CardContent>
           {events.length === 0 ? (
-            <p className="text-sm text-text-secondary">No security events yet.</p>
+            <EmptyState icon={ShieldAlert} title="No security events yet" description="Login failures and account/permission changes will appear here." />
           ) : (
-            <ul className="divide-y divide-border-subtle rounded-card border border-border">
+            <ul className="divide-y divide-border-subtle">
               {events.map((e) => (
-                <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
+                <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
                   <div>
                     <p className="font-medium">{e.action}</p>
-                    <p className="text-xs text-text-secondary">{e.actorEmail ?? "system"}</p>
+                    <p className="text-xs text-text-secondary">
+                      {e.actorEmail ?? "System"} &middot; {e.resourceType}
+                      {e.resourceId && ` #${e.resourceId.slice(0, 8)}`}
+                    </p>
                   </div>
                   <span className="text-xs text-text-secondary">{dateFormat.format(new Date(e.createdAt))}</span>
                 </li>
               ))}
             </ul>
           )}
-        </section>
-      </div>
+        </CardContent>
+      </Card>
     </>
   );
 }

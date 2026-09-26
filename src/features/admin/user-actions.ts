@@ -5,8 +5,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
-import { createAdminClient } from "@/services/supabase/admin";
 import { getPlatformSettings } from "@/services/settings";
+import { createAdminClient } from "@/services/supabase/admin";
 import {
   checkNewUserRoles,
   checkRoleChange,
@@ -115,9 +115,9 @@ export async function setUserStatus(userId: string, status: "active" | "suspende
 export async function createUser(input: { email: string; password: string; fullName: string; role: string }): Promise<UserActionResult> {
   const auth = await authorize();
   if (!auth.ok) return auth;
+  const admin = createAdminClient();
   const emailError = validateEmail(input.email);
   if (emailError) return { ok: false, error: emailError };
-  const admin = createAdminClient();
   const settings = await getPlatformSettings(admin);
   const passwordError = validatePassword(input.password ?? "", settings.minPasswordLength);
   if (passwordError) return { ok: false, error: passwordError };
@@ -125,7 +125,6 @@ export async function createUser(input: { email: string; password: string; fullN
   if (!roles.ok) return roles;
   const escalation = checkNewUserRoles(auth.actor, roles.roles);
   if (escalation) return { ok: false, error: escalation };
-
   const email = input.email.trim().toLowerCase();
   const { data, error } = await admin.auth.admin.createUser({
     email,

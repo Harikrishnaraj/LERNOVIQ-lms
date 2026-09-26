@@ -1,16 +1,15 @@
 export const LAST_ACTIVE_COOKIE = "lms_last_active";
 
 /**
- * Is the session idle-expired? Off entirely when no timeout is configured. Once one is set, a
- * missing or unparseable cookie counts as expired (fails closed) rather than granting an
- * unbounded session — the cookie only ever disappears if it was never set (a session that
- * predates the policy) or was tampered with, and both cases should re-authenticate.
+ * Whether a session should be forced to re-authenticate under the platform's configured idle
+ * timeout (T-143). `timeoutMinutes: null` means no timeout is configured -- never expires.
+ * A missing `lastActiveIso` (first request after enabling the policy, or a cleared cookie) counts
+ * as expired: fail closed rather than silently granting an unbounded session.
  */
-export function isSessionIdleExpired(lastActiveCookie: string | undefined, timeoutMinutes: number | null, now: Date = new Date()): boolean {
+export function isSessionIdleExpired(lastActiveIso: string | null, timeoutMinutes: number | null, now: Date): boolean {
   if (timeoutMinutes === null) return false;
-  if (!lastActiveCookie) return true;
-  const lastActive = new Date(lastActiveCookie);
-  if (Number.isNaN(lastActive.getTime())) return true;
-  const elapsedMinutes = (now.getTime() - lastActive.getTime()) / 60_000;
-  return elapsedMinutes > timeoutMinutes;
+  if (!lastActiveIso) return true;
+  const last = new Date(lastActiveIso).getTime();
+  if (Number.isNaN(last)) return true;
+  return now.getTime() - last > timeoutMinutes * 60_000;
 }

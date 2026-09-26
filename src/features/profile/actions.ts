@@ -6,6 +6,7 @@ import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { sniffImage } from "@/lib/image";
 import { createClient } from "@/lib/supabase/server";
 import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
+import { getPlatformSettings } from "@/services/settings";
 import { AVATAR_BUCKET, supabaseStorage } from "@/services/storage";
 import { getPlatformSettings } from "@/services/settings";
 import { MAX_AVATAR_BYTES, avatarPathFromUrl, validateName, validatePasswordChange } from "./rules";

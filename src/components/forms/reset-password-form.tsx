@@ -4,9 +4,11 @@ import { useState, type FormEvent } from "react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DEFAULT_MIN_PASSWORD_LENGTH, buildResetPasswordSchema, type ResetPasswordInput } from "@/features/auth/schemas";
+import { buildResetPasswordSchema, type ResetPasswordInput } from "@/features/auth/schemas";
 
-const resetPasswordSchema = buildResetPasswordSchema(DEFAULT_MIN_PASSWORD_LENGTH);
+// Client-side pre-check only, for instant feedback; the server re-validates against the
+// platform's configured minimum (T-143), which may be stricter than this baseline.
+const resetPasswordSchema = buildResetPasswordSchema(8);
 
 type FieldErrors = Partial<Record<keyof ResetPasswordInput, string>>;
 

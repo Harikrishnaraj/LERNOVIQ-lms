@@ -2,24 +2,33 @@ import { describe, expect, it } from "vitest";
 import { isSessionIdleExpired } from "@/lib/permissions/session";
 
 describe("isSessionIdleExpired", () => {
+  const now = new Date("2026-01-01T12:00:00Z");
+
   it("never expires when no timeout is configured", () => {
-    expect(isSessionIdleExpired(undefined, null)).toBe(false);
-    expect(isSessionIdleExpired("not-a-date", null)).toBe(false);
+    expect(isSessionIdleExpired(null, null, now)).toBe(false);
+    expect(isSessionIdleExpired("2020-01-01T00:00:00Z", null, now)).toBe(false);
   });
 
-  it("fails closed on a missing cookie once a timeout is configured", () => {
-    expect(isSessionIdleExpired(undefined, 30)).toBe(true);
+  it("treats a missing timestamp as expired once a timeout is configured", () => {
+    expect(isSessionIdleExpired(null, 15, now)).toBe(true);
   });
 
-  it("fails closed on an unparseable cookie", () => {
-    expect(isSessionIdleExpired("garbage", 30)).toBe(true);
+  it("treats an unparseable timestamp as expired", () => {
+    expect(isSessionIdleExpired("not-a-date", 15, now)).toBe(true);
   });
 
-  it("is not expired just under the timeout, and is expired just over it", () => {
-    const now = new Date("2026-01-01T01:00:00.000Z");
-    const under = new Date(now.getTime() - 29 * 60_000).toISOString();
-    const over = new Date(now.getTime() - 31 * 60_000).toISOString();
-    expect(isSessionIdleExpired(under, 30, now)).toBe(false);
-    expect(isSessionIdleExpired(over, 30, now)).toBe(true);
+  it("is not expired within the window", () => {
+    const recent = new Date(now.getTime() - 5 * 60_000).toISOString();
+    expect(isSessionIdleExpired(recent, 15, now)).toBe(false);
+  });
+
+  it("is expired past the window", () => {
+    const stale = new Date(now.getTime() - 20 * 60_000).toISOString();
+    expect(isSessionIdleExpired(stale, 15, now)).toBe(true);
+  });
+
+  it("is not expired exactly at the boundary", () => {
+    const boundary = new Date(now.getTime() - 15 * 60_000).toISOString();
+    expect(isSessionIdleExpired(boundary, 15, now)).toBe(false);
   });
 });

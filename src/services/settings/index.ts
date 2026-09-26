@@ -6,31 +6,24 @@ export interface PlatformSettings {
   sessionIdleTimeoutMinutes: number | null;
 }
 
-const DEFAULTS: PlatformSettings = {
+/** Safe defaults matching this app's original hardcoded behavior, used if the row can't be read. */
+export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   minPasswordLength: 8,
   mfaRequiredPortals: ["admin"],
   sessionIdleTimeoutMinutes: null,
 };
 
-interface Row {
-  min_password_length: number;
-  mfa_required_portals: string[];
-  session_idle_timeout_minutes: number | null;
-}
-
-/**
- * The single configurable row of password/MFA/session policy (T-143). Publicly readable (even
- * signed out: signup/reset need the password-length floor before the caller has a session), so
- * this never throws on a missing row — it falls back to the defaults every hardcoded check used
- * before this table existed, so a read failure can never loosen policy.
- */
+/** Publicly readable (RLS allows anon too): signup/reset need min_password_length pre-session. */
 export async function getPlatformSettings(supabase: SupabaseClient): Promise<PlatformSettings> {
-  const { data } = await supabase.from("platform_settings").select("min_password_length, mfa_required_portals, session_idle_timeout_minutes").eq("id", true).maybeSingle();
-  if (!data) return DEFAULTS;
-  const row = data as Row;
+  const { data } = await supabase
+    .from("platform_settings")
+    .select("min_password_length, mfa_required_portals, session_idle_timeout_minutes")
+    .eq("id", true)
+    .maybeSingle();
+  if (!data) return DEFAULT_PLATFORM_SETTINGS;
   return {
-    minPasswordLength: row.min_password_length,
-    mfaRequiredPortals: row.mfa_required_portals,
-    sessionIdleTimeoutMinutes: row.session_idle_timeout_minutes,
+    minPasswordLength: data.min_password_length as number,
+    mfaRequiredPortals: data.mfa_required_portals as string[],
+    sessionIdleTimeoutMinutes: (data.session_idle_timeout_minutes as number | null) ?? null,
   };
 }
