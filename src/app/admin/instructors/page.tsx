@@ -110,7 +110,7 @@ export default async function AdminInstructorsPage() {
                   {instructors.map((i) => (
                     <tr key={i.userId}>
                       <td className="p-2">
-                        <Link href={`/admin/users/${i.userId}`} className="font-medium hover:underline">
+                        <Link href={`/admin/instructors/${i.userId}`} className="font-medium hover:underline">
                           {i.fullName ?? i.email ?? "Unknown"}
                         </Link>
                       </td>
