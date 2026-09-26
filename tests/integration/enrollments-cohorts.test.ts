@@ -101,6 +101,7 @@ describe.skipIf(!hasLiveProject)("enrollments & cohorts (T-135, live Supabase)",
     const draft = await createCourse(svc, (await createUserWithRole(svc, `${tag}-ins2`, "instructor")).id, {
       slug: `${tag}-draft`,
       title: `${tag} Draft`,
+      publish: false,
     });
     courseIds.push(draft.courseId);
     expect((await enrollUserAction(learnerB.id, draft.courseId)).ok).toBe(false);

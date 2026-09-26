@@ -58,7 +58,7 @@ describe.skipIf(!hasLiveProject)("moderation queue (T-139, live Supabase)", () =
     course = await createCourse(svc, instructor.id, { slug: `${tag}-course`, title: `${tag} Course`, publish: true });
     courseIds.push(course.courseId);
 
-    await svc.from("enrollments").insert({ user_id: author.id, course_id: course.courseId, version_id: course.versionId, status: "active" });
+    await svc.from("enrollments").insert([author.id, reporter.id].map((user_id) => ({ user_id, course_id: course.courseId, version_id: course.versionId, status: "active" })));
 
     currentClient = author.client;
     const thread = await startDiscussion(course.courseId, { title: `${tag} thread`, body: "Some offensive content." });

@@ -106,7 +106,7 @@ describe.skipIf(!hasLiveProject)("admin user detail (T-130, live Supabase)", () 
   it("does nothing when an anonymous caller tries to record a login", async () => {
     const before = (await svc.from("login_history").select("id", { count: "exact", head: true })).count ?? 0;
     const { error } = await anon().rpc("record_login", { p_ip: "1.1.1.1", p_user_agent: "anon" });
-    expect(error).toBeNull();
+    expect(error).not.toBeNull(); // anon has no execute grant
     const after = (await svc.from("login_history").select("id", { count: "exact", head: true })).count ?? 0;
     expect(after).toBe(before);
   });

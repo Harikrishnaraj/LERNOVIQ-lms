@@ -9,6 +9,8 @@ const hasLiveProject = Boolean(
     process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
 
+const realFetch = globalThis.fetch;
+
 // F-415: webhook dispatch (T-142), live Supabase. fetch is mocked -- no real HTTP call leaves
 // the test, but the endpoint row, signature and delivery log are all real.
 describe.skipIf(!hasLiveProject)("webhook dispatch (T-142, live Supabase)", () => {
@@ -18,7 +20,7 @@ describe.skipIf(!hasLiveProject)("webhook dispatch (T-142, live Supabase)", () =
   const userIds: string[] = [];
   let endpointId: string;
   let secret: string;
-  let fetchMock: ReturnType<typeof vi.fn>;
+  let fetchMock: ReturnType<typeof vi.fn<(input: unknown, init: { body: string; headers: Record<string, string> }) => Promise<Response>>>;
 
   beforeAll(async () => {
     const instructor = await createUserWithRole(svc, `${tag}-ins`, "instructor");
@@ -42,7 +44,12 @@ describe.skipIf(!hasLiveProject)("webhook dispatch (T-142, live Supabase)", () =
 
   beforeEach(() => {
     fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+    // Only the outbound hook call is mocked; Supabase requests still use the real fetch.
+    vi.stubGlobal("fetch", (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input instanceof Request ? input.url : input).startsWith("https://example.com/")
+        ? fetchMock(input, init as never)
+        : realFetch(input, init),
+    );
   });
 
   afterEach(() => {

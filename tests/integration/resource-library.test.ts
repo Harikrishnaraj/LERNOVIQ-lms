@@ -71,6 +71,7 @@ describe.skipIf(!hasLiveProject)("instructor resource library (T-111, live Supab
     course = await createCourse(svc, owner.id, {
       slug: `${tag}-course`,
       title: `${tag} Course`,
+      publish: false, // published courses are locked against edits
       sections: [{ title: "S", lessons: [{ title: "Text lesson" }] }],
     });
     courseIds.push(course.courseId);

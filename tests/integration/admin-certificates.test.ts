@@ -171,7 +171,7 @@ describe.skipIf(!hasLiveProject)("admin certificate administration (T-137, live 
   it("reissues the revoked certificate as a new, live certificate (audited)", async () => {
     currentClient = admin.client;
     const reissued = await reissueCertificateAction(certificateId);
-    expect(reissued.ok).toBe(true);
+    expect(reissued, JSON.stringify(reissued)).toMatchObject({ ok: true });
     if (!reissued.ok) return;
     expect(reissued.code).toMatch(/^MLC-/);
 
