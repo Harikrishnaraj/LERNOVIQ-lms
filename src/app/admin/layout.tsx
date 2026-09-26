@@ -26,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (settings.mfaRequiredPortals.includes("admin") && (await needsMfa(supabase))) redirect("/mfa");
 
   return (
-    <PortalShell portal="admin" user={user && { email: user.email! }} onLogout={logout}>
+    <PortalShell portal="admin" user={user && { email: user.email! }} onLogout={logout} profileHref="/admin/profile">
       {children}
     </PortalShell>
   );

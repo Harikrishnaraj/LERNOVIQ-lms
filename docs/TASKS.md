@@ -130,7 +130,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-141** Communication: announcements (targeted), email templates, delivery log. — F-413
 - [x] **T-142** Integrations & API: API keys (hashed, scoped), webhooks, rate limits, request log. — F-415
 - [x] **T-143** Settings & Security: platform settings, password/MFA policy, session policy, security events. — F-416
-- [ ] **T-144** Admin profile: personal info, security, notification preferences, my recent actions. — F-417
+- [x] **T-144** Admin profile: personal info, security, notification preferences, my recent actions. — F-417
 - [ ] **T-145** E2E: admin extended. — F-402…F-417
 
 ## Phase 8 — Organizations / enterprise
