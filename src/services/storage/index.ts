@@ -31,6 +31,7 @@ export const AVATAR_BUCKET = "avatars";
 export const RESOURCE_LIBRARY_BUCKET = "resource-library";
 export const SCORM_BUCKET = "scorm-packages";
 export const SCORM_STAGING_BUCKET = "scorm-uploads";
+export const REPORT_EXPORT_BUCKET = "report-exports";
 
 export const supabaseStorage: StorageAdapter = {
   async uploadPublic(bucket, path, bytes, contentType) {
