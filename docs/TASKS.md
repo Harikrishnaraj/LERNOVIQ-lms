@@ -112,7 +112,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-110** Certificates: issued for my courses, certificate template settings. — F-218
 - [x] **T-111** Resource Library: reusable media/documents with usage. — F-219
 - [x] **T-112** Instructor Settings: public profile, payout details (via provider), notifications. — F-220
-- [ ] **T-113** E2E: instructor extended (TEST_PLAN §11, §12). — F-206…F-220
+- [x] **T-113** E2E: instructor extended (TEST_PLAN §11, §12). — F-206…F-220
 
 ## Phase 7 — Admin complete
 
