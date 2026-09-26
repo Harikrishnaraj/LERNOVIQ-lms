@@ -6,6 +6,7 @@ import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
 import { createAdminClient } from "@/services/supabase/admin";
+import { getPlatformSettings } from "@/services/settings";
 import {
   checkNewUserRoles,
   checkRoleChange,
@@ -116,14 +117,15 @@ export async function createUser(input: { email: string; password: string; fullN
   if (!auth.ok) return auth;
   const emailError = validateEmail(input.email);
   if (emailError) return { ok: false, error: emailError };
-  const passwordError = validatePassword(input.password ?? "");
+  const admin = createAdminClient();
+  const settings = await getPlatformSettings(admin);
+  const passwordError = validatePassword(input.password ?? "", settings.minPasswordLength);
   if (passwordError) return { ok: false, error: passwordError };
   const roles = parseRoleSet([input.role]);
   if (!roles.ok) return roles;
   const escalation = checkNewUserRoles(auth.actor, roles.roles);
   if (escalation) return { ok: false, error: escalation };
 
-  const admin = createAdminClient();
   const email = input.email.trim().toLowerCase();
   const { data, error } = await admin.auth.admin.createUser({
     email,

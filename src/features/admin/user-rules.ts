@@ -29,6 +29,8 @@ export const PRIVILEGED_ROLES: readonly RoleId[] = ["admin", "super_admin"];
 export const isRoleId = (v: unknown): v is RoleId => typeof v === "string" && (ROLE_IDS as readonly string[]).includes(v);
 const isPrivileged = (r: string) => (PRIVILEGED_ROLES as readonly string[]).includes(r);
 
+// Admin-created accounts never go below this floor, even if the platform-wide configured
+// minimum (T-143) is set lower — a weaker platform default must never weaken this stricter path.
 export const MIN_PASSWORD_LENGTH = 12;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,8 +40,9 @@ export function validateEmail(email: string): string | null {
   return null;
 }
 
-export function validatePassword(password: string): string | null {
-  return password.length >= MIN_PASSWORD_LENGTH ? null : `Use at least ${MIN_PASSWORD_LENGTH} characters for the password.`;
+export function validatePassword(password: string, configuredMin: number = MIN_PASSWORD_LENGTH): string | null {
+  const min = Math.max(configuredMin, MIN_PASSWORD_LENGTH);
+  return password.length >= min ? null : `Use at least ${min} characters for the password.`;
 }
 
 /** Deduplicated known roles, or an error when empty or unknown. */

@@ -4,7 +4,9 @@ import { useState, type FormEvent } from "react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { signUpSchema, type SignUpInput } from "@/features/auth/schemas";
+import { DEFAULT_MIN_PASSWORD_LENGTH, buildSignUpSchema, type SignUpInput } from "@/features/auth/schemas";
+
+const signUpSchema = buildSignUpSchema(DEFAULT_MIN_PASSWORD_LENGTH);
 
 type FieldErrors = Partial<Record<keyof SignUpInput, string>>;
 
