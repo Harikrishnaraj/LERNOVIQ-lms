@@ -12,6 +12,7 @@ import {
   PlayCircle,
   ClipboardList,
   HelpCircle,
+  Package,
   Star,
   type LucideIcon,
 } from "lucide-react";
@@ -36,6 +37,7 @@ const LESSON_ICON: Record<OutlineLesson["type"], LucideIcon> = {
   text: FileText,
   quiz: HelpCircle,
   assignment: ClipboardList,
+  scorm: Package,
 };
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {

@@ -17,6 +17,10 @@ export interface StorageAdapter {
   exists(bucket: string, path: string): Promise<boolean>;
   /** Copies an object, optionally into a different bucket, without a client round-trip. */
   copy(fromBucket: string, fromPath: string, toBucket: string, toPath: string): Promise<void>;
+  /** Stores the bytes in a private bucket. No URL is returned; read it back with `download`. */
+  upload(bucket: string, path: string, bytes: Uint8Array, contentType: string): Promise<void>;
+  /** Reads an object's bytes and stored content-type directly (service role) for server-side proxying. */
+  download(bucket: string, path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
 }
 
 export const THUMBNAIL_BUCKET = "course-thumbnails";
@@ -25,6 +29,8 @@ export const ASSET_BUCKET = "lesson-assets";
 export const SUBMISSION_BUCKET = "assignment-submissions";
 export const AVATAR_BUCKET = "avatars";
 export const RESOURCE_LIBRARY_BUCKET = "resource-library";
+export const SCORM_BUCKET = "scorm-packages";
+export const SCORM_STAGING_BUCKET = "scorm-uploads";
 
 export const supabaseStorage: StorageAdapter = {
   async uploadPublic(bucket, path, bytes, contentType) {
@@ -69,5 +75,20 @@ export const supabaseStorage: StorageAdapter = {
       .storage.from(fromBucket)
       .copy(fromPath, toPath, { destinationBucket: toBucket });
     if (error) throw new Error(`storage copy failed: ${error.message}`);
+  },
+
+  async upload(bucket, path, bytes, contentType) {
+    const { error } = await createAdminClient().storage.from(bucket).upload(path, bytes, {
+      contentType,
+      upsert: true,
+      cacheControl: "31536000",
+    });
+    if (error) throw new Error(`storage upload failed: ${error.message}`);
+  },
+
+  async download(bucket, path) {
+    const { data, error } = await createAdminClient().storage.from(bucket).download(path);
+    if (error || !data) throw new Error(`storage download failed: ${error?.message}`);
+    return { bytes: new Uint8Array(await data.arrayBuffer()), contentType: data.type || "application/octet-stream" };
   },
 };

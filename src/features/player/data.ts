@@ -15,12 +15,14 @@ export interface PlayerCourse {
 export interface PlayerLessonContent {
   id: string;
   title: string;
-  type: "video" | "text" | "quiz" | "assignment";
+  type: "video" | "text" | "quiz" | "assignment" | "scorm";
   /** Raw stored HTML: sanitize before rendering. */
   content: string;
   videoUrl: string | null;
   durationMinutes: number;
   isPreview: boolean;
+  /** Set only for type "scorm": the path to request from the SCORM proxy route. */
+  scormLaunchPath: string | null;
 }
 
 interface OutlineRow {
@@ -142,6 +144,13 @@ export async function getLessonContent(
     .eq("id", lessonId)
     .maybeSingle();
   if (error || !data) return null;
+
+  let scormLaunchPath: string | null = null;
+  if (data.type === "scorm") {
+    const { data: pkg } = await supabase.from("scorm_packages").select("launch_path").eq("lesson_id", lessonId).maybeSingle();
+    scormLaunchPath = (pkg?.launch_path as string | null) ?? null;
+  }
+
   return {
     id: data.id,
     title: data.title,
@@ -150,6 +159,7 @@ export async function getLessonContent(
     videoUrl: data.video_url,
     durationMinutes: data.duration_minutes,
     isPreview: data.is_preview,
+    scormLaunchPath,
   };
 }
 

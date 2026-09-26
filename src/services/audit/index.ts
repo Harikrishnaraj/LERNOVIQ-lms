@@ -28,6 +28,8 @@ export const AUDIT_ACTIONS = [
   "certificate.revoked",
   "assessment.attempt_reset",
   "certificate.reissued",
+  "content.resource_deleted",
+  "content.scorm_package_deleted",
   "auth.login_failed",
   "settings.changed",
   "audit.exported",

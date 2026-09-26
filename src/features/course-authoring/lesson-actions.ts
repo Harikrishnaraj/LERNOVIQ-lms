@@ -6,7 +6,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sanitizeLessonHtml } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
-import { ASSET_BUCKET, RESOURCE_LIBRARY_BUCKET, VIDEO_BUCKET, supabaseStorage } from "@/services/storage";
+import {
+  ASSET_BUCKET,
+  RESOURCE_LIBRARY_BUCKET,
+  SCORM_BUCKET,
+  SCORM_STAGING_BUCKET,
+  VIDEO_BUCKET,
+  supabaseStorage,
+} from "@/services/storage";
+import { MAX_TOTAL_BYTES, ScormValidationError, validateAndExtractPackage } from "@/services/scorm/parse";
 import { getCourseForEditing } from "./queries";
 import { getLessonForEditing } from "./lessons";
 import {
@@ -223,5 +231,90 @@ export async function attachLibraryResource(courseId: string, lessonId: string, 
 
   revalidatePath(editorPath(courseId, lessonId));
   revalidatePath("/instructor/resources");
+  return { ok: true };
+}
+
+const MAX_SCORM_ZIP_BYTES = MAX_TOTAL_BYTES;
+
+/** Issues a one-time upload ticket for the raw .zip into the staging bucket (server processes it next). */
+export async function requestScormUpload(
+  courseId: string,
+  lessonId: string,
+  file: { name: string; size: number; type: string },
+): Promise<UploadTicket> {
+  const ctx = await authorize(courseId, lessonId);
+  if (!ctx.ok) return { ok: false, error: ctx.result.error };
+  if (ctx.lesson.type !== "scorm") return { ok: false, error: "Only SCORM lessons can have a package." };
+  if (!file.name.toLowerCase().endsWith(".zip")) return { ok: false, error: "Upload a .zip file." };
+  if (file.size <= 0 || file.size > MAX_SCORM_ZIP_BYTES) {
+    return { ok: false, error: `The package must be under ${Math.round(MAX_SCORM_ZIP_BYTES / (1024 * 1024))}MB.` };
+  }
+  const path = `${ctx.courseId}/${lessonId}/${randomUUID()}.zip`;
+  try {
+    const { token } = await supabaseStorage.createSignedUpload(SCORM_STAGING_BUCKET, path);
+    return { ok: true, bucket: SCORM_STAGING_BUCKET, path, token, ref: path };
+  } catch {
+    return { ok: false, error: "We could not start the upload. Please try again." };
+  }
+}
+
+/** After the browser finished staging the zip: validate, extract, and store the package. */
+export async function processScormUpload(
+  courseId: string,
+  lessonId: string,
+  stagingPath: string,
+): Promise<LessonResult> {
+  const ctx = await authorize(courseId, lessonId);
+  if (!ctx.ok) return ctx.result;
+  if (ctx.lesson.type !== "scorm") return { ok: false, error: "Only SCORM lessons can have a package." };
+  if (!stagingPath.startsWith(`${ctx.courseId}/${lessonId}/`) || stagingPath.includes("..")) {
+    return { ok: false, error: "That upload does not belong to this lesson." };
+  }
+  if (!(await supabaseStorage.exists(SCORM_STAGING_BUCKET, stagingPath).catch(() => false))) {
+    return { ok: false, error: "The upload did not complete. Please try again." };
+  }
+
+  let parsed: Awaited<ReturnType<typeof validateAndExtractPackage>>;
+  try {
+    const { bytes: zipBytes } = await supabaseStorage.download(SCORM_STAGING_BUCKET, stagingPath);
+    parsed = await validateAndExtractPackage(zipBytes);
+  } catch (err) {
+    await supabaseStorage.remove(SCORM_STAGING_BUCKET, [stagingPath]).catch(() => {});
+    return { ok: false, error: err instanceof ScormValidationError ? err.message : "That package could not be processed." };
+  }
+
+  const prefix = `${ctx.courseId}/${lessonId}/${randomUUID()}`;
+  try {
+    for (const file of parsed.files) {
+      await supabaseStorage.upload(SCORM_BUCKET, `${prefix}/${file.path}`, file.bytes, file.contentType);
+    }
+  } catch {
+    await supabaseStorage.remove(SCORM_STAGING_BUCKET, [stagingPath]).catch(() => {});
+    return { ok: false, error: "We could not store that package. Please try again." };
+  }
+
+  const { data: previous } = await ctx.supabase.rpc("get_scorm_package_for_lesson", { p_lesson_id: lessonId });
+  const { error } = await ctx.supabase.rpc("save_scorm_package", {
+    p_lesson_id: lessonId,
+    p_version: parsed.version,
+    p_title: parsed.title,
+    p_launch_path: parsed.launchPath,
+    p_storage_prefix: prefix,
+    p_file_paths: parsed.files.map((f) => f.path),
+    p_file_count: parsed.files.length,
+    p_total_bytes: parsed.totalBytes,
+  });
+  await supabaseStorage.remove(SCORM_STAGING_BUCKET, [stagingPath]).catch(() => {});
+  if (error) {
+    await supabaseStorage.remove(SCORM_BUCKET, parsed.files.map((f) => `${prefix}/${f.path}`)).catch(() => {});
+    return FAILED;
+  }
+
+  const old = (previous as { storage_prefix: string; file_paths: string[] }[] | null)?.[0];
+  if (old) {
+    await supabaseStorage.remove(SCORM_BUCKET, old.file_paths.map((p) => `${old.storage_prefix}/${p}`)).catch(() => {});
+  }
+
+  revalidatePath(editorPath(courseId, lessonId));
   return { ok: true };
 }

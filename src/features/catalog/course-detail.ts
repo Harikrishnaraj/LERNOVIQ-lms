@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export interface OutlineLesson {
   id: string;
   title: string;
-  type: "video" | "text" | "quiz" | "assignment";
+  type: "video" | "text" | "quiz" | "assignment" | "scorm";
   durationMinutes: number;
   isPreview: boolean;
 }
