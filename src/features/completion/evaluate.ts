@@ -1,4 +1,5 @@
 import { notify } from "@/services/notifications";
+import { dispatchWebhookEvent } from "@/services/webhooks/dispatch";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { summarizeCompletion } from "./rules";
 
@@ -80,6 +81,11 @@ export async function evaluateCompletion(
       .update({ status: "completed", completed_at: new Date().toISOString() })
       .eq("id", enrollmentId)
       .eq("status", "active");
+    await dispatchWebhookEvent("course.completed", {
+      userId: enrollment.user_id as string,
+      courseId: enrollment.course_id as string,
+      enrollmentId,
+    });
   }
 
   if (!versionRes.data?.certificate_enabled) return { complete: true, certificateCode: null };
@@ -150,6 +156,11 @@ export async function evaluateCompletion(
     category: "course",
     title: `You earned a certificate for ${versionRes.data.title as string}`,
     href: "/learner/certificates",
+  });
+  await dispatchWebhookEvent("certificate.issued", {
+    userId: enrollment.user_id as string,
+    courseId: enrollment.course_id as string,
+    certificateCode: cert.code as string,
   });
   return { complete: true, certificateCode: cert.code as string };
 }

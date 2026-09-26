@@ -13,6 +13,7 @@ const LIMITS = {
   "discussion-post": { limit: 20, windowSeconds: 10 * 60 },
   "discussion-react": { limit: 60, windowSeconds: 10 * 60 },
   "review-report": { limit: 20, windowSeconds: 10 * 60 },
+  "api-request": { limit: 300, windowSeconds: 10 * 60 },
   "instructor-message": { limit: 20, windowSeconds: 10 * 60 },
 } as const;
 

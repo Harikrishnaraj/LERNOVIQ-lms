@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
+import { dispatchWebhookEvent } from "@/services/webhooks/dispatch";
 import { validateCohortName } from "./enrollments";
 import { getAdminUsers } from "./users";
 
@@ -48,6 +49,7 @@ export async function enrollUserAction(userId: string, courseId: string): Promis
     resourceId: courseId,
     metadata: { userId, courseId },
   });
+  await dispatchWebhookEvent("enrollment.created", { userId, courseId, triggeredBy: "admin" });
 
   revalidatePath("/admin/enrollments");
   return { ok: true };
@@ -140,6 +142,8 @@ export async function bulkEnrollCohortAction(cohortId: string, courseId: string)
     resourceId: cohortId,
     metadata: { courseId, ...result },
   });
+  // One aggregate event for the whole batch, not one per learner enrolled.
+  await dispatchWebhookEvent("enrollment.created", { cohortId, courseId, enrolled: result.enrolled, triggeredBy: "admin-bulk" });
 
   revalidatePath("/admin/enrollments");
   return { ok: true, totalMembers: result.total_members, enrolled: result.enrolled };
