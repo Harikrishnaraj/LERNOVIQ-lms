@@ -97,6 +97,12 @@ export async function evaluateCompletion(
     .eq("id", courseRes.data?.instructor_id)
     .maybeSingle();
 
+  const { data: template } = await admin
+    .from("certificate_templates")
+    .select("signature_title, closing_message")
+    .eq("course_id", enrollment.course_id)
+    .maybeSingle();
+
   const { data: cert, error } = await admin
     .from("certificates")
     .insert({
@@ -107,6 +113,8 @@ export async function evaluateCompletion(
       learner_name: await learnerName(admin, enrollment.user_id as string),
       course_title: versionRes.data.title,
       instructor_name: (instructor?.full_name as string | null) ?? null,
+      signature_title: (template?.signature_title as string | null) ?? null,
+      closing_message: (template?.closing_message as string | null) ?? null,
     })
     .select("code")
     .single();
