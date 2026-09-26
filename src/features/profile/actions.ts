@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/server";
 import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
 import { getPlatformSettings } from "@/services/settings";
 import { AVATAR_BUCKET, supabaseStorage } from "@/services/storage";
-import { getPlatformSettings } from "@/services/settings";
 import { MAX_AVATAR_BYTES, avatarPathFromUrl, validateName, validatePasswordChange } from "./rules";
 
 export type ProfileResult = { ok: true; avatarUrl: string | null } | { ok: false; error: string };
