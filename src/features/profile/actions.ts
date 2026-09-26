@@ -55,6 +55,7 @@ export async function updateProfile(formData: FormData): Promise<ProfileResult> 
   if (oldPath && oldUrl !== avatarUrl) await supabaseStorage.remove(AVATAR_BUCKET, [oldPath]).catch(() => undefined);
 
   revalidatePath("/learner/settings");
+  revalidatePath("/instructor/settings");
   return { ok: true, avatarUrl };
 }
 

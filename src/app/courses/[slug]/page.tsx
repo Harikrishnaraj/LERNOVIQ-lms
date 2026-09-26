@@ -225,6 +225,17 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
             </section>
           )}
 
+          {course.instructorName && (course.instructorHeadline || course.instructorBio) && (
+            <section aria-labelledby="instructor-heading" className="space-y-2">
+              <h2 id="instructor-heading" className="text-xl font-semibold">
+                About the instructor
+              </h2>
+              <p className="font-medium">{course.instructorName}</p>
+              {course.instructorHeadline && <p className="text-sm text-text-secondary">{course.instructorHeadline}</p>}
+              {course.instructorBio && <p className="whitespace-pre-line text-sm text-text-secondary">{course.instructorBio}</p>}
+            </section>
+          )}
+
           {reviews && <CourseReviewsSection data={reviews} signedIn={Boolean(auth.user)} />}
 
           {course.requirements.length > 0 && (
