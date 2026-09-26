@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { OrganizationDetailPanel } from "@/components/admin/organization-detail-panel";
+import { AssignedLearningPanel } from "@/components/admin/assigned-learning-panel";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { getOrgAssignedLearning } from "@/features/admin/assigned-learning";
 import { getMyOrganizationId, getOrganizationDetail, getOrganizationMembers } from "@/features/admin/organizations";
+import { listPaths } from "@/features/paths/paths";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "My Organization" };
@@ -34,12 +37,20 @@ export default async function OrgAdminPage() {
       </>
     );
   }
-  const members = await getOrganizationMembers(supabase, orgId);
+  const [members, assignments, paths] = await Promise.all([getOrganizationMembers(supabase, orgId), getOrgAssignedLearning(supabase, orgId), listPaths(supabase)]);
 
   return (
     <>
       <PageHeader title={org.name} description={`${org.memberCount} ${org.memberCount === 1 ? "member" : "members"}`} />
-      <OrganizationDetailPanel org={org} members={members} />
+      <div className="space-y-10">
+        <OrganizationDetailPanel org={org} members={members} />
+        <section aria-labelledby="assigned-heading" className="space-y-3">
+          <h2 id="assigned-heading" className="text-base font-semibold">
+            Assigned learning
+          </h2>
+          <AssignedLearningPanel orgId={orgId} revalidateHref="/org_admin" assignments={assignments} members={members} paths={paths.map((p) => ({ id: p.pathId, title: p.title }))} />
+        </section>
+      </div>
     </>
   );
 }
