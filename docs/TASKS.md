@@ -180,7 +180,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-242** Structured logging + correlation IDs + error tracking. — F-942
 - [x] **T-243** Privacy: data export, account deletion workflow, retention jobs. — F-943
 - [x] **T-244** Accessibility audit (WCAG 2.2 AA) + fixes. — F-944
-- [ ] **T-245** Responsive audit at 375 / 768 / 1024 / 1440 for every screen. — F-945
+- [x] **T-245** Responsive audit at 375 / 768 / 1024 / 1440 for every screen. — F-945
 - [ ] **T-246** Performance pass (bundle size, LCP, query counts, lazy chart/editor loading). — F-946
 - [ ] **T-247** Upgrade to Next.js 16 / ESLint 10 when stable for this stack. — F-900
 - [ ] **T-248** CI (GitHub Actions: check + E2E) + Vercel preview deployments. — F-947
