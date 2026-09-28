@@ -17,6 +17,7 @@ import {
 import { MAX_TOTAL_BYTES, ScormValidationError, validateAndExtractPackage } from "@/services/scorm/parse";
 import { getCourseForEditing } from "./queries";
 import { getLessonForEditing } from "./lessons";
+import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 import {
   normalizeVideoRef,
   storageVideoPath,
@@ -44,7 +45,7 @@ const saveSchema = z.object({
 
 type Db = Awaited<ReturnType<typeof createClient>>;
 type Ctx =
-  | { ok: true; supabase: Db; courseId: string; versionId: string; lesson: NonNullable<Awaited<ReturnType<typeof getLessonForEditing>>> }
+  | { ok: true; supabase: Db; userId: string; courseId: string; versionId: string; lesson: NonNullable<Awaited<ReturnType<typeof getLessonForEditing>>> }
   | { ok: false; result: { ok: false; error: string } };
 
 // authenticate -> own course -> newest version editable -> lesson belongs to that version.
@@ -59,7 +60,7 @@ async function authorize(courseId: string, lessonId: string): Promise<Ctx> {
   if (!course.editable) return { ok: false, result: LOCKED };
   const lesson = await getLessonForEditing(supabase, course.version.id, lessonId);
   if (!lesson) return { ok: false, result: DENIED };
-  return { ok: true, supabase, courseId: course.courseId, versionId: course.version.id, lesson };
+  return { ok: true, supabase, userId: user.id, courseId: course.courseId, versionId: course.version.id, lesson };
 }
 
 const editorPath = (courseId: string, lessonId: string) => `/instructor/courses/${courseId}/lessons/${lessonId}`;
@@ -113,6 +114,9 @@ export async function requestUpload(
 ): Promise<UploadTicket> {
   const ctx = await authorize(courseId, lessonId);
   if (!ctx.ok) return { ok: false, error: ctx.result.error };
+  if (!(await rateLimit("upload-initiate", await clientIp(), ctx.userId))) {
+    return { ok: false, error: RATE_LIMITED_MESSAGE };
+  }
   if (kind !== "video" && kind !== "asset") return { ok: false, error: "Unsupported upload." };
   if (kind === "video" && ctx.lesson.type !== "video") return { ok: false, error: "Only video lessons can have a video." };
   if (kind === "asset" && ctx.lesson.assets.length >= MAX_ASSETS) {
@@ -244,6 +248,9 @@ export async function requestScormUpload(
 ): Promise<UploadTicket> {
   const ctx = await authorize(courseId, lessonId);
   if (!ctx.ok) return { ok: false, error: ctx.result.error };
+  if (!(await rateLimit("upload-initiate", await clientIp(), ctx.userId))) {
+    return { ok: false, error: RATE_LIMITED_MESSAGE };
+  }
   if (ctx.lesson.type !== "scorm") return { ok: false, error: "Only SCORM lessons can have a package." };
   if (!file.name.toLowerCase().endsWith(".zip")) return { ok: false, error: "Upload a .zip file." };
   if (file.size <= 0 || file.size > MAX_SCORM_ZIP_BYTES) {

@@ -15,6 +15,8 @@ const LIMITS = {
   "review-report": { limit: 20, windowSeconds: 10 * 60 },
   "api-request": { limit: 300, windowSeconds: 10 * 60 },
   "instructor-message": { limit: 20, windowSeconds: 10 * 60 },
+  "upload-initiate": { limit: 30, windowSeconds: 10 * 60 },
+  "analytics-export": { limit: 20, windowSeconds: 10 * 60 },
 } as const;
 
 export type RateLimitedAction = keyof typeof LIMITS;

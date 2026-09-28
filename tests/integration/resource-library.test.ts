@@ -15,6 +15,7 @@ import {
   requestResourceUpload,
 } from "@/features/instructor/resource-actions";
 import { getResourceLibrary } from "@/features/instructor/resources";
+import { rateLimit } from "@/services/rate-limit";
 
 const hasLiveProject = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -78,6 +79,15 @@ describe.skipIf(!hasLiveProject)("instructor resource library (T-111, live Supab
   }, 200_000);
 
   afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
+
+  it("rejects requesting an upload ticket while rate-limited (T-241, SECURITY §18)", async () => {
+    currentClient = owner.client;
+    vi.mocked(rateLimit).mockResolvedValueOnce(false);
+    expect(await requestResourceUpload({ name: "x.pdf", size: 10, type: "application/pdf" })).toEqual({
+      ok: false,
+      error: "Too many attempts. Please wait a while and try again.",
+    });
+  });
 
   it("uploads a resource with zero usage, scoped to its owner", async () => {
     const resource = await uploadResource();

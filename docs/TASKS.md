@@ -175,8 +175,8 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 12 — Production hardening & launch
 
-- [ ] **T-240** Security headers + CSP (SECURITY §22). — F-940
-- [ ] **T-241** Rate limiting for public/AI/upload/assessment endpoints. — F-941
+- [x] **T-240** Security headers + CSP (SECURITY §22). — F-940
+- [x] **T-241** Rate limiting for public/AI/upload/assessment endpoints. — F-941
 - [ ] **T-242** Structured logging + correlation IDs + error tracking. — F-942
 - [ ] **T-243** Privacy: data export, account deletion workflow, retention jobs. — F-943
 - [ ] **T-244** Accessibility audit (WCAG 2.2 AA) + fixes. — F-944

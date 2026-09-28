@@ -7,6 +7,7 @@ import { attachLibraryResource } from "@/features/course-authoring/lesson-action
 import { getAttachableLessons, type AttachableLesson } from "@/features/instructor/resources";
 import { createClient } from "@/lib/supabase/server";
 import { RESOURCE_LIBRARY_BUCKET, supabaseStorage } from "@/services/storage";
+import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 
 export type ResourceResult = { ok: true } | { ok: false; error: string };
 export type ResourceUploadTicket =
@@ -29,6 +30,9 @@ export async function requestResourceUpload(file: {
 }): Promise<ResourceUploadTicket> {
   const userId = await currentUserId();
   if (!userId) return { ok: false, error: "Please log in again." };
+  if (!(await rateLimit("upload-initiate", await clientIp(), userId))) {
+    return { ok: false, error: RATE_LIMITED_MESSAGE };
+  }
 
   const check = validateUpload("asset", file);
   if (!check.ok) return check;
