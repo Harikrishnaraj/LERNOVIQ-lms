@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PasswordForm, ProfileForm } from "@/components/profile/profile-forms";
+import { PrivacyPanel } from "@/components/profile/privacy-panel";
 import { ApplyToTeach } from "@/components/instructor/apply-to-teach";
 import { PageHeader } from "@/components/layout/page-header";
 import { getMyInstructorApplication } from "@/features/instructor/application";
+import { getMyDeletionStatus } from "@/features/privacy/account";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -15,10 +17,11 @@ export default async function LearnerSettingsPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const [{ data: profile }, { data: roles }, application] = await Promise.all([
+  const [{ data: profile }, { data: roles }, application, deletionRequestedAt] = await Promise.all([
     supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle(),
     supabase.from("user_roles").select("role_id").eq("user_id", user.id),
     getMyInstructorApplication(supabase, user.id),
+    getMyDeletionStatus(supabase, user.id),
   ]);
   const isInstructor = (roles ?? []).some((r) => r.role_id === "instructor");
 
@@ -61,6 +64,13 @@ export default async function LearnerSettingsPage() {
             <ApplyToTeach application={application} />
           </section>
         )}
+
+        <section aria-labelledby="privacy-heading" className="space-y-4">
+          <h2 id="privacy-heading" className="text-base font-semibold">
+            Privacy
+          </h2>
+          <PrivacyPanel deletionRequestedAt={deletionRequestedAt} />
+        </section>
       </div>
     </>
   );
