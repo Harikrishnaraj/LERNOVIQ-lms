@@ -184,5 +184,5 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-246** Performance pass (bundle size, LCP, query counts, lazy chart/editor loading). — F-946
 - [ ] **T-247** Upgrade to Next.js 16 / ESLint 10 when stable for this stack. — F-900
 - [ ] **T-248** CI (GitHub Actions: check + E2E) + Vercel preview deployments. — F-947
-- [ ] **T-249** Backups + tested restore runbook. — F-948
+- [x] **T-249** Backups + tested restore runbook. — F-948
 - [ ] **T-250** Production deploy + full production QA checklist (TEST_PLAN §23). — F-947
