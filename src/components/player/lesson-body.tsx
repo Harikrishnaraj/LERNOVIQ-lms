@@ -39,10 +39,10 @@ export function LessonBody({
         </p>
       )}
 
-      {lesson.type === "scorm" && lesson.scormLaunchPath && (
-        <ScormPlayer lessonId={lesson.id} launchPath={lesson.scormLaunchPath} onCommit={onScormCommit} />
+      {lesson.type === "scorm" && lesson.scormLaunchPath && lesson.scormToken && (
+        <ScormPlayer lessonId={lesson.id} token={lesson.scormToken} launchPath={lesson.scormLaunchPath} onCommit={onScormCommit} />
       )}
-      {lesson.type === "scorm" && !lesson.scormLaunchPath && (
+      {lesson.type === "scorm" && !(lesson.scormLaunchPath && lesson.scormToken) && (
         <p className="rounded-card border border-dashed border-border bg-surface p-6 text-sm text-text-secondary">
           The SCORM package for this lesson is not available yet.
         </p>

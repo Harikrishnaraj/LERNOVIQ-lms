@@ -104,11 +104,27 @@ describe("proxy", () => {
     expect(await proxy(makeRequest("/admin"))).toBe(passThrough);
   });
 
-  it("does not gate an unprotected route", async () => {
-    const passThrough = NextResponse.next();
-    updateSessionMock.mockResolvedValue({ response: passThrough, user: null, supabase: {} });
+  it("does not gate an unprotected route (and does no session work for it)", async () => {
     const result = await proxy(makeRequest("/signup"));
-    expect(result).toBe(passThrough);
+    expect(result.status).toBe(200);
+    expect(result.headers.get("location")).toBeNull();
+    expect(updateSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("serves nothing but SCORM files on the SCORM content origin", async () => {
+    const saved = { content: process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN, app: process.env.NEXT_PUBLIC_APP_URL };
+    process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN = "http://127.0.0.1:3000";
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+    try {
+      for (const path of ["/login", "/learner", "/api/cron/scheduled-reports"]) {
+        const req = new NextRequest(`http://127.0.0.1:3000${path}`, { headers: { host: "127.0.0.1:3000" } });
+        expect((await proxy(req)).status, path).toBe(404);
+      }
+      expect(updateSessionMock).not.toHaveBeenCalled();
+    } finally {
+      process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN = saved.content;
+      process.env.NEXT_PUBLIC_APP_URL = saved.app;
+    }
   });
 
   it("requires MFA for a non-admin portal when configured to", async () => {

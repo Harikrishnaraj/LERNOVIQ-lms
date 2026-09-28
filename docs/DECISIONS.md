@@ -243,3 +243,11 @@ Improve:
 **Reason:** AI-assisted builds tend to drop or quietly shrink features. A machine-checked link between features and tasks makes gaps visible, and a feature can only be removed through an explicit ADR. This supersedes the "Later" bucket in the original task list: deferred features are now scheduled in Phases 5–12, not dropped.
 
 **Status:** Accepted.
+
+## ADR-029 — SCORM Delivery: Signed Asset Tokens and an Optional Content Origin
+
+**Decision:** SCORM package files are served at `/api/scorm/<lessonId>/<token>/<path>`, where the token is a short-lived HMAC (user + lesson + expiry, key derived from the service-role key) minted only after RLS lets the viewer read the lesson. The route trusts the token, not a cookie. Every HTML file gets the API shim, and a generated host frame (`__lms_frame.html`) holds the API in the parent window for drivers that use the ADL parent search (Rustici scormdriver, i.e. Articulate Storyline). When `NEXT_PUBLIC_SCORM_CONTENT_ORIGIN` names a host distinct from the app, the player frame is served from it with `allow-scripts allow-same-origin allow-modals`, and the proxy returns 404 for everything on that host except `/api/scorm`. Without it, the T-138 behaviour stands: a fully isolated `allow-scripts` sandbox on the app origin.
+
+**Reason:** Manual QA with a real Storyline package showed three blockers. HTML came back from storage as `text/plain`. The sandboxed frame never sends the session cookie, so every sub-file returned 401. The driver only looks for the API in `window.parent`, which is cross-origin under a unique-origin sandbox. The strict same-origin sandbox chosen in T-138 therefore can only run single-page packages. Authoring-tool exports need their frames to share one origin that is not the app's.
+
+**Status:** Proposed. The content origin partly revisits the T-138 choice of no separate subdomain, so it needs the user's confirmation. Production needs a DNS name pointing at the same deployment.

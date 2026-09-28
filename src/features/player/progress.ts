@@ -41,19 +41,21 @@ async function resolveEnrolledLesson(slug: string, lessonId: string) {
 
   const { data: lesson } = await supabase
     .from("lessons")
-    .select("id, course_sections!inner(version_id)")
+    .select("id, type, course_sections!inner(version_id)")
     .eq("id", lessonId)
     .eq("course_sections.version_id", enrollment.version_id)
     .maybeSingle();
   if (!lesson) return null;
 
-  return { supabase, enrollmentId: enrollment.id as string };
+  return { supabase, enrollmentId: enrollment.id as string, lessonType: lesson.type as string };
 }
 
 /** Marks a lesson complete for the signed-in learner. Idempotent: the first completion time is kept. */
 export async function completeLesson(slug: string, lessonId: string): Promise<CompleteResult> {
   const ctx = await resolveEnrolledLesson(slug, lessonId);
   if (!ctx) return { error: "You are not enrolled in this lesson." };
+  // A SCORM lesson is done only when the package reports passed/completed (submitScormCommit).
+  if (ctx.lessonType === "scorm") return { error: "This lesson completes when you finish the course content." };
 
   const { data: existing } = await ctx.supabase
     .from("lesson_progress")

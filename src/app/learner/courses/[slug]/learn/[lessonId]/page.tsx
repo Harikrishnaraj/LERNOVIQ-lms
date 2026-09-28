@@ -118,6 +118,7 @@ export default async function LessonPage({
               completed={lessonProgress.completed}
               nextHref={next ? lessonHref(next.id) : null}
               onComplete={completeLesson.bind(null, slug, lessonId)}
+              automatic={lesson.type === "scorm"}
             />
           )}
 

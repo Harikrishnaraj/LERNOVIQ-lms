@@ -6,7 +6,7 @@ let currentClient: SupabaseClient;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { submitScormCommit } from "@/features/player/progress";
+import { completeLesson, submitScormCommit } from "@/features/player/progress";
 
 const hasLiveProject = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -78,6 +78,27 @@ describe.skipIf(!hasLiveProject)("scorm player (T-138, live Supabase)", () => {
     currentClient = outsider.client;
     const res = await submitScormCommit(course.slug, lessonId, { "cmi.core.lesson_status": "incomplete" });
     expect("error" in res).toBe(true);
+  });
+
+  it("refuses a manual 'Mark complete' on a SCORM lesson: only the package's result completes it", async () => {
+    currentClient = learner.client;
+    expect(await completeLesson(course.slug, lessonId)).toEqual({ error: "This lesson completes when you finish the course content." });
+    const { data } = await svc.from("lesson_progress").select("completed_at").eq("lesson_id", lessonId).eq("enrollment_id", enrollmentId).maybeSingle();
+    expect(data?.completed_at ?? null).toBeNull();
+  });
+
+  it("refuses to replace the package of a published (non-editable) version, even for the owner", async () => {
+    const { error } = await instructor.client.rpc("save_scorm_package", {
+      p_lesson_id: lessonId,
+      p_version: "1.2",
+      p_title: "swap",
+      p_launch_path: "index.html",
+      p_storage_prefix: "x",
+      p_file_paths: ["index.html"],
+      p_file_count: 1,
+      p_total_bytes: 1,
+    });
+    expect(error?.code).toBe("42501");
   });
 
   it("saves an in-progress commit without completing the lesson", async () => {

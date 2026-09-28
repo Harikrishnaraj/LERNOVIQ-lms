@@ -15,9 +15,33 @@ const PORTAL_PERMISSION: Record<string, string> = {
   "/org_admin": "portal.org_admin.access",
 };
 
+// Paths that need the session refreshed and portal access checked (the original matcher).
+const SESSION_PATHS = /^\/(learner|instructor|admin|org_admin|courses|certificates)(\/|$)/;
+
+/** Host of the dedicated SCORM content origin, when configured and distinct from the app's own. */
+export function scormContentHost(contentOrigin: string | undefined, appUrl: string | undefined): string | null {
+  try {
+    if (!contentOrigin) return null;
+    const host = new URL(contentOrigin).host;
+    return appUrl && new URL(appUrl).host === host ? null : host;
+  } catch {
+    return null;
+  }
+}
+
 export async function proxy(request: NextRequest) {
-  const { response, user, supabase } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
+
+  // The SCORM content origin runs untrusted package code with allow-same-origin, so it serves
+  // package files only (/api/scorm, excluded by the matcher): no login page, app pages or other
+  // APIs, so there is never a session on that origin for package code to use.
+  const contentHost = scormContentHost(process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN, process.env.NEXT_PUBLIC_APP_URL);
+  if (contentHost && request.headers.get("host") === contentHost) {
+    return new NextResponse("Not found", { status: 404 });
+  }
+  if (!SESSION_PATHS.test(pathname)) return NextResponse.next();
+
+  const { response, user, supabase } = await updateSession(request);
   const portal = Object.keys(PORTAL_PERMISSION).find((prefix) => pathname.startsWith(prefix));
 
   if (portal && !user) {
@@ -71,5 +95,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/learner/:path*", "/instructor/:path*", "/admin/:path*", "/org_admin/:path*", "/courses/:path*", "/certificates/:path*"],
+  // Everything except static assets and the SCORM file route, so the content-origin guard above
+  // sees every other request; session work still only runs for SESSION_PATHS.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/scorm/).*)"],
 };

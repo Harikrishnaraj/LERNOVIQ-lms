@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { signScormToken } from "@/services/scorm/token";
 import type { PlayerSection } from "./navigation";
 
 export interface PlayerCourse {
@@ -23,6 +24,8 @@ export interface PlayerLessonContent {
   isPreview: boolean;
   /** Set only for type "scorm": the path to request from the SCORM proxy route. */
   scormLaunchPath: string | null;
+  /** Signed, short-lived capability for the SCORM asset route (the sandboxed iframe sends no cookies). */
+  scormToken: string | null;
 }
 
 interface OutlineRow {
@@ -146,9 +149,15 @@ export async function getLessonContent(
   if (error || !data) return null;
 
   let scormLaunchPath: string | null = null;
+  let scormToken: string | null = null;
   if (data.type === "scorm") {
     const { data: pkg } = await supabase.from("scorm_packages").select("launch_path").eq("lesson_id", lessonId).maybeSingle();
     scormLaunchPath = (pkg?.launch_path as string | null) ?? null;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    // RLS already let this viewer read the lesson, so they may load its package files.
+    if (scormLaunchPath && user) scormToken = signScormToken(user.id, lessonId);
   }
 
   return {
@@ -160,6 +169,7 @@ export async function getLessonContent(
     durationMinutes: data.duration_minutes,
     isPreview: data.is_preview,
     scormLaunchPath,
+    scormToken,
   };
 }
 

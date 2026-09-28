@@ -40,6 +40,11 @@ const EXT_TO_MIME: Record<string, string> = {
   txt: "text/plain", csv: "text/csv", pdf: "application/pdf",
 };
 
+/** Content type from the (already allow-listed) extension; storage rewrites text/html to text/plain on download. */
+export function contentTypeFor(path: string): string | undefined {
+  return EXT_TO_MIME[extensionOf(path)];
+}
+
 export class ScormValidationError extends Error {}
 
 function extensionOf(path: string): string {
