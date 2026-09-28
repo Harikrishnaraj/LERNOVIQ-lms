@@ -3,6 +3,7 @@ import { getOrgAssignedLearning, organizationReportToCsv } from "@/features/admi
 import { getMyOrganizationId, getOrganizationDetail } from "@/features/admin/organizations";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
+import { clientIp, rateLimit } from "@/services/rate-limit";
 
 // F-503: organization report export (completion/overdue/hours), org-admin side (own org only).
 export async function GET() {
@@ -11,6 +12,9 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
+  if (!(await rateLimit("analytics-export", await clientIp(), user.id))) {
+    return new NextResponse("Too many exports. Please wait a while and try again.", { status: 429 });
+  }
 
   const orgId = await getMyOrganizationId(supabase);
   if (!orgId) return new NextResponse("Not found", { status: 404 });

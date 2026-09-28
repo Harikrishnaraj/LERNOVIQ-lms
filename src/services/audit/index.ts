@@ -49,6 +49,9 @@ export const AUDIT_ACTIONS = [
   "organization.learning_assigned",
   "organization.learning_unassigned",
   "organization.report_exported",
+  "account.deletion_requested",
+  "account.deletion_cancelled",
+  "account.data_exported",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PasswordForm, ProfileForm } from "@/components/profile/profile-forms";
+import { PrivacyPanel } from "@/components/profile/privacy-panel";
 import { PageHeader } from "@/components/layout/page-header";
 import { PublicProfileForm } from "@/components/instructor/public-profile-form";
 import { PayoutDetailsForm } from "@/components/instructor/payout-details-form";
 import { getPayoutDetails, getPublicProfile } from "@/features/instructor/settings";
+import { getMyDeletionStatus } from "@/features/privacy/account";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Settings | Instructor" };
@@ -18,9 +20,10 @@ export default async function InstructorSettingsPage() {
   if (!user) redirect("/login?next=/instructor/settings");
 
   const { data: profile } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle();
-  const [publicProfile, payoutDetails] = await Promise.all([
+  const [publicProfile, payoutDetails, deletionRequestedAt] = await Promise.all([
     getPublicProfile(supabase, user.id),
     getPayoutDetails(supabase, user.id),
+    getMyDeletionStatus(supabase, user.id),
   ]);
 
   return (
@@ -73,6 +76,13 @@ export default async function InstructorSettingsPage() {
             </Link>
             .
           </p>
+        </section>
+
+        <section aria-labelledby="privacy-heading" className="space-y-4">
+          <h2 id="privacy-heading" className="text-base font-semibold">
+            Privacy
+          </h2>
+          <PrivacyPanel deletionRequestedAt={deletionRequestedAt} />
         </section>
       </div>
     </>
