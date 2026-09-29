@@ -61,8 +61,10 @@ export function ScormPlayer({
   const [status, setStatus] = useState<"active" | "saving" | "saved" | "error">("active");
   const [frame, setFrame] = useState<{ origin: string; sandbox: string } | null>(null);
 
-  // Decided after mount because it compares against this page's own origin.
+  // Decided after mount because it compares against this page's own origin, which only exists in
+  // the browser -- SSR/hydration cannot compute this value, so it genuinely needs an effect.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFrame(frameConfig(process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN, window.location.origin));
   }, []);
 
