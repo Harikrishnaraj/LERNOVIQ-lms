@@ -52,6 +52,10 @@ export const AUDIT_ACTIONS = [
   "account.deletion_requested",
   "account.deletion_cancelled",
   "account.data_exported",
+  "communication.template_created",
+  "communication.template_updated",
+  "communication.template_deleted",
+  "communication.announcement_sent",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

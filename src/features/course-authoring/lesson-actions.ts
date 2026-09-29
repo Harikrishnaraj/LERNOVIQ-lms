@@ -19,6 +19,7 @@ import { getCourseForEditing } from "./queries";
 import { getLessonForEditing } from "./lessons";
 import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 import {
+  looksLikeVideo,
   normalizeVideoRef,
   storageVideoPath,
   validateUpload,
@@ -82,6 +83,24 @@ export async function saveLesson(
   }
   const video = normalizeVideoRef(input.videoRef, ctx.courseId);
   if (!video.ok) return { ok: false, error: video.error, fieldErrors: { videoRef: video.error } };
+
+  // A newly attached (not previously saved) uploaded file: the browser only checked the claimed
+  // name/MIME before upload (spoofable — a renamed .txt reports as video/mp4), so verify the
+  // object actually exists and really is a video container before it is ever shown to a learner.
+  const newVideoPath = storageVideoPath(video.value ?? "");
+  if (newVideoPath && newVideoPath !== storageVideoPath(ctx.lesson.videoRef ?? "")) {
+    const invalid = { ok: false as const, error: "The uploaded file is not a valid video. Please upload it again." };
+    const ext = newVideoPath.split(".").pop() ?? "";
+    try {
+      const head = await supabaseStorage.readHeader(VIDEO_BUCKET, newVideoPath, 32);
+      if (!looksLikeVideo(head, ext)) {
+        await supabaseStorage.remove(VIDEO_BUCKET, [newVideoPath]).catch(() => {});
+        return { ...invalid, fieldErrors: { videoRef: invalid.error } };
+      }
+    } catch {
+      return { ...invalid, fieldErrors: { videoRef: invalid.error } };
+    }
+  }
 
   const patch = {
     title: parsed.data.title,

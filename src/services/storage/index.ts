@@ -21,6 +21,8 @@ export interface StorageAdapter {
   upload(bucket: string, path: string, bytes: Uint8Array, contentType: string): Promise<void>;
   /** Reads an object's bytes and stored content-type directly (service role) for server-side proxying. */
   download(bucket: string, path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
+  /** The first `byteCount` bytes of an object, for sniffing real content (e.g. video magic bytes). */
+  readHeader(bucket: string, path: string, byteCount: number): Promise<Uint8Array>;
 }
 
 export const THUMBNAIL_BUCKET = "course-thumbnails";
@@ -91,5 +93,14 @@ export const supabaseStorage: StorageAdapter = {
     const { data, error } = await createAdminClient().storage.from(bucket).download(path);
     if (error || !data) throw new Error(`storage download failed: ${error?.message}`);
     return { bytes: new Uint8Array(await data.arrayBuffer()), contentType: data.type || "application/octet-stream" };
+  },
+
+  async readHeader(bucket, path, byteCount) {
+    // The storage-js `download()` helper does not expose a Range header, so we fetch the object's
+    // own (short-lived, server-only) signed URL directly to read just its first bytes.
+    const url = await this.createSignedUrl(bucket, path, 60);
+    const res = await fetch(url, { headers: { Range: `bytes=0-${byteCount - 1}` } });
+    if (!res.ok && res.status !== 206) throw new Error(`storage read failed: HTTP ${res.status}`);
+    return new Uint8Array(await res.arrayBuffer());
   },
 };

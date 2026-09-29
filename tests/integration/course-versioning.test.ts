@@ -238,7 +238,10 @@ describe.skipIf(!hasLiveProject)("course versioning (T-102, live Supabase)", () 
     as(scormOwner);
     expect(await startNewVersion(scormCourse.courseId)).toEqual({ ok: true, versionNumber: 2 });
     const v2 = (await svc.from("course_versions").select("id").eq("course_id", scormCourse.courseId).eq("version_number", 2).single()).data!.id as string;
-    const v2Lesson = (await svc.from("lessons").select("id").eq("section_id", (await svc.from("course_sections").select("id").eq("version_id", v2).single()).data!.id as string).single()).data!;
+    // The course has two sections in v2 (the fixture's default "Intro" section plus this test's own "S"
+    // section), so the SCORM lesson's copy must be found by its distinguishing title, not just version_id.
+    const v2Section = (await svc.from("course_sections").select("id").eq("version_id", v2).eq("title", "S").single()).data!;
+    const v2Lesson = (await svc.from("lessons").select("id").eq("section_id", v2Section.id as string).single()).data!;
     const v2Pkg = (await svc.from("scorm_packages").select("*").eq("lesson_id", v2Lesson.id as string).single()).data!;
     expect(v2Pkg).toMatchObject({
       storage_prefix: pkg!.storage_prefix,
