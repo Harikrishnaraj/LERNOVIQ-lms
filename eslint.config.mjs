@@ -12,7 +12,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
+    // .claude/worktrees holds other agents' checkouts (including their own node_modules/.next and
+    // scratch scripts) - never app code, so it must never be linted as part of this tree.
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", ".claude/worktrees/**"],
   },
 ];
 
