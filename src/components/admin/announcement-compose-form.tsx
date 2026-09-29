@@ -42,6 +42,10 @@ export function AnnouncementComposeForm({
 
   useEffect(() => {
     let cancelled = false;
+    // Flips to "counting…" immediately on every target change, ahead of the debounced fetch below
+    // -- a deliberate UX choice (instant feedback that a new count is coming), not something to
+    // defer into the timer callback.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCounting(true);
     const timer = setTimeout(async () => {
       const res = await previewTargetCountAction({
