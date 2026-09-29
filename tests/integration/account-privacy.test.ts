@@ -98,15 +98,19 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
   });
 
   it("purge_old_audit_logs only removes rows older than the 2-year retention window, and only cron/service-role may call it", async () => {
+    // audit_logs is append-only (T-070): even the service role cannot UPDATE created_at after
+    // the insert (the immutable trigger silently refuses it), so the backdated row must be
+    // inserted with its old created_at already set, not inserted-then-updated.
     const { data: oldRow } = await svc
       .from("audit_logs")
-      .insert({ action: `${tag}.old`, resource_type: "test", metadata: {} })
+      .insert({
+        action: `${tag}.old`,
+        resource_type: "test",
+        metadata: {},
+        created_at: new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      })
       .select("id")
       .single();
-    await svc
-      .from("audit_logs")
-      .update({ created_at: new Date(Date.now() - 3 * 365 * 24 * 60 * 60 * 1000).toISOString() })
-      .eq("id", oldRow!.id);
     const { data: recentRow } = await svc.from("audit_logs").insert({ action: `${tag}.recent`, resource_type: "test", metadata: {} }).select("id").single();
 
     const { error: deniedErr } = await learner.client.rpc("purge_old_audit_logs");
@@ -117,6 +121,7 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
 
     expect((await svc.from("audit_logs").select("id").eq("id", oldRow!.id).maybeSingle()).data).toBeNull();
     expect((await svc.from("audit_logs").select("id").eq("id", recentRow!.id).maybeSingle()).data).not.toBeNull();
-    await svc.from("audit_logs").delete().eq("id", recentRow!.id);
+    // recentRow is left in place: audit_logs is append-only, so even test cleanup cannot delete
+    // it outside the purge job (see "is append-only even for the service role" in audit-logs.test.ts).
   });
 });
