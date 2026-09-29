@@ -11,7 +11,10 @@ const OTHER_LESSON = "a72a72e9-8d91-4c95-868e-e99afe1c2ab3";
 const NOW = Date.UTC(2026, 8, 28, 10, 15);
 
 beforeAll(() => {
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
+  // .env.local sets this to an empty string (not unset) when no live project is configured, and
+  // vitest.config.ts's loadEnv() loads it verbatim -- `??=` only replaces null/undefined, so it
+  // must be `||=` to also replace that empty string.
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||= "test-service-role-key";
 });
 
 describe("SCORM asset token", () => {

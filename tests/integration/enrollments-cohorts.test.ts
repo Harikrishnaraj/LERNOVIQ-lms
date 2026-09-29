@@ -157,6 +157,41 @@ describe.skipIf(!hasLiveProject)("enrollments & cohorts (T-135, live Supabase)",
     expect(ids).toContain(plainLearner.id);
   });
 
+  it("refuses to reset a completed enrollment back to active when re-enrolling", async () => {
+    const completedLearner = await user("cmp", "learner", `${tag} Completed Learner`);
+    await svc.from("enrollments").insert({ user_id: completedLearner.id, course_id: course.courseId, version_id: course.versionId, status: "completed", completed_at: new Date().toISOString() });
+
+    currentClient = admin.client;
+    const result = await enrollUserAction(completedLearner.id, course.courseId);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toContain("already completed");
+
+    const { data } = await svc.from("enrollments").select("status").eq("user_id", completedLearner.id).eq("course_id", course.courseId).single();
+    expect(data!.status).toBe("completed");
+  });
+
+  it("skips an already-completed member during bulk enroll without blocking the rest of the cohort", async () => {
+    const completedLearner = await user("cmp2", "learner", `${tag} Completed Learner 2`);
+    const freshLearner = await user("frs", "learner", `${tag} Fresh Learner`);
+    await svc.from("enrollments").insert({ user_id: completedLearner.id, course_id: course.courseId, version_id: course.versionId, status: "completed", completed_at: new Date().toISOString() });
+
+    currentClient = admin.client;
+    await createCohortAction(`${tag} Re-run Cohort`);
+    const cohorts = await getAdminCohorts(admin.client);
+    const cohort = cohorts.find((c) => c.name === `${tag} Re-run Cohort`)!;
+    cohortIds.push(cohort.id);
+    await addCohortMemberAction(cohort.id, completedLearner.id);
+    await addCohortMemberAction(cohort.id, freshLearner.id);
+
+    const result = await bulkEnrollCohortAction(cohort.id, course.courseId);
+    expect(result).toMatchObject({ ok: true, totalMembers: 2, enrolled: 1 });
+
+    const { data: completedRow } = await svc.from("enrollments").select("status").eq("user_id", completedLearner.id).eq("course_id", course.courseId).single();
+    expect(completedRow!.status).toBe("completed");
+    const { data: freshRow } = await svc.from("enrollments").select("status").eq("user_id", freshLearner.id).eq("course_id", course.courseId).single();
+    expect(freshRow!.status).toBe("active");
+  });
+
   it("rejects cohort management from a non-admin", async () => {
     currentClient = plainLearner.client;
     expect((await createCohortAction(`${tag} Sneaky`)).ok).toBe(false);
