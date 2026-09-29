@@ -127,7 +127,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-138** Content: media, documents, SCORM package upload + launch (validated). — F-410
 - [x] **T-139** Moderation: reported posts/reviews queue, hide/restore, ban. — F-411
 - [x] **T-140** Analytics: platform dashboards, saved reports, scheduled export. — F-412
-- [ ] **T-141** Communication: announcements (targeted), email templates, delivery log. — F-413
+- [x] **T-141** Communication: announcements (targeted), email templates, delivery log. — F-413
 - [x] **T-142** Integrations & API: API keys (hashed, scoped), webhooks, rate limits, request log. — F-415
 - [x] **T-143** Settings & Security: platform settings, password/MFA policy, session policy, security events. — F-416
 - [x] **T-144** Admin profile: personal info, security, notification preferences, my recent actions. — F-417
