@@ -9,6 +9,17 @@ import type { NextConfig } from "next";
 // production, so 'unsafe-eval' is scoped to non-production only.
 const isDev = process.env.NODE_ENV !== "production";
 
+function originOf(url: string | undefined): string | null {
+  try {
+    return url ? new URL(url).origin : null;
+  } catch {
+    return null;
+  }
+}
+const APP_ORIGIN = originOf(process.env.NEXT_PUBLIC_APP_URL);
+// ADR-029: SCORM packages may run on a dedicated content origin, which the player page frames.
+const SCORM_ORIGIN = originOf(process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN);
+
 const CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
@@ -17,6 +28,7 @@ const CSP = [
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co",
   "media-src 'self' https://*.supabase.co",
+  `frame-src 'self'${SCORM_ORIGIN ? ` ${SCORM_ORIGIN}` : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -33,6 +45,24 @@ const SECURITY_HEADERS = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
 ];
 
+// SCORM package files (/api/scorm/*) must be frameable by the player page and by their own host
+// frame, and authoring-tool exports rely on inline scripts and eval. Their isolation comes from
+// the sandbox, the separate content origin and the per-lesson token (ADR-029), not from this CSP.
+const SCORM_CSP = [
+  "default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'",
+  `frame-ancestors 'self'${APP_ORIGIN ? ` ${APP_ORIGIN}` : ""}`,
+  "object-src 'none'",
+  "base-uri 'self'",
+].join("; ");
+
+const SCORM_HEADERS = [
+  { key: "Content-Security-Policy", value: SCORM_CSP },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+];
+
 const nextConfig: NextConfig = {
   experimental: {
     // Server Actions default to 1 MB. Course thumbnails may be up to 2 MB (validated in the action);
@@ -40,7 +70,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "3mb" },
   },
   async headers() {
-    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+    return [
+      // Every route except SCORM package files gets the strict set (X-Frame-Options: DENY etc.).
+      { source: "/:path((?!api/scorm/).*)", headers: SECURITY_HEADERS },
+      { source: "/api/scorm/:path*", headers: SCORM_HEADERS },
+    ];
   },
 };
 
