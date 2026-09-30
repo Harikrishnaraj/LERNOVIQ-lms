@@ -113,6 +113,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-111** Resource Library: reusable media/documents with usage. — F-219
 - [x] **T-112** Instructor Settings: public profile, payout details (via provider), notifications. — F-220
 - [x] **T-113** E2E: instructor extended (TEST_PLAN §11, §12). — F-206…F-220
+- [x] **T-114** Assignments page: create across courses (rich-text description, allowed file types, reference files up to 50MB), add to live courses (ADR-030), all-course table with status, submissions/enrolled, search and actions. — F-206
 
 ## Phase 7 — Admin complete
 

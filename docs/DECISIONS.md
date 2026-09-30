@@ -251,3 +251,11 @@ Improve:
 **Reason:** Manual QA with a real Storyline package showed three blockers. HTML came back from storage as `text/plain`. The sandboxed frame never sends the session cookie, so every sub-file returned 401. The driver only looks for the API in `window.parent`, which is cross-origin under a unique-origin sandbox. The strict same-origin sandbox chosen in T-138 therefore can only run single-page packages. Authoring-tool exports need their frames to share one origin that is not the app's.
 
 **Status:** Proposed. The content origin partly revisits the T-138 choice of no separate subdomain, so it needs the user's confirmation. Production needs a DNS name pointing at the same deployment.
+
+## ADR-030 — Adding Assignments to a Live Course
+
+**Decision:** An instructor may **add** a new assignment to their own published (live) course from the Assignments page, without starting a new version. It is created in the published version, so enrolled learners see it straight away, and — when a newer editable draft exists on top — in that draft too, so the next publish does not drop it. This is additive only: existing live assignments stay locked for editing and deleting, exactly as ADR-011 requires, and everything else in a live course still goes through a new draft version and review. Learners pinned to an older archived version do not get the new assignment. When the newest version is in review (not editable), the assignment goes to the live version only.
+
+**Reason:** Instructors need to set new work for a running cohort (the Assignments page mockup assigns to a live course that already has submissions). Adding a new, separate assignment cannot rewrite any learner's existing history, submission, grade or certificate, which is what ADR-011 protects; changing or removing an assignment that learners may already be working on could, so that stays locked.
+
+**Status:** Accepted (user decision, T-114). Narrows ADR-011; does not replace it.

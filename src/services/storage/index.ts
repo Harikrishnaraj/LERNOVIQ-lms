@@ -29,6 +29,7 @@ export const THUMBNAIL_BUCKET = "course-thumbnails";
 export const VIDEO_BUCKET = "course-videos";
 export const ASSET_BUCKET = "lesson-assets";
 export const SUBMISSION_BUCKET = "assignment-submissions";
+export const ASSIGNMENT_RESOURCE_BUCKET = "assignment-resources";
 export const AVATAR_BUCKET = "avatars";
 export const RESOURCE_LIBRARY_BUCKET = "resource-library";
 export const SCORM_BUCKET = "scorm-packages";
