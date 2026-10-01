@@ -266,7 +266,7 @@ Improve:
 
 **Reason:** User decision (2026-10-01). Stripe covers checkout, subscriptions, coupons, refunds and payouts (Connect) in one provider; the adapter keeps a second provider (for example Razorpay for India) possible later without touching feature code.
 
-**Status:** Accepted (user decision).
+**Status:** Deferred (2026-10-01) — the user put the payment provider decision on hold shortly after choosing Stripe ("for payment we will decide later"). Kept as the leading option; commerce tasks T-180–T-188 stay open until a provider is confirmed.
 
 ## ADR-032 — Production Hosting on Cloudflare Workers (vinext)
 
