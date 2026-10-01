@@ -4,6 +4,7 @@ import { can } from "@/lib/permissions/can";
 import { needsMfa } from "@/lib/permissions/mfa";
 import { LAST_ACTIVE_COOKIE, isSessionIdleExpired } from "@/lib/permissions/session";
 import { getPlatformSettings } from "@/services/settings";
+import { pickRequestId, REQUEST_ID_HEADER } from "@/lib/log/request-id";
 
 // Authentication ("is there a user") + portal-level authorization ("can this
 // user use this portal"). Finer-grained per-action permission checks inside
@@ -29,7 +30,20 @@ export function scormContentHost(contentOrigin: string | undefined, appUrl: stri
   }
 }
 
+/**
+ * Every request gets a correlation ID (T-242): forwarded to the app as `x-request-id` (so server
+ * logs carry it) and returned on the response (so a user or support can quote it).
+ */
 export async function proxy(request: NextRequest) {
+  const requestId = pickRequestId(request.headers);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REQUEST_ID_HEADER, requestId);
+  const response = await route(request, requestHeaders);
+  response.headers.set(REQUEST_ID_HEADER, requestId);
+  return response;
+}
+
+async function route(request: NextRequest, requestHeaders: Headers): Promise<NextResponse> {
   const pathname = request.nextUrl.pathname;
 
   // The SCORM content origin runs untrusted package code with allow-same-origin, so it serves
@@ -39,9 +53,9 @@ export async function proxy(request: NextRequest) {
   if (contentHost && request.headers.get("host") === contentHost) {
     return new NextResponse("Not found", { status: 404 });
   }
-  if (!SESSION_PATHS.test(pathname)) return NextResponse.next();
+  if (!SESSION_PATHS.test(pathname)) return NextResponse.next({ request: { headers: requestHeaders } });
 
-  const { response, user, supabase } = await updateSession(request);
+  const { response, user, supabase } = await updateSession(request, requestHeaders);
   const portal = Object.keys(PORTAL_PERMISSION).find((prefix) => pathname.startsWith(prefix));
 
   if (portal && !user) {

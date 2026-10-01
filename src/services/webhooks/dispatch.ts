@@ -1,3 +1,4 @@
+import { captureError } from "@/services/error-tracking";
 import { signWebhookPayload, type WebhookEvent } from "./index";
 import { createAdminClient } from "@/services/supabase/admin";
 
@@ -50,6 +51,6 @@ export async function dispatchWebhookEvent(event: WebhookEvent, payload: Record<
       }),
     );
   } catch (err) {
-    console.error("dispatchWebhookEvent failed", event, err);
+    void captureError("webhook.dispatch_failed", err, { webhookEvent: event });
   }
 }

@@ -1,3 +1,4 @@
+import { log } from "@/lib/log";
 import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 
@@ -49,7 +50,7 @@ export async function rateLimit(
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    console.error("rateLimit: SUPABASE_SERVICE_ROLE_KEY not configured; limiting disabled");
+    log.error("rate_limit.not_configured", { detail: "service role key missing; limiting disabled" });
     return true;
   }
   const db = createClient(url, key, { auth: { persistSession: false } });
@@ -65,7 +66,7 @@ export async function rateLimit(
       p_window_seconds: windowSeconds,
     });
     if (error) {
-      console.error("rateLimit: check failed", error.message);
+      log.error("rate_limit.check_failed", { message: error.message });
       return true;
     }
     if (data === false) return false;

@@ -1,3 +1,4 @@
+import { captureError } from "@/services/error-tracking";
 import { notify } from "@/services/notifications";
 import { dispatchWebhookEvent } from "@/services/webhooks/dispatch";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -173,7 +174,7 @@ export async function tryEvaluateCompletion(
   try {
     return await evaluateCompletion(admin, enrollmentId);
   } catch (err) {
-    console.error("evaluateCompletion failed", err);
+    void captureError("completion.evaluate_failed", err);
     return NOT_COMPLETE;
   }
 }

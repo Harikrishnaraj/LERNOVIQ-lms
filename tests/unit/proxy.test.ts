@@ -184,4 +184,22 @@ describe("proxy", () => {
     expect(result).toBe(passThrough);
     expect(result.cookies.get("lms_last_active")).toBeDefined();
   });
+
+  it("gives every response an x-request-id and forwards it to the app (T-242)", async () => {
+    // Public path: no session work, still tagged.
+    const pub = await proxy(makeRequest("/"));
+    expect(pub.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(pub.headers.get("x-middleware-request-x-request-id")).toBe(pub.headers.get("x-request-id"));
+
+    // A safe upstream id is kept; protected routes forward it to updateSession too.
+    updateSessionMock.mockResolvedValue({ response: NextResponse.next(), user: null, supabase: {} });
+    const req = new NextRequest(new URL("/learner", "http://localhost:3000"), { headers: { "x-request-id": "edge-req-12345678" } });
+    const redirect = await proxy(req);
+    expect(redirect.headers.get("x-request-id")).toBe("edge-req-12345678");
+    expect((updateSessionMock.mock.calls.at(-1)![1] as Headers).get("x-request-id")).toBe("edge-req-12345678");
+
+    // An unsafe upstream id is replaced, never echoed.
+    const bad = await proxy(new NextRequest(new URL("/", "http://localhost:3000"), { headers: { "x-request-id": "<x>" } }));
+    expect(bad.headers.get("x-request-id")).not.toBe("<x>");
+  });
 });

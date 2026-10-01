@@ -1,3 +1,4 @@
+import { captureError } from "@/services/error-tracking";
 import { createAdminClient } from "@/services/supabase/admin";
 
 /** Privileged actions that must leave a trail (SECURITY section 17). Add new ones here. */
@@ -89,7 +90,7 @@ export async function recordAudit(entry: AuditEntry): Promise<boolean> {
     if (error) throw error;
     return true;
   } catch (err) {
-    console.error("audit write failed", entry.action, err);
+    void captureError("audit.write_failed", err, { action: entry.action });
     return false;
   }
 }
