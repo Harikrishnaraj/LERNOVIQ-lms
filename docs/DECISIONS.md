@@ -259,3 +259,31 @@ Improve:
 **Reason:** Instructors need to set new work for a running cohort (the Assignments page mockup assigns to a live course that already has submissions). Adding a new, separate assignment cannot rewrite any learner's existing history, submission, grade or certificate, which is what ADR-011 protects; changing or removing an assignment that learners may already be working on could, so that stays locked.
 
 **Status:** Accepted (user decision, T-114). Narrows ADR-011; does not replace it.
+
+## ADR-031 — Stripe for Payments (Test Mode First)
+
+**Decision:** Commerce (T-180–T-188) uses **Stripe**, behind the payment adapter required by ADR-015. Development and QA use Stripe **test mode** only; live keys are a separate, later decision. Enrollment in a paid course happens only after a verified Stripe webhook (signature checked, event ID stored for idempotency), never from the browser redirect.
+
+**Reason:** User decision (2026-10-01). Stripe covers checkout, subscriptions, coupons, refunds and payouts (Connect) in one provider; the adapter keeps a second provider (for example Razorpay for India) possible later without touching feature code.
+
+**Status:** Accepted (user decision).
+
+## ADR-032 — Production Hosting on Cloudflare Workers (vinext)
+
+**Decision:** Preview and production deployments run on **Cloudflare Workers** using **vinext** (Cloudflare's Vite-based reimplementation of the Next.js API surface), not Vercel. The Worker is named `modern-lms` (already created in the user's Cloudflare account). Supabase stays the database, auth and storage provider. CI keeps running the normal `next build` as well, so the app stays deployable to any standard Next.js host.
+
+**Reason:** User decision (2026-10-01). Checked before choosing the adapter: Next.js 16 runs `src/proxy.ts` on the Node.js runtime with no option to change it, and Cloudflare's OpenNext adapter documents Node.js middleware as "not yet supported" — our session refresh, portal guards, MFA and idle-timeout checks all live in the proxy, so OpenNext is not viable today. Cloudflare recommends vinext for Next.js 16 apps; `npx vinext check` reports this project 95% compatible (all `next/*` imports, the App Router, server actions, route handlers and `src/proxy.ts` supported). The one flagged issue is `__dirname` in a test helper (`tests/e2e/support/env.ts`), not app code.
+
+**Risks:** vinext is in beta. Mitigations: full E2E suite against the Cloudflare preview before any production promotion (ADR-019); keep `next build` green in CI as a fallback path.
+
+**Status:** Accepted (user decision). Narrows the "Vercel or equivalent" line in ARCHITECTURE.md; T-248 previews move to Cloudflare.
+
+## ADR-033 — Organization SSO via OIDC First
+
+**Decision:** Organization SSO (T-165, F-504) is built on Supabase Auth **custom OIDC providers**, which work on the current Free plan (up to 3 providers per project). Each organization is linked to one provider; a user who signs in through it is placed in that organization. **SAML 2.0** (Pro plan and above) is added later, when a customer needs it, behind the same organization ↔ provider mapping.
+
+**Reason:** User decision (2026-10-01). Verified in Supabase's docs: SAML SSO requires Pro ($25/month, 50 SSO MAU included, $0.015 per extra); custom OIDC providers are available on Free (3 providers; unlimited on Pro). Microsoft Entra, Okta, Google Workspace and Auth0 all speak OIDC.
+
+**Notes:** Supabase does not link an SSO identity to an existing password account with the same email, so the design must handle a person who already signed up with a password.
+
+**Status:** Accepted (user decision).
