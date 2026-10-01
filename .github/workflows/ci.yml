@@ -48,10 +48,16 @@ jobs:
         run: npm run build:vinext
 
   e2e:
-    name: E2E (Playwright)
+    # The full suite (desktop + mobile, ~450 tests against a remote Supabase) does not fit one
+    # job, so it is split into shards that run in parallel; each shard builds and starts the app.
+    name: E2E (Playwright) ${{ matrix.shard }}/6
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - name: Skip without Supabase secrets
         if: env.SUPABASE_SERVICE_ROLE_KEY == ''
@@ -69,11 +75,11 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Playwright (builds and starts the app itself)
         if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        run: npx playwright test
+        run: npx playwright test --shard=${{ matrix.shard }}/6
       - uses: actions/upload-artifact@v4
         if: failure() && env.SUPABASE_SERVICE_ROLE_KEY != ''
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
