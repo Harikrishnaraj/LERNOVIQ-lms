@@ -48,4 +48,9 @@ describe("signUp server action", () => {
       expect.objectContaining({ email: validInput.email, password: validInput.password }),
     );
   });
+
+  it("does not reveal an already-registered email even when Supabase reports it", async () => {
+    signUpMock.mockResolvedValue({ error: { code: "user_already_exists", message: "User already registered" } });
+    await expect(signUp(validInput)).rejects.toThrow("REDIRECT:/verify-email?email=test%40example.com");
+  });
 });
