@@ -141,7 +141,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-162** Org Admin scoped portal access (own org only). — F-501
 - [x] **T-163** Assigned courses/paths + required completion + due dates. — F-502
 - [x] **T-164** Organization reports (completion, overdue, hours) + export. — F-503
-- [ ] **T-165** Organization SSO (SAML/OIDC via Supabase). — F-504
+- [~] **T-165** Organization SSO (SAML/OIDC via Supabase). — F-504
 - [x] **T-166** E2E: org isolation (TEST_PLAN §4, §13). — F-500…F-504
 
 ## Phase 9 — Commerce
