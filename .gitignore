@@ -46,3 +46,10 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 /tests/e2e/.auth/
+/dist/
+.vinext/
+.cloudflare/
+
+# Local Cloudflare Worker secrets (wrangler/vite preview)
+.dev.vars
+.dev.vars.*
