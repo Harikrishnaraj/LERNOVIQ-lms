@@ -65,7 +65,7 @@ export function RoleMatrix({
       )}
       <div className="overflow-x-auto rounded-card border border-border">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-border bg-border-subtle text-xs text-text-secondary uppercase">
+          <thead className="border-b border-border bg-border-subtle text-xs text-neutral-text uppercase">
             <tr>
               <th scope="col" className="p-2">
                 Permission

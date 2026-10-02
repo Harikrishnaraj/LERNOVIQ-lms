@@ -16,7 +16,7 @@ const THEME: Record<
   learner: {
     aside: "bg-surface border-r border-border",
     brand: "text-text",
-    groupLabel: "text-text-muted",
+    groupLabel: "text-text-secondary",
     item: "gap-3 px-3 py-2 text-sm",
     active: "bg-primary-light text-primary font-semibold",
     idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
@@ -32,7 +32,7 @@ const THEME: Record<
   admin: {
     aside: "bg-surface border-r border-border",
     brand: "text-text",
-    groupLabel: "text-text-muted",
+    groupLabel: "text-text-secondary",
     item: "gap-2.5 px-2.5 py-1.5 text-[13px]",
     active: "bg-primary-light text-primary-dark font-semibold",
     idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
@@ -40,7 +40,7 @@ const THEME: Record<
   org_admin: {
     aside: "bg-surface border-r border-border",
     brand: "text-text",
-    groupLabel: "text-text-muted",
+    groupLabel: "text-text-secondary",
     item: "gap-2.5 px-2.5 py-1.5 text-[13px]",
     active: "bg-primary-light text-primary-dark font-semibold",
     idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
