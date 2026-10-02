@@ -276,7 +276,7 @@ Improve:
 
 **Risks:** vinext is in beta. Mitigations: full E2E suite against the Cloudflare preview before any production promotion (ADR-019); keep `next build` green in CI as a fallback path.
 
-**Status:** Accepted (user decision). Narrows the "Vercel or equivalent" line in ARCHITECTURE.md; T-248 previews move to Cloudflare.
+**Status:** Superseded by ADR-035 (2026-10-02). Narrowed the "Vercel or equivalent" line in ARCHITECTURE.md; T-248 previews had moved to Cloudflare.
 
 ## ADR-033 — Organization SSO via OIDC First
 
@@ -297,3 +297,13 @@ Improve:
 **Notes:** The hosted project is still the source of truth for production settings; a hosted Auth setting a test depends on must be mirrored in `config.toml`. Testing against the real deployment belongs to the production QA checklist (T-250).
 
 **Status:** Accepted (user decision).
+
+## ADR-035 — Cloudflare Removed; Hosting Not Chosen Yet
+
+**Decision:** The Cloudflare Workers / vinext setup from ADR-032 is removed: `cloudflare.config.ts`, `vite.config.ts`, the vinext and Cloudflare packages and scripts, the `build:vinext` CI step, the GitHub Actions deploy job, and the Cloudflare Claude Code plugin config. The app builds and runs only as standard Next.js (`next build` / `next start`). No hosting provider is chosen; CI keeps proving every change is deployable (Check + full E2E on a local Supabase stack, ADR-034).
+
+**Reason:** User decision (2026-10-02): "No need for cloudflare", remove it all, no hosting preference yet. Cloudflare Workers Builds failed on every push (dashboard build settings), and the vinext path added a second, beta build to keep green. The user has also floated a VPS with a self-hosted open-source AI model, which a plain Next.js server fits directly.
+
+**Consequences:** T-248 (preview deployments) and T-250 (production deploy) stay open and are blocked on the hosting decision; their IDs and F-947 are unchanged. Kept from the vinext work because they stand on their own: React 19.3, `"type": "module"`, `next typegen` before `tsc`, and the unique MFA factor name per enrolment (a real double-render race). The Cloudflare Workers Builds Git integration and the `modern-lms` Worker live in the user's Cloudflare account and must be disconnected/deleted there.
+
+**Status:** Accepted (user decision). Supersedes ADR-032.

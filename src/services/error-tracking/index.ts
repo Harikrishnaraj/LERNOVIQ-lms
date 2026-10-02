@@ -1,6 +1,6 @@
 // Error tracking adapter (T-242, ADR-015). Server errors are always written as structured
-// `error` log lines with their request ID, which Cloudflare Workers Logs keeps and indexes
-// (ADR-032). A third-party tracker (e.g. Sentry) plugs in here via setErrorReporter() once a
+// `error` log lines with their request ID, which the host's log collector keeps and indexes.
+// A third-party tracker (e.g. Sentry) plugs in here via setErrorReporter() once a
 // key exists; until then reporting is log-only. Reporting never throws.
 
 import { log } from "@/lib/log";

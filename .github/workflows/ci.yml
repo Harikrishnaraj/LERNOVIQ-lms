@@ -1,10 +1,9 @@
 name: CI
 
-# T-248 (F-947, ADR-019, ADR-032). Every PR and every push to main runs the project's own
-# definition of "green" (`npm run check`: typecheck → lint → unit + live integration tests →
-# feature registry → Next.js build), then the Cloudflare (vinext) build, then the Playwright suite,
-# then deploys to the `modern-lms` Worker (production from main, preview versions for PRs). The
-# deploy replaced Cloudflare Workers Builds (user decision 2026-10-02).
+# T-248 (F-947, ADR-019). Every PR and every push to main runs the project's own definition of
+# "green" (`npm run check`: typecheck → lint → unit + live integration tests → feature registry →
+# Next.js build), then the Playwright suite. Hosting is not chosen yet (ADR-035), so nothing is
+# deployed from here; this workflow proves the code is safe to deploy.
 #
 # T-251 / ADR-034: each job starts its own local Supabase stack (Supabase CLI + Docker) from
 # supabase/config.toml and supabase/migrations, seeds it with scripts/seed.mjs, and tests against
@@ -38,7 +37,7 @@ env:
 
 jobs:
   check:
-    name: Check (typecheck, lint, tests, features, builds)
+    name: Check (typecheck, lint, tests, features, build)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -63,8 +62,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed
       - name: npm run check
         run: npm run check
-      - name: Cloudflare Workers build (vinext)
-        run: npm run build:vinext
 
   e2e:
     # The full suite (desktop + mobile, ~450 tests) is split into shards that run in parallel;
@@ -114,50 +111,3 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
-
-  deploy:
-    # T-248 / ADR-032: deploys the vinext build to the `modern-lms` Worker from here instead of
-    # Cloudflare Workers Builds. Only after Check and every E2E shard pass. Pushes to main go to
-    # production; same-repo PRs upload a preview version that takes no traffic (--no-promote).
-    # Skipped until the CLOUDFLARE_* secrets exist, and on fork PRs (no secrets there).
-    name: Deploy to Cloudflare (${{ github.event_name == 'push' && 'production' || 'preview' }})
-    needs: [check, e2e]
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    concurrency:
-      group: deploy-${{ github.ref }}
-      cancel-in-progress: false
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # Baked into the client bundle at build time: the hosted project, not CI's local stack.
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
-      NEXT_PUBLIC_APP_URL: ${{ vars.PROD_APP_URL }}
-      NEXT_PUBLIC_SCORM_CONTENT_ORIGIN: ${{ vars.PROD_SCORM_CONTENT_ORIGIN }}
-    steps:
-      - name: Check deploy secrets
-        id: gate
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$NEXT_PUBLIC_SUPABASE_URL" ] || [ -z "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
-            echo "::notice::Cloudflare deploy skipped: set CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PROD_SUPABASE_URL and PROD_SUPABASE_ANON_KEY repository secrets."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/checkout@v4
-        if: steps.gate.outputs.ready == 'true'
-      - uses: actions/setup-node@v4
-        if: steps.gate.outputs.ready == 'true'
-        with:
-          node-version: 22
-          cache: npm
-      - if: steps.gate.outputs.ready == 'true'
-        run: npm ci
-      - name: Build (vinext)
-        if: steps.gate.outputs.ready == 'true'
-        run: npm run build:vinext
-      - name: Deploy
-        if: steps.gate.outputs.ready == 'true'
-        run: npm run ${{ github.event_name == 'push' && 'deploy:vinext' || 'deploy:vinext:preview' }}

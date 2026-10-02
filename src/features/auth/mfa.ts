@@ -12,7 +12,7 @@ export type MfaEnrollment = { factorId: string; qrCode: string; secret: string }
 
 // Starts TOTP enrolment for the signed-in user. Stale unverified factors are
 // removed first, and each enrolment gets a unique friendly name: the /mfa page
-// can be rendered twice in quick succession (seen under vinext on Workers), and
+// can be rendered twice in quick succession (seen under a vinext build), and
 // two concurrent enrolments with the same (empty) name hit
 // mfa_factor_name_conflict. Each render then shows its own valid factor; the
 // unverified leftovers are removed on the next visit.

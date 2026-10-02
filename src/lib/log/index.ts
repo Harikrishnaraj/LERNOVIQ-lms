@@ -1,5 +1,5 @@
-// Structured logging (T-242, F-942). One JSON line per event on stdout/stderr, which Cloudflare
-// Workers Logs (ADR-032) and any log drain index by field. Secrets are redacted (SECURITY §20) and
+// Structured logging (T-242, F-942). One JSON line per event on stdout/stderr, which the host's
+// log collector or any log drain indexes by field. Secrets are redacted (SECURITY §20) and
 // every line carries the request ID set by src/proxy.ts when it runs inside a request.
 
 import { formatLog, type LogLevel } from "./format";

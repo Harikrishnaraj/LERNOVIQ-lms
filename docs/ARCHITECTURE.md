@@ -19,7 +19,7 @@ Recommended stack:
 - Email: transactional email provider behind a service interface
 - E2E: Playwright
 - Unit/integration: Vitest where useful
-- Deployment: Cloudflare Workers via vinext (ADR-032); `next build` stays green so any Next.js-compatible host remains possible
+- Deployment: host not chosen yet (ADR-035, Cloudflare removed); the app is a standard Next.js build (`next build` / `next start`), so any Next.js-compatible host or a VPS works
 - Version control: Git + GitHub
 
 This follows the supplied Vibe Coding guide's recommended beginner-to-production direction: Next.js, TypeScript, Tailwind CSS, PostgreSQL/Supabase, Supabase Auth, Git/GitHub, Playwright and Vercel.

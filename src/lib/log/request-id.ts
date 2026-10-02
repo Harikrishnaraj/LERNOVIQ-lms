@@ -10,8 +10,8 @@ export function isSafeRequestId(value: string | null | undefined): value is stri
 }
 
 /**
- * The ID for this request: an upstream `x-request-id` if it is safe, else Cloudflare's `cf-ray`
- * (so our logs line up with Cloudflare's), else a fresh UUID.
+ * The ID for this request: an upstream `x-request-id` if it is safe, else a `cf-ray` (when a
+ * Cloudflare proxy/CDN sits in front, so our logs line up with its logs), else a fresh UUID.
  */
 export function pickRequestId(headers: { get(name: string): string | null }, generate: () => string = () => crypto.randomUUID()): string {
   const upstream = headers.get(REQUEST_ID_HEADER);
