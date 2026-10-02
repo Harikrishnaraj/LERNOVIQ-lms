@@ -306,4 +306,15 @@ Improve:
 
 **Consequences:** T-248 (preview deployments) and T-250 (production deploy) stay open and are blocked on the hosting decision; their IDs and F-947 are unchanged. Kept from the vinext work because they stand on their own: React 19.3, `"type": "module"`, `next typegen` before `tsc`, and the unique MFA factor name per enrolment (a real double-render race). The Cloudflare Workers Builds Git integration and the `modern-lms` Worker live in the user's Cloudflare account and must be disconnected/deleted there.
 
-**Status:** Accepted (user decision). Supersedes ADR-032.
+**Status:** Accepted (user decision). Supersedes ADR-032. Hosting chosen in ADR-036 (VPS).
+
+## ADR-036 — Production on a VPS with Docker, Deployed by GitHub Actions
+
+**Decision:** Production runs on the user's Ubuntu VPS. The stack has three containers (`deploy/docker-compose.yml`): the Next.js **standalone** server (built from `Dockerfile` with `NEXT_OUTPUT=standalone`), **Caddy** for HTTPS and reverse proxy, and a tiny **cron** container that calls `/api/cron/scheduled-reports` hourly. The CI workflow's `deploy` job runs after Check and every E2E shard pass, on pushes to `main` or a manual "Run workflow". It builds the image, pushes it to GHCR (private) and deploys over SSH as a `deploy` user. The job writes the server `.env` from repository secrets on each deploy, then runs `docker compose pull && up -d` and a smoke check. Until the user has a domain, hostnames default to sslip.io names derived from the IP (`<ip-dashed>.sslip.io` for the app, `content-<ip-dashed>.sslip.io` as the SCORM content origin), so HTTPS works from day one; `PROD_APP_HOST`/`PROD_CONTENT_HOST` override them. Setup steps: `docs/DEPLOY.md`.
+
+**Reason:** User decision (2026-10-02): host on their VPS (no domain yet). A plain Next.js server needs no adapter, matches what CI already tests (`next build`), and leaves room for the self-hosted open-source AI model the user has mentioned. Serving plain HTTP by IP is not an option: the CSP has `upgrade-insecure-requests`, HSTS is on, and the SCORM content origin must be a second host. sslip.io gives two real hostnames with valid certificates without buying a domain.
+
+**Consequences:** `NEXT_PUBLIC_*` values are build arguments (inlined into the client bundle), so a hostname change needs a new build, which a re-run of the deploy job does. Server secrets live only in GitHub secrets and the server's `.env` (mode 600). There is a single instance and no zero-downtime rollout: the restart takes a few seconds. Preview deployments per PR (the rest of F-947 / T-248) are not covered yet. Running them on the same VPS (one stack per PR under its own sslip.io name) is the follow-up. Supabase Auth's Site URL and redirect list must include the production host.
+
+**Status:** Accepted (user decision).
+

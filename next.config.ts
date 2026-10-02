@@ -70,6 +70,9 @@ const SCORM_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // The Docker image (Dockerfile, ADR-036) builds with NEXT_OUTPUT=standalone so the runtime image
+  // carries only traced files; CI and local `next build` / `next start` stay on the default output.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   experimental: {
     // Server Actions default to 1 MB. Course thumbnails may be up to 2 MB (validated in the action);
     // videos and attachments never pass through Next (signed direct-to-storage uploads).
