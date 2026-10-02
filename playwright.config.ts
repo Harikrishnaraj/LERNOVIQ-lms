@@ -6,9 +6,8 @@ export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
   retries: 1,
-  // CI shards all hit the same free-tier Supabase project; at 6 shards x 2 workers it stopped
-  // responding (statement timeouts, auth 504s) about 10 minutes in. One worker per shard (T-251).
-  workers: process.env.CI ? 1 : undefined,
+  // In CI each shard has its own local Supabase stack (ADR-034), so two workers per runner is safe.
+  workers: process.env.CI ? 2 : undefined,
   // Pages read from a remote Supabase project; 5s is too tight under parallel load.
   expect: { timeout: 10_000 },
   reporter: process.env.CI ? "github" : "list",

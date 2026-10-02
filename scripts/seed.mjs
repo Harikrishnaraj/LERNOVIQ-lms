@@ -12,13 +12,15 @@
  * Demo logins (dev only):  seed-instructor@example.com / seed-learner@example.com / seed-admin@example.com / seed-superadmin@example.com
  * Password for both:       seed-password-1
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-for (const line of readFileSync(join(root, ".env.local"), "utf8").split("\n")) {
+// CI has no .env.local: the local Supabase stack's URL and keys arrive as environment variables.
+const envFile = join(root, ".env.local");
+for (const line of existsSync(envFile) ? readFileSync(envFile, "utf8").split("\n") : []) {
   const i = line.indexOf("=");
   if (i < 1 || line.trim().startsWith("#")) continue;
   const key = line.slice(0, i).trim();

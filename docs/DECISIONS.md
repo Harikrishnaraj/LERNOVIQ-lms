@@ -287,3 +287,13 @@ Improve:
 **Notes:** Supabase does not link an SSO identity to an existing password account with the same email, so the design must handle a person who already signed up with a password.
 
 **Status:** Accepted (user decision).
+
+## ADR-034 — CI Tests Run Against a Local Supabase Stack
+
+**Decision:** Every CI job (Check and each E2E shard) starts its own Supabase stack with the Supabase CLI (Docker) from `supabase/config.toml` and `supabase/migrations`, seeds it with `scripts/seed.mjs`, and runs the integration and E2E tests against it. CI no longer uses the hosted `modern-lms` project or its secrets. `config.toml` mirrors the hosted Auth settings the tests rely on (email confirmation on, TOTP MFA on, Google provider on, sign-ups open, anonymous sign-ins off) and raises per-IP auth rate limits for the suite. The CSP allows the configured Supabase origin when it is not a `*.supabase.co` host, so production's policy is unchanged.
+
+**Reason:** User decision (2026-10-02, T-251). Six E2E shards sharing the free-tier project took it down about 10 minutes into each run (statement timeouts, Auth 504s, no DB connections), failing every shard and making the dev database unusable meanwhile. Throttling to two workers kept it up but made CI take about 2.5 hours. A stack per job is isolated, has no cross-region latency (GitHub's runners are in the US, the project is in ap-south-1) and lets fork PRs run the full suite.
+
+**Notes:** The hosted project is still the source of truth for production settings; a hosted Auth setting a test depends on must be mirrored in `config.toml`. Testing against the real deployment belongs to the production QA checklist (T-250).
+
+**Status:** Accepted (user decision).

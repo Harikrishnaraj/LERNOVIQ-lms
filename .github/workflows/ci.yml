@@ -6,9 +6,10 @@ name: CI
 # Deployments themselves are done by Cloudflare Workers Builds (previews for branches, production
 # from main) — this workflow only proves the code is safe to deploy.
 #
-# Repository secrets (Settings → Secrets and variables → Actions): NEXT_PUBLIC_SUPABASE_URL,
-# NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Without them (e.g. a fork PR) the live
-# integration tests skip themselves and the E2E job is skipped with a notice.
+# T-251 / ADR-034: each job starts its own local Supabase stack (Supabase CLI + Docker) from
+# supabase/config.toml and supabase/migrations, seeds it with scripts/seed.mjs, and tests against
+# it. CI never touches the hosted project (sharing it took the free-tier database down) and needs
+# no repository secrets, so fork PRs get the full run too.
 
 on:
   pull_request:
@@ -24,11 +25,12 @@ permissions:
   contents: read
 
 env:
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   NEXT_PUBLIC_APP_URL: http://localhost:3000
   NEXT_TELEMETRY_DISABLED: "1"
+  SUPABASE_CLI_VERSION: 2.119.0
+  # The local stack mirrors the hosted Google provider (T-165); CI never completes a Google sign-in.
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ci-placeholder.apps.googleusercontent.com
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: ci-placeholder
 
 jobs:
   check:
@@ -42,45 +44,60 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Start local Supabase, export its URL and keys, seed it
+        run: |
+          supabase start
+          eval "$(supabase status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed
       - name: npm run check
         run: npm run check
       - name: Cloudflare Workers build (vinext)
         run: npm run build:vinext
 
   e2e:
-    # The full suite (desktop + mobile, ~450 tests against a remote Supabase) does not fit one
-    # job, so it is split into shards that run in parallel; each shard builds and starts the app.
+    # The full suite (desktop + mobile, ~450 tests) is split into shards that run in parallel;
+    # each shard has its own Supabase stack, builds the app and starts it.
     name: E2E (Playwright) ${{ matrix.shard }}/6
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 60
     strategy:
       fail-fast: false
-      # Every shard uses the same free-tier Supabase project, which collapsed under 12 concurrent
-      # test workers (6 shards x 2). Run two shards at a time, one worker each (T-251).
-      max-parallel: 2
       matrix:
         shard: [1, 2, 3, 4, 5, 6]
     steps:
-      - name: Skip without Supabase secrets
-        if: env.SUPABASE_SERVICE_ROLE_KEY == ''
-        run: echo "::notice::SUPABASE_SERVICE_ROLE_KEY is not available to this run (fork PR or secret not set); E2E skipped."
       - uses: actions/checkout@v4
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
       - uses: actions/setup-node@v4
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
         with:
           node-version: 22
           cache: npm
-      - if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        run: npm ci
-      - if: env.SUPABASE_SERVICE_ROLE_KEY != ''
-        run: npx playwright install --with-deps chromium
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Start local Supabase, export its URL and keys, seed it
+        run: |
+          supabase start
+          eval "$(supabase status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed
       - name: Playwright (builds and starts the app itself)
-        if: env.SUPABASE_SERVICE_ROLE_KEY != ''
         run: npx playwright test --shard=${{ matrix.shard }}/6
       - uses: actions/upload-artifact@v4
-        if: failure() && env.SUPABASE_SERVICE_ROLE_KEY != ''
+        if: failure()
         with:
           name: playwright-report-${{ matrix.shard }}
           path: |

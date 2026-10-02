@@ -17,6 +17,12 @@ function originOf(url: string | undefined): string | null {
   }
 }
 const APP_ORIGIN = originOf(process.env.NEXT_PUBLIC_APP_URL);
+// A local Supabase stack (CI, ADR-034) is not under *.supabase.co, so allow its origin explicitly.
+const SUPABASE_ORIGIN = originOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const SUPABASE_SOURCES =
+  SUPABASE_ORIGIN && !/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(SUPABASE_ORIGIN)
+    ? `https://*.supabase.co ${SUPABASE_ORIGIN}`
+    : "https://*.supabase.co";
 // ADR-029: SCORM packages may run on a dedicated content origin, which the player page frames.
 const SCORM_ORIGIN = originOf(process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN);
 
@@ -24,10 +30,10 @@ const CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://*.supabase.co",
+  `img-src 'self' data: ${SUPABASE_SOURCES}`,
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co",
-  "media-src 'self' https://*.supabase.co",
+  `connect-src 'self' ${SUPABASE_SOURCES}`,
+  `media-src 'self' ${SUPABASE_SOURCES}`,
   `frame-src 'self'${SCORM_ORIGIN ? ` ${SCORM_ORIGIN}` : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
