@@ -47,15 +47,17 @@ describe.skipIf(!hasLiveProject)("platform settings (T-143, live Supabase)", () 
   }, 200_000);
 
   afterEach(async () => {
-    // Reset to the app's original defaults so later tests (and other suites) aren't affected.
-    await svc.from("platform_settings").update({ min_password_length: 8, mfa_required_portals: ["admin"], session_idle_timeout_minutes: null }).eq("id", true);
+    // Reset to the current defaults so later tests (and other suites) aren't affected. MFA covers both
+    // back-office portals since T-162 (migration org_admin_portal); resetting to ["admin"] here used to
+    // switch the org-admin requirement off in whatever database the suite ran against.
+    await svc.from("platform_settings").update({ min_password_length: 8, mfa_required_portals: ["admin", "org_admin"], session_idle_timeout_minutes: null }).eq("id", true);
   });
 
   afterAll(() => cleanup(svc, { learnerIds: [], courseIds: [], userIds }), 120_000);
 
-  it("reads the seeded defaults matching the app's original hardcoded behavior", async () => {
+  it("reads the seeded defaults", async () => {
     const settings = await getPlatformSettings(admin.client);
-    expect(settings).toEqual({ minPasswordLength: 8, mfaRequiredPortals: ["admin"], sessionIdleTimeoutMinutes: null });
+    expect(settings).toEqual({ minPasswordLength: 8, mfaRequiredPortals: ["admin", "org_admin"], sessionIdleTimeoutMinutes: null });
   });
 
   it("rejects updating settings from a non-admin", async () => {

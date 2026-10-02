@@ -6,10 +6,11 @@ export interface PlatformSettings {
   sessionIdleTimeoutMinutes: number | null;
 }
 
-/** Safe defaults matching this app's original hardcoded behavior, used if the row can't be read. */
+/** Safe defaults matching the platform_settings column defaults, used if the row can't be read. */
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   minPasswordLength: 8,
-  mfaRequiredPortals: ["admin"],
+  // Both back-office portals require MFA since T-162 (migration org_admin_portal).
+  mfaRequiredPortals: ["admin", "org_admin"],
   sessionIdleTimeoutMinutes: null,
 };
 

@@ -11,9 +11,9 @@ test.describe("platform settings", () => {
   const svc = serviceClient();
 
   test.afterAll(async () => {
-    // platform_settings is a single global row: always restore the app's original defaults so
-    // this spec never leaves other tests running against an altered policy.
-    await svc.from("platform_settings").update({ min_password_length: 8, mfa_required_portals: ["admin"], session_idle_timeout_minutes: null }).eq("id", true);
+    // platform_settings is a single global row: always restore the defaults (MFA for both
+    // back-office portals since T-162) so this spec never leaves other tests on an altered policy.
+    await svc.from("platform_settings").update({ min_password_length: 8, mfa_required_portals: ["admin", "org_admin"], session_idle_timeout_minutes: null }).eq("id", true);
     await cleanup(svc, { learnerIds: [], courseIds: [], userIds: [] });
   });
 
