@@ -29,6 +29,8 @@ test.describe("admin profile", () => {
       const toggle = page.getByRole("checkbox", { name: "In-app notifications for Courses", exact: true });
       await expect(toggle).toBeChecked();
       await toggle.uncheck();
+      // The checkbox is disabled while the preference saves; reload only once the save is done.
+      await expect(toggle).toBeEnabled();
       await page.reload();
       await expect(page.getByRole("checkbox", { name: "In-app notifications for Courses", exact: true })).not.toBeChecked();
     } finally {

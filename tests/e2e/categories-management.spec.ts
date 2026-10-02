@@ -32,11 +32,13 @@ test.describe("categories management", () => {
       const nameInput = page.getByLabel(`Name for ${tag} New Category`);
       await nameInput.fill(`${tag} Renamed Category`);
       await page.getByLabel(`Slug for ${tag} New Category`).fill(`${tag}-renamed`);
-      await page.getByRole("listitem").filter({ hasText: `${tag} Renamed Category` }).getByRole("button", { name: "Save" }).click();
+      // The new name is only an input value so far (hasText ignores those): find the row by its input.
+      await page.getByRole("listitem").filter({ has: nameInput }).getByRole("button", { name: "Save" }).click();
       await expect(page.getByLabel(`Name for ${tag} Renamed Category`)).toBeVisible();
 
       // 3. Delete (unused, so the delete button is enabled).
-      const row = page.getByRole("listitem").filter({ hasText: `${tag} Renamed Category` });
+      // Anchor on the name input: the delete button's label text goes away once it asks to confirm.
+      const row = page.getByRole("listitem").filter({ has: page.getByLabel(`Name for ${tag} Renamed Category`) });
       await row.getByRole("button", { name: `Delete ${tag} Renamed Category` }).click();
       await row.getByRole("button", { name: "Confirm delete" }).click();
       await expect(page.getByLabel(`Name for ${tag} Renamed Category`)).toHaveCount(0);

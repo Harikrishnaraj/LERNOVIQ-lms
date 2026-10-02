@@ -99,7 +99,8 @@ test.describe("instructor certificates", () => {
     // 1. Issued list shows the seeded certificate.
     await expect(page.getByRole("heading", { name: "Issued certificates" })).toBeVisible();
     await expect(page.getByText(`${tag} Alice Learner`)).toBeVisible();
-    await expect(page.getByText(`${tag} Distributed Systems`)).toBeVisible();
+    // The course name also fills the course pickers' <option>s; the issued row shows it as text.
+    await expect(page.getByRole("paragraph").filter({ hasText: `${tag} Distributed Systems` })).toBeVisible();
     await expect(page.getByText("Valid")).toBeVisible();
 
     // 2. Template settings: fill and save.
