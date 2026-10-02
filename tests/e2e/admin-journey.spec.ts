@@ -49,7 +49,8 @@ test.describe("admin journey", () => {
     await ip.goto(`/instructor/courses/${c.courseId}/submit`);
     await ip.waitForLoadState("networkidle");
     await ip.getByRole("button", { name: "Submit for review" }).click();
-    await expect(ip.getByText("Submitted. A reviewer will pick this up soon.")).toBeVisible();
+    // Server action + router.refresh() re-renders a query-heavy page; allow for a busy shared project.
+    await expect(ip.getByText("Submitted. A reviewer will pick this up soon.")).toBeVisible({ timeout: 30_000 });
 
     const done = await loginAsRole(page, "admin");
     try {
@@ -128,7 +129,7 @@ test.describe("admin journey", () => {
       await expect(row.getByText("Instructor, Learner")).toBeVisible();
       await row.getByRole("button", { name: `Suspend ${target.email}` }).click();
       await row.getByRole("button", { name: `Confirm suspend ${target.email}` }).click();
-      await expect(row.getByText("Suspended", { exact: true })).toBeVisible();
+      await expect(row.getByText("Suspended", { exact: true })).toBeVisible({ timeout: 30_000 });
 
       await page.getByRole("button", { name: "Add user" }).click();
       const form = page.getByRole("form", { name: "Add user" });
