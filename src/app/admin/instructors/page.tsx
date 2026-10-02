@@ -50,7 +50,7 @@ export default async function AdminInstructorsPage() {
           {applications.length === 0 ? (
             <EmptyState icon={UserCog} title="Nothing to review" description="New instructor applications will appear here." />
           ) : (
-            <ul className="divide-y divide-border-subtle">
+            <ul aria-label="Applications awaiting review" className="divide-y divide-border-subtle">
               {applications.map((a) => (
                 <li key={a.id} className="space-y-2 py-3">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">

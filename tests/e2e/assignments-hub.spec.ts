@@ -53,13 +53,14 @@ test.describe("instructor assignments page", () => {
 
     await page.getByLabel("Course *").selectOption({ label: `${tag} Data Science` });
     await expect(page.getByText(/This course is live/)).toBeVisible();
+    await expect(page.getByText("Choose a course.")).toHaveCount(0);
     await page.getByLabel("Assignment Title *").fill(`${tag} Research Paper`);
     const editor = page.getByRole("textbox", { name: "Description" });
     await editor.click();
     await page.getByRole("button", { name: "Bold" }).click();
     await page.keyboard.type("Write 2,000 words");
     await page.getByLabel("Points").fill("100");
-    await expect(page.getByText("PDF, DOC, DOCX")).toBeVisible();
+    await expect(page.getByText("PDF, DOC, DOCX", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Assign Assignment" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Enrolled learners can see it now." })).toBeVisible();
 
@@ -82,7 +83,7 @@ test.describe("instructor assignments page", () => {
     await lp.getByRole("link", { name: `${tag} Research Paper` }).click();
     await lp.waitForURL(/\/learner\/assignments\/[0-9a-f-]{36}$/);
     await expect(lp.locator("strong", { hasText: "Write 2,000 words" })).toBeVisible();
-    await expect(lp.getByText("PDF, DOC or DOCX file up to", { exact: false })).toBeVisible();
+    await expect(lp.getByText(/PDF, DOC or DOCX, up to \d+ MB/)).toBeVisible();
     await lctx.close();
 
     await row.getByRole("link", { name: /View submissions/ }).click();

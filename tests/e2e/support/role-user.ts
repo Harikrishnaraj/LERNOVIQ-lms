@@ -34,6 +34,8 @@ export async function loginAsRole(page: Page, role: string, opts: { mfa?: boolea
     .from("user_roles")
     .insert({ user_id: userId, role_id: role });
   if (roleError) throw roleError;
+  // Learner specs exercise the portal, not onboarding (onboarding.spec.ts covers that with its own user).
+  if (role === "learner") await db.from("learner_onboarding").insert({ user_id: userId, interests: ["design"] });
 
   const state = { secret: "" };
   const login = async () => {

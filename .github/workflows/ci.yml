@@ -26,6 +26,10 @@ permissions:
 
 env:
   NEXT_PUBLIC_APP_URL: http://localhost:3000
+  # ADR-029: SCORM runs on a content origin distinct from the app (same server, other host name),
+  # as in production; without it the player falls back to the single-frame sandbox and the E2E
+  # package's ADL parent search finds no API.
+  NEXT_PUBLIC_SCORM_CONTENT_ORIGIN: http://127.0.0.1:3000
   NEXT_TELEMETRY_DISABLED: "1"
   SUPABASE_CLI_VERSION: 2.119.0
   # The local stack mirrors the hosted Google provider (T-165); CI never completes a Google sign-in.

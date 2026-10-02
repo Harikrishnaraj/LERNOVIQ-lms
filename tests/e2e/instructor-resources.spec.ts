@@ -24,6 +24,8 @@ test.describe("instructor resource library", () => {
     course = await createCourse(svc, teacher.id, {
       slug: `${tag}-course`,
       title: `${tag} Practical Systems`,
+      // Attaching changes the lesson, so the course must be an editable draft (published ones are locked).
+      publish: false,
       sections: [{ title: "Getting started", lessons: [{ title: "Welcome" }] }],
     });
     courseIds.push(course.courseId);
@@ -65,7 +67,9 @@ test.describe("instructor resource library", () => {
     await page.reload();
     await expect(page.locator("li").filter({ hasText: "sample.pdf" }).getByText("Used in 1 lesson")).toBeVisible();
 
-    // 4. Deleting an in-use resource is refused.
+    // 4. Deleting an in-use resource is refused (after the "cannot be undone" confirm, which
+    //    Playwright would otherwise dismiss).
+    page.once("dialog", (d) => void d.accept());
     await page.locator("li").filter({ hasText: "sample.pdf" }).getByRole("button", { name: "Delete" }).click();
     await expect(page.getByText(/attached to a lesson/i)).toBeVisible();
   });

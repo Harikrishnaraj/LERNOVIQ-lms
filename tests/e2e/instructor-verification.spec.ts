@@ -46,7 +46,8 @@ test.describe("instructor verification", () => {
     try {
       await page.goto("/admin/instructors");
       await expect(page.getByRole("heading", { level: 1, name: "Instructors" })).toBeVisible();
-      const row = page.locator("li").filter({ hasText: `${tag} Applicant` });
+      // Scoped to the queue: once approved, the person also appears in "All instructors" below.
+      const row = page.getByRole("list", { name: "Applications awaiting review" }).getByRole("listitem").filter({ hasText: `${tag} Applicant` });
       await expect(row).toBeVisible();
       await row.getByRole("button", { name: "Approve" }).click();
       await expect(row).toHaveCount(0);

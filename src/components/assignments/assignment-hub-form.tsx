@@ -41,7 +41,16 @@ export function AssignmentHubForm({ courses }: { courses: AssignableCourse[] }) 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
 
-  const set = <K extends keyof FormState>(k: K, value: FormState[K]) => setV((prev) => ({ ...prev, [k]: value }));
+  const set = <K extends keyof FormState>(k: K, value: FormState[K]) => {
+    setV((prev) => ({ ...prev, [k]: value }));
+    // Changing a field clears its stale error (e.g. "Choose a course." after a course is chosen).
+    setErrors((prev) => {
+      if (!(k in prev)) return prev;
+      const next = { ...prev };
+      delete next[k];
+      return next;
+    });
+  };
   const course = courses.find((c) => c.id === v.courseId);
 
   function reset() {

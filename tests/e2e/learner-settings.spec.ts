@@ -10,6 +10,8 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 
 // F-116: profile, avatar and password from the learner settings page.
 test.describe("learner settings", () => {
+  // The second test signs in with the password the first test sets, so they run in order.
+  test.describe.configure({ mode: "serial" });
   const svc = serviceClient();
   const tag = uniqueTag("set");
   const learnerIds: string[] = [];

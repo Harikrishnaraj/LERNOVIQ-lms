@@ -11,6 +11,9 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 // F-205: build an assessment in the UI, then a learner takes it in the player.
 test.describe("assessment builder", () => {
+  // Each test continues from the previous one (created data, state), so they must run in order
+  // in one worker; with fullyParallel they could land in different workers and fail.
+  test.describe.configure({ mode: "serial" });
   const svc = serviceClient();
   const tag = uniqueTag("ab");
   const userIds: string[] = [];

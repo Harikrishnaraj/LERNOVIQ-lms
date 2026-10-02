@@ -8,8 +8,16 @@ import { loginAsRole } from "./support/role-user";
 const WIDTHS = [375, 768, 1024, 1440] as const;
 
 async function assertNoHorizontalOverflow(page: import("@playwright/test").Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
+  const { overflow, culprits } = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    // The outermost elements that stick out past the viewport, so a failure names what to fix.
+    const culprits = [...document.querySelectorAll("body *")]
+      .filter((e) => e.getBoundingClientRect().right > vw + 1 && !(e.parentElement && e.parentElement.getBoundingClientRect().right > vw + 1))
+      .slice(0, 5)
+      .map((e) => `<${e.tagName.toLowerCase()} class="${(e.getAttribute("class") ?? "").slice(0, 60)}"> ${(e.textContent ?? "").trim().slice(0, 40)}`);
+    return { overflow: document.documentElement.scrollWidth - vw, culprits };
+  });
+  expect(overflow, `page wider than the viewport; outermost overflowing elements:\n${culprits.join("\n")}`).toBeLessThanOrEqual(0);
 }
 
 test.describe("responsive (public pages)", () => {
