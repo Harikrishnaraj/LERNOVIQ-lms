@@ -96,6 +96,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed
       - name: Playwright (builds and starts the app itself)
         run: npx playwright test --shard=${{ matrix.shard }}/6
+      - name: Print the page snapshot of each failed test
+        if: failure()
+        run: |
+          find test-results -name error-context.md | sort | while read -r f; do
+            echo "::group::$f"; sed -n '1,150p' "$f"; echo "::endgroup::"
+          done
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

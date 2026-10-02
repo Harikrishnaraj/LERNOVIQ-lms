@@ -81,6 +81,42 @@ describe.skipIf(!hasLiveProject)("org admin scoped portal (T-162, live Supabase)
     expect((await svc.from("organizations").select("name").eq("id", orgB!.id).single()).data!.name).toBe(`${tag} B`);
   });
 
+  it("an org admin can search people to add to their own org, but not for another org (T-251)", async () => {
+    const { createClient } = await import("@supabase/supabase-js");
+    const anon = () =>
+      createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+    const { data: orgA } = await svc.from("organizations").insert({ name: `${tag} SA`, slug: `${tag}-sa` }).select("id").single();
+    const { data: orgB } = await svc.from("organizations").insert({ name: `${tag} SB`, slug: `${tag}-sb` }).select("id").single();
+    orgIds.push(orgA!.id, orgB!.id);
+
+    const admin = await createUserWithRole(svc, `${tag}-sadmin`, "org_admin");
+    const free = await createUserWithRole(svc, `${tag}-sfree`, "learner", { fullName: `${tag} Free Person` });
+    const taken = await createUserWithRole(svc, `${tag}-staken`, "learner", { fullName: `${tag} Taken Person` });
+    userIds.push(admin.id, free.id, taken.id);
+    await svc.from("organization_members").insert([
+      { organization_id: orgA!.id, user_id: admin.id, org_role: "org_admin" },
+      { organization_id: orgB!.id, user_id: taken.id, org_role: "member" },
+    ]);
+    const client = anon();
+    const { error: signInError } = await client.auth.signInWithPassword({ email: admin.email, password: admin.password });
+    if (signInError) throw signInError;
+
+    // Own org: finds people not yet in any organization; never another org's members.
+    const own = await client.rpc("org_member_candidates", { p_org_id: orgA!.id, p_q: `${tag} ` });
+    expect(own.error).toBeNull();
+    const ids = (own.data as { user_id: string }[]).map((r) => r.user_id);
+    expect(ids).toContain(free.id);
+    expect(ids).not.toContain(taken.id);
+    expect(ids).not.toContain(admin.id);
+
+    // Too-short queries return nothing; another org is refused outright.
+    expect((await client.rpc("org_member_candidates", { p_org_id: orgA!.id, p_q: "a" })).data).toEqual([]);
+    const other = await client.rpc("org_member_candidates", { p_org_id: orgB!.id, p_q: `${tag} ` });
+    expect(other.error?.message).toMatch(/not allowed/);
+  });
+
   afterAll(async () => {
     if (orgIds.length) await svc.from("organizations").delete().in("id", orgIds);
     await cleanup(svc, { learnerIds: [], courseIds: [], userIds });

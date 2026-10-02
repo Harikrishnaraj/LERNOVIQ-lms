@@ -187,7 +187,7 @@ export function OrganizationDetailPanel({ org, members }: { org: OrganizationDet
         </h2>
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-56 flex-1">
-            <LearnerSearchPicker onSelect={setCandidate} selected={candidate} search={searchOrgCandidatesAction} placeholder="Search by name or email…" />
+            <LearnerSearchPicker onSelect={setCandidate} selected={candidate} search={(q) => searchOrgCandidatesAction(org.id, q)} placeholder="Search by name or email…" />
           </div>
           <label className="flex flex-col gap-1 text-xs font-medium text-text-secondary">
             Role

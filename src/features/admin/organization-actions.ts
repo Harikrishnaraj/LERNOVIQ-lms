@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
-import { getAdminUsers } from "./users";
 import { validateOrganizationName, validateOrganizationSlug } from "./organizations";
 import type { LearnerOption } from "./enrollment-actions";
 
@@ -18,14 +17,22 @@ async function actor() {
   return { supabase, user };
 }
 
-/** Any user matching the search, regardless of role — an org member can be a learner, instructor, etc. */
-export async function searchOrgCandidatesAction(q: string): Promise<LearnerOption[]> {
+/**
+ * People who could join this organization: any role (an org member can be a learner, instructor,
+ * etc.), but only those not yet in an organization. Platform admins and the org's own admins only.
+ */
+export async function searchOrgCandidatesAction(orgId: string, q: string): Promise<LearnerOption[]> {
   const { supabase, user } = await actor();
   if (!user) return [];
   const trimmed = q.trim();
   if (trimmed.length < 2) return [];
-  const { users } = await getAdminUsers(supabase, { q: trimmed, role: "", status: "", page: 1 });
-  return users.map((u) => ({ userId: u.userId, fullName: u.fullName, email: u.email }));
+  const { data, error } = await supabase.rpc("org_member_candidates", { p_org_id: orgId, p_q: trimmed });
+  if (error) return [];
+  return ((data ?? []) as { user_id: string; full_name: string | null; email: string }[]).map((u) => ({
+    userId: u.user_id,
+    fullName: u.full_name,
+    email: u.email,
+  }));
 }
 
 export async function createOrganizationAction(input: { name: string; slug: string }): Promise<CreateOrgResult> {
