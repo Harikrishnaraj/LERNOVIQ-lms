@@ -55,7 +55,7 @@ test.describe("certificate administration", () => {
       await page.getByRole("button", { name: "Revoke", exact: true }).click();
       await page.getByLabel("Reason for revoking").fill("Academic integrity violation");
       await page.getByRole("button", { name: "Confirm revoke" }).click();
-      await expect(page.getByText("Revoked")).toBeVisible();
+      await expect(page.getByRole("table").getByText("Revoked")).toBeVisible();
       await expect(page.getByText("Academic integrity violation")).toBeVisible();
 
       await page.getByRole("button", { name: "Reissue", exact: true }).click();

@@ -44,7 +44,7 @@ test.describe("admin content oversight", () => {
 
       await page.getByLabel("Search content").fill(`${tag}-handout`);
       await page.getByRole("button", { name: "Apply" }).click();
-      await expect(page.getByText(`${tag}-handout.pdf`)).toBeVisible();
+      await expect(page.getByRole("cell", { name: `${tag}-handout.pdf`, exact: true })).toBeVisible();
 
       await page.getByRole("button", { name: `Delete ${tag}-handout.pdf` }).click();
       await page.getByRole("button", { name: "Confirm delete" }).click();

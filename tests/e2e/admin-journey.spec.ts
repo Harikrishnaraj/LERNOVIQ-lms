@@ -53,9 +53,10 @@ test.describe("admin journey", () => {
 
     const done = await loginAsRole(page, "admin");
     try {
-      // Pending course shows on the overview and in the pending tab; open the review.
-      await page.goto("/admin");
-      await page.getByRole("link", { name: `${tag} Pending Course` }).click();
+      // Pending course shows in the pending tab; open the review. (The overview lists only the oldest
+      // few pending courses, and the shared project may hold others, so search the pending tab.)
+      await page.goto(`/admin/courses?tab=pending&q=${tag}`);
+      await page.getByRole("link", { name: `${tag} Pending Course` }).first().click();
       await expect(page).toHaveURL(new RegExp(`/admin/courses/${c.courseId}$`));
       await expect(page.getByRole("list", { name: "Automatic checks" }).getByText("Thumbnail image - passes")).toBeVisible();
 

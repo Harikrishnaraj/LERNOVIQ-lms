@@ -45,12 +45,12 @@ test.describe("admin instructor detail", () => {
 
       await expect(page.getByRole("heading", { level: 1, name: `${tag} Instructor` })).toBeVisible();
       await expect(page.getByText(`${tag} Course`)).toBeVisible();
-      await expect(page.getByText("1 learners")).toBeVisible();
+      await expect(page.getByText("1 learners", { exact: true })).toBeVisible();
 
       await expect(page.getByRole("heading", { name: "Rating distribution" })).toBeVisible();
       await expect(page.getByText("1 total ratings across all courses")).toBeVisible();
 
-      await expect(page.getByRole("heading", { name: "Revenue" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Revenue", exact: true })).toBeVisible();
       await expect(page.getByText("No revenue data")).toBeVisible();
 
       await expect(page.getByText("This instructor has not saved payout details yet.")).toBeVisible();

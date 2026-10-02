@@ -37,9 +37,10 @@ test.describe("integrations", () => {
       expect(Array.isArray(body.data)).toBe(true);
 
       await page.reload();
-      await expect(page.getByText(`${tag} Key`)).toBeVisible();
-      await page.getByRole("button", { name: "Revoke" }).click();
-      await expect(page.getByText("Revoked")).toBeVisible();
+      const keyRow = page.getByRole("listitem").filter({ hasText: `${tag} Key` });
+      await expect(keyRow).toBeVisible();
+      await keyRow.getByRole("button", { name: "Revoke" }).click();
+      await expect(keyRow.getByText("Revoked")).toBeVisible();
 
       const afterRevoke = await request.get(`${baseURL}/api/v1/courses`, { headers: { authorization: `Bearer ${key}` } });
       expect(afterRevoke.status()).toBe(401);

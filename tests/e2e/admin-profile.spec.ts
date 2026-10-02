@@ -26,11 +26,11 @@ test.describe("admin profile", () => {
       await expect(page.getByText(/course #abc123/)).toBeVisible();
 
       await expect(page.getByRole("heading", { name: "Notification preferences" })).toBeVisible();
-      const toggle = page.getByRole("listitem").filter({ hasText: "Courses" }).getByRole("checkbox");
+      const toggle = page.getByRole("checkbox", { name: "In-app notifications for Courses", exact: true });
       await expect(toggle).toBeChecked();
       await toggle.uncheck();
       await page.reload();
-      await expect(page.getByRole("listitem").filter({ hasText: "Courses" }).getByRole("checkbox")).not.toBeChecked();
+      await expect(page.getByRole("checkbox", { name: "In-app notifications for Courses", exact: true })).not.toBeChecked();
     } finally {
       await done();
     }

@@ -51,12 +51,14 @@ test.describe("moderation queue", () => {
       await expect(page.getByText(`${tag} thread`)).toBeVisible();
       await expect(page.getByText("abusive content")).toBeVisible();
 
-      await page.getByRole("button", { name: "Hide" }).click();
-      await expect(page.getByText("No open reports")).toBeVisible();
+      // The queue is shared with other runs, so act on and assert about this test's own report only.
+      const report = () => page.getByRole("listitem").filter({ hasText: `${tag} thread` });
+      await report().getByRole("button", { name: "Hide" }).click();
+      await expect(report()).toHaveCount(0);
 
       await page.getByRole("link", { name: "Resolved" }).click();
-      await expect(page.getByText(`${tag} thread`)).toBeVisible();
-      await expect(page.getByText("Hidden")).toBeVisible();
+      await expect(report()).toBeVisible();
+      await expect(report().getByText("Hidden")).toBeVisible();
     } finally {
       await done();
     }
