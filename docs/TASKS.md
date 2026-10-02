@@ -187,4 +187,4 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [~] **T-248** CI (GitHub Actions: check + E2E) + Cloudflare preview deployments (ADR-032). — F-947
 - [x] **T-249** Backups + tested restore runbook. — F-948
 - [ ] **T-250** Production deploy on Cloudflare Workers (ADR-032) + full production QA checklist (TEST_PLAN §23). — F-947
-- [~] **T-251** Fix the failing E2E specs found by the first full live run (accessibility, admin analytics/certificates/content/instructor-detail/integrations/moderation/profile, admin journey) and make the suite reliable in CI by running it against a local Supabase stack per job (ADR-034, user decision 2026-10-02), so CI E2E is green. — F-947
+- [x] **T-251** Fix the failing E2E specs found by the first full live run (accessibility, admin analytics/certificates/content/instructor-detail/integrations/moderation/profile, admin journey) and make the suite reliable in CI by running it against a local Supabase stack per job (ADR-034, user decision 2026-10-02), so CI E2E is green. — F-947
