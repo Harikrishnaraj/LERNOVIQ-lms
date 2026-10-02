@@ -37,10 +37,13 @@ test.describe("instructor assignments page", () => {
 
   test.afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }));
 
-  test("assigns work to a live course without a due date; the table and the learner show it", async ({ page, browser }) => {
+  test("assigns work to a live course without a due date; the table and the learner show it", async ({ page, browser, isMobile }) => {
     test.setTimeout(240_000);
     await signIn(page, instructor, "/instructor");
-    await page.getByRole("link", { name: "Assignments" }).first().click();
+    // On phones the sidebar lives behind the menu button.
+    if (isMobile) await page.getByRole("button", { name: "Open navigation" }).click();
+    const nav = isMobile ? page.getByRole("dialog", { name: "Navigation" }) : page.getByRole("complementary");
+    await nav.getByRole("link", { name: "Assignments" }).click();
     await page.waitForURL("/instructor/assignments");
     await expect(page.getByRole("heading", { name: "Assign New Assignment" })).toBeVisible();
     await expect(page.getByText("No assignments yet")).toBeVisible();
