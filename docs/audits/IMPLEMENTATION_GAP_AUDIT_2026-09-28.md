@@ -1,5 +1,8 @@
 # MODERN LMS — IMPLEMENTATION GAP AUDIT
 
+> **Superseded** by [`IMPLEMENTATION_GAP_AUDIT_2026-10-05.md`](IMPLEMENTATION_GAP_AUDIT_2026-10-05.md),
+> which re-runs this audit against `main` at `f3c8333`. Kept as a historical snapshot of `ab314e3`.
+
 ```text
 MODERN LMS
 IMPLEMENTATION GAP AUDIT
