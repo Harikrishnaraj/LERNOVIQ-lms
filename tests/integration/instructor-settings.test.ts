@@ -6,8 +6,8 @@ let currentClient: SupabaseClient;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { updatePayoutDetailsAction, updatePublicProfileAction } from "@/features/instructor/settings-actions";
-import { getPayoutDetails, getPublicProfile } from "@/features/instructor/settings";
+import { updatePublicProfileAction } from "@/features/instructor/settings-actions";
+import { getPublicProfile } from "@/features/instructor/settings";
 import { getCourseDetail } from "@/features/catalog/course-detail";
 
 const hasLiveProject = Boolean(
@@ -21,7 +21,7 @@ const anon = () =>
     auth: { persistSession: false },
   });
 
-// F-220: Instructor settings — public profile, payout details (T-112), live Supabase.
+// F-220: Instructor settings — public profile (T-112), live Supabase. Payout details were removed (ADR-037).
 describe.skipIf(!hasLiveProject)("instructor settings (T-112, live Supabase)", () => {
   const svc = hasLiveProject ? serviceClient() : (null as never);
   const tag = uniqueTag("insettings");
@@ -84,37 +84,5 @@ describe.skipIf(!hasLiveProject)("instructor settings (T-112, live Supabase)", (
     // Either rejected outright, or silently affects zero rows under RLS.
     const { data: unaffected } = await svc.from("profiles").select("headline").eq("id", owner.id).single();
     expect(error !== null || unaffected!.headline !== "Hijacked").toBe(true);
-  });
-
-  it("lets the instructor save and read back their own payout details", async () => {
-    currentClient = owner.client;
-    const res = await updatePayoutDetailsAction({ method: "paypal", reference: "owner@example.com" });
-    expect(res).toEqual({ ok: true });
-
-    const details = await getPayoutDetails(owner.client, owner.id);
-    expect(details).toMatchObject({ payoutMethod: "paypal", payoutReference: "owner@example.com" });
-
-    // Saving again replaces the previous value (upsert).
-    const res2 = await updatePayoutDetailsAction({ method: "bank_transfer", reference: "IBAN ref 123" });
-    expect(res2).toEqual({ ok: true });
-    const updated = await getPayoutDetails(owner.client, owner.id);
-    expect(updated).toMatchObject({ payoutMethod: "bank_transfer", payoutReference: "IBAN ref 123" });
-  });
-
-  it("rejects an invalid payout method or a blank reference", async () => {
-    currentClient = owner.client;
-    expect((await updatePayoutDetailsAction({ method: "crypto", reference: "x" })).ok).toBe(false);
-    expect((await updatePayoutDetailsAction({ method: "paypal", reference: "" })).ok).toBe(false);
-  });
-
-  it("keeps payout details private to their owner", async () => {
-    const othersView = await getPayoutDetails(other.client, owner.id);
-    expect(othersView).toBeNull();
-
-    const { data: direct } = await other.client
-      .from("instructor_payout_details")
-      .select("payout_reference")
-      .eq("instructor_id", owner.id);
-    expect(direct).toEqual([]);
   });
 });

@@ -1,12 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadEnvLocal } from "./support/env";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
+import { loginAsRole } from "./support/role-user";
 
 loadEnvLocal();
 test.use({ storageState: { cookies: [], origins: [] } });
 
-// F-202: pricing & settings step, and what it does for learners.
-test.describe("pricing and settings", () => {
+// F-202: the instructor's course settings step, the platform-set price (admin, ADR-037), and what
+// they do for learners.
+test.describe("course settings and platform price", () => {
   const svc = serviceClient();
   const tag = uniqueTag("pe");
   const userIds: string[] = [];
@@ -37,22 +39,18 @@ test.describe("pricing and settings", () => {
 
   test.afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }));
 
-  test("sets paid pricing with validation, saves, and it persists", async ({ page }) => {
+  test("the instructor sets certificate, visibility and prerequisites; the price is read-only", async ({ page }) => {
     test.setTimeout(120_000);
     await signIn(page, instructor, "/instructor");
     await page.goto(`/instructor/courses/${draft.courseId}/pricing`);
     await page.waitForLoadState("networkidle");
     await expect(page.getByRole("heading", { level: 1, name: `${tag} Main Course` })).toBeVisible();
-    await expect(page.getByLabel("Free")).toBeChecked();
+    await expect(page.getByRole("heading", { name: "Price" })).toBeVisible();
+    await expect(page.getByText("Course prices are set by the platform team, not by instructors.")).toBeVisible();
+    await expect(page.getByLabel("Paid")).toHaveCount(0);
+    await expect(page.getByPlaceholder("49.99")).toHaveCount(0);
     await expect(page.getByLabel(/Issue a certificate/)).toBeChecked();
 
-    await page.getByLabel("Paid").check();
-    await page.getByPlaceholder("49.99").fill("0.50");
-    await page.getByRole("button", { name: "Save settings" }).click();
-    await expect(page.getByText("The minimum price is 1.00. Choose Free for no charge.")).toBeVisible();
-
-    await page.getByPlaceholder("49.99").fill("49.99");
-    await page.getByLabel("Currency").selectOption("EUR");
     await page.getByLabel(/Issue a certificate/).uncheck();
     await page.getByLabel("Who can find this course").selectOption("unlisted");
     await page.getByLabel(`${tag} Required First`).check();
@@ -60,16 +58,41 @@ test.describe("pricing and settings", () => {
     await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
 
     await page.reload();
-    await expect(page.getByLabel("Paid")).toBeChecked();
-    await expect(page.getByPlaceholder("49.99")).toHaveValue("49.99");
-    await expect(page.getByLabel("Currency")).toHaveValue("EUR");
     await expect(page.getByLabel(/Issue a certificate/)).not.toBeChecked();
     await expect(page.getByLabel("Who can find this course")).toHaveValue("unlisted");
     await expect(page.getByLabel(`${tag} Required First`)).toBeChecked();
+  });
 
-    // My Courses shows the new price.
-    await page.goto("/instructor/courses");
-    await expect(page.getByText("€49.99")).toBeVisible();
+  test("an admin sets the price with validation; the instructor and catalog show it", async ({ page, browser }) => {
+    test.setTimeout(180_000);
+    const done = await loginAsRole(page, "admin");
+    try {
+      await page.goto(`/admin/courses/${prereq.courseId}`);
+      await page.waitForLoadState("networkidle");
+      const form = page.getByRole("form", { name: "Course price" });
+      await form.getByLabel("Paid").check();
+      await form.getByLabel("Price").fill("0.50");
+      await form.getByRole("button", { name: "Save price" }).click();
+      await expect(form.getByText("The minimum price is 1.00. Choose Free for no charge.")).toBeVisible();
+
+      await form.getByLabel("Price").fill("49.99");
+      await form.getByLabel("Currency").selectOption("EUR");
+      await form.getByRole("button", { name: "Save price" }).click();
+      await expect(form.getByRole("status").filter({ hasText: "Price saved." })).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole("form", { name: "Course price" }).getByLabel("Price")).toHaveValue("49.99");
+    } finally {
+      await done();
+    }
+
+    // The public course page and the instructor's own view show the platform's price.
+    const anon = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const ap = await anon.newPage();
+    await ap.goto(`/courses/${tag}-req`);
+    await expect(ap.getByText("€49.99").first()).toBeVisible();
+    await anon.close();
+
+    await svc.from("course_versions").update({ price_cents: 0, currency: "USD" }).eq("course_id", prereq.courseId);
   });
 
   test("prerequisites block enrollment in the UI until completed", async ({ page }) => {

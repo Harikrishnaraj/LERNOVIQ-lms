@@ -92,7 +92,7 @@ export function evaluateReadiness(s: ReadinessSnapshot): ReadinessReport {
       label: "An assessment for the certificate",
       step: "assessments",
       ok: !s.version.certificateEnabled || s.assessments.length > 0,
-      detail: "This course issues a certificate, so add an assessment (or turn certificates off in Pricing & settings).",
+      detail: "This course issues a certificate, so add an assessment (or turn certificates off in Settings).",
     },
     {
       id: "questions",

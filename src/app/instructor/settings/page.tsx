@@ -5,8 +5,7 @@ import { PasswordForm, ProfileForm } from "@/components/profile/profile-forms";
 import { PrivacyPanel } from "@/components/profile/privacy-panel";
 import { PageHeader } from "@/components/layout/page-header";
 import { PublicProfileForm } from "@/components/instructor/public-profile-form";
-import { PayoutDetailsForm } from "@/components/instructor/payout-details-form";
-import { getPayoutDetails, getPublicProfile } from "@/features/instructor/settings";
+import { getPublicProfile } from "@/features/instructor/settings";
 import { getMyDeletionStatus } from "@/features/privacy/account";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,15 +19,14 @@ export default async function InstructorSettingsPage() {
   if (!user) redirect("/login?next=/instructor/settings");
 
   const { data: profile } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).maybeSingle();
-  const [publicProfile, payoutDetails, deletionRequestedAt] = await Promise.all([
+  const [publicProfile, deletionRequestedAt] = await Promise.all([
     getPublicProfile(supabase, user.id),
-    getPayoutDetails(supabase, user.id),
     getMyDeletionStatus(supabase, user.id),
   ]);
 
   return (
     <>
-      <PageHeader title="Settings" description="Your profile, public teaching profile, payout details and notifications." />
+      <PageHeader title="Settings" description="Your profile, public teaching profile and notifications." />
       <div className="space-y-10">
         <section aria-labelledby="profile-heading" className="space-y-4">
           <h2 id="profile-heading" className="text-base font-semibold">
@@ -46,16 +44,6 @@ export default async function InstructorSettingsPage() {
             Public profile
           </h2>
           <PublicProfileForm initialHeadline={publicProfile.headline ?? ""} initialBio={publicProfile.bio ?? ""} />
-        </section>
-
-        <section aria-labelledby="payout-heading" className="space-y-4">
-          <h2 id="payout-heading" className="text-base font-semibold">
-            Payout details
-          </h2>
-          <PayoutDetailsForm
-            initialMethod={payoutDetails?.payoutMethod ?? null}
-            initialReference={payoutDetails?.payoutReference ?? ""}
-          />
         </section>
 
         <section aria-labelledby="password-heading" className="space-y-4">

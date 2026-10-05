@@ -65,7 +65,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-052** Curriculum Builder: sections + lessons/quiz/assignment items CRUD, drag reorder + keyboard/menu alternative. — F-203
 - [x] **T-053** Lesson Editor: sanitized rich text, video (upload via storage adapter or URL), attachments, preview flag. — F-204
 - [x] **T-054** Assessment Builder: question types incl. essay/coding, points, pass mark, attempts, time limit. — F-205
-- [x] **T-055** Pricing & Settings step (free/paid, certificate on/off, prerequisites, visibility). — F-202
+- [x] **T-055** Course Settings step (certificate on/off, prerequisites, visibility; price read-only, set by admins per ADR-037). — F-202
 - [x] **T-056** Course Preview as learner. — F-208
 - [x] **T-057** Readiness checklist (pure rules + UI linking to failing sections). — F-209
 - [x] **T-058** `submitCourseForReview` + submission screen with notes to reviewer. — F-210
@@ -111,7 +111,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-109** Reviews: ratings list, distribution, reply to review. — F-217
 - [x] **T-110** Certificates: issued for my courses, certificate template settings. — F-218
 - [x] **T-111** Resource Library: reusable media/documents with usage. — F-219
-- [x] **T-112** Instructor Settings: public profile, payout details (via provider), notifications. — F-220
+- [x] **T-112** Instructor Settings: public profile, notifications (payout details removed, ADR-037). — F-220
 - [x] **T-113** E2E: instructor extended (TEST_PLAN §11, §12). — F-206…F-220
 - [x] **T-114** Assignments page: create across courses (rich-text description, allowed file types, reference files up to 50MB), add to live courses (ADR-030), all-course table with status, submissions/enrolled, search and actions. — F-206
 
@@ -119,7 +119,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 - [x] **T-130** User Detail: account, roles, progress by course, skills, sessions & devices, login history, actions. — F-402
 - [x] **T-131** Instructors: list, verification queue (approve/reject applications), top instructors. — F-403
-- [x] **T-132** Instructor Detail: courses, revenue, rating distribution, payouts. — F-403
+- [x] **T-132** Instructor Detail: courses, rating distribution (revenue/payouts removed, ADR-037). — F-403
 - [x] **T-133** Roles & Permissions matrix editor (audited; cannot remove last Super Admin). — F-404
 - [x] **T-134** Categories management. — F-405
 - [x] **T-135** Enrollments & cohorts: search, manual enroll/unenroll, cohort create, bulk assign. — F-407
@@ -152,7 +152,8 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-183** Subscriptions (plans, entitlement checks, cancel). — F-601
 - [ ] **T-184** Coupons (percent/fixed, limits, expiry). — F-602
 - [ ] **T-185** Refunds (admin-initiated, audited, revokes access per policy). — F-603
-- [ ] **T-186** Instructor earnings + payouts (`instructor_payouts`). — F-604
+- ~~T-186 Instructor earnings + payouts (`instructor_payouts`).~~ Descoped by ADR-037 (F-604).
+- [~] **T-252** Platform-set course prices (ADR-037): `course.price` permission, `admin_set_course_price` RPC and admin price control; instructors see the price read-only and cannot write it (column grants revoked); instructor money UI removed. — F-202
 - [ ] **T-187** Admin Commerce/Revenue: net revenue, by channel, orders table. — F-605
 - [ ] **T-188** Tests: TEST_PLAN §14. — F-600…F-605
 

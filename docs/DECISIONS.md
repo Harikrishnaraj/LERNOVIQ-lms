@@ -318,3 +318,31 @@ Improve:
 
 **Status:** Accepted (user decision).
 
+## ADR-037 — No Instructor Commerce; the Platform Sells Courses
+
+**Decision:** Instructors are not paid through the platform and do not set prices.
+
+Removed:
+- the instructor "Earnings" link and its planned page (F-604 / T-186, now Descoped);
+- the payout details form and its table (`instructor_payout_details`, dropped);
+- revenue from the instructor Analytics page;
+- the Revenue and Payout details cards on the admin Instructor detail page.
+
+Price and currency now belong to the platform:
+- a new `course.price` permission (admin, super_admin);
+- a security-definer `admin_set_course_price(course, cents, currency)` that updates every version of the course, so a draft that is later published keeps the platform's price;
+- a "Price" control on Admin → Courses → course detail, audited as `course.price_changed`.
+
+Instructors' column grants on `course_versions.price_cents` and `currency` are revoked, so a direct API call cannot set a price. The instructor step "Pricing & settings" becomes "Settings": certificate, visibility and prerequisites, with the price shown read-only. Its URL (`/pricing`) is kept to avoid breaking links.
+
+**Reason:** User decision (2026-10-05): "We don't need commerce for the instructor"; remove instructor money entirely; the platform sells courses.
+
+**Consequences:**
+- Learner commerce stays planned, now as platform revenue: checkout, webhooks, subscriptions, coupons, refunds (T-180–T-185) and the admin revenue report (T-187).
+- Prices already set on existing courses are kept.
+- `create_draft_version` still copies the price into new drafts; it runs as security definer, so the revoked grants do not affect it.
+- The instructor analytics RPC still returns revenue figures; the UI no longer shows them.
+- Payout details previously saved by instructors are deleted by the migration.
+
+**Status:** Accepted (user decision). Descopes F-604 / T-186; amends F-202, F-220 and F-403.
+
