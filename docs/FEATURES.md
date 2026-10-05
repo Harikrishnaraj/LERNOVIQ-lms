@@ -58,7 +58,7 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | ----- | ------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------- |
 | F-200 | Instructor overview dashboard               | Instructor Dashboard                      | Own-course KPIs and pending items from real data                 |
 | F-201 | My Courses & course overview                | Instructor My Courses, CourseOverview     | Status filters; only own courses returned                        |
-| F-202 | Guided course creation (basics, pricing, settings) | Instructor CreateCourse, ADR-008   | Draft saved at every step; resumable                             |
+| F-202 | Guided course creation (basics, settings; price set by the platform, ADR-037) | Instructor CreateCourse, ADR-008   | Draft saved at every step; resumable                             |
 | F-203 | Curriculum builder                          | Instructor CurriculumBuilder              | Sections/items CRUD + reorder with keyboard alternative          |
 | F-204 | Lesson editor & media                       | Instructor LessonEditor                   | Rich text sanitized; video/attachments via storage adapter       |
 | F-205 | Assessment builder                          | Instructor AssessmentBuilder              | All PRD §10 question types; grading strategy stored              |
@@ -76,7 +76,7 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-217 | Reviews management                          | Instructor Reviews                        | Rating distribution; reply to reviews                            |
 | F-218 | Instructor certificates                     | Instructor Certificates                   | Issued list; template settings                                   |
 | F-219 | Resource library                            | Instructor ResourceLibrary                | Reusable assets with usage count                                 |
-| F-220 | Instructor settings & public profile        | Instructor Settings                       | Profile, payout details, notifications                           |
+| F-220 | Instructor settings & public profile        | Instructor Settings                       | Profile, public profile, notifications (no payouts, ADR-037)     |
 
 ## Course lifecycle
 
@@ -91,7 +91,7 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-400 | Admin overview & pending actions          | ScreenOverview                        | KPIs + pending actions from real data                         |
 | F-401 | User management                           | ScreenUsers                           | TEST_PLAN §13 user management passes                          |
 | F-402 | User detail                               | ScreenUserDetail                      | Sessions, login history, progress, skills visible             |
-| F-403 | Instructor management & verification      | ScreenInstructors, ScreenInstructorDetail | Verification queue approve/reject; detail with revenue    |
+| F-403 | Instructor management & verification      | ScreenInstructors, ScreenInstructorDetail | Verification queue approve/reject; detail with courses and ratings |
 | F-404 | Roles & permissions                       | ScreenRoles                           | Matrix editable, audited, last Super Admin protected          |
 | F-405 | Courses & categories                      | ScreenCourses                         | Status tabs, search, bulk actions; categories CRUD            |
 | F-406 | Course review workflow                    | ScreenCourseReview                    | Approve/changes/reject with checklist; audited                |
@@ -125,7 +125,6 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-601 | Subscriptions                    | PRD §13                | Plan entitlements enforced server-side                     |
 | F-602 | Coupons                          | PRD §13                | Limits and expiry enforced                                 |
 | F-603 | Refunds                          | PRD §13                | Admin refund updates payment + access; audited             |
-| F-604 | Instructor earnings & payouts    | Instructor Earnings    | Earnings match paid orders minus refunds/fees              |
 | F-605 | Admin revenue & commerce         | ScreenRevenue          | Net revenue, by channel, orders table                      |
 
 ## AI
@@ -166,4 +165,8 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 
 ## Descoped
 
-_None. Moving a feature here requires an ADR._
+Moving a feature here requires an ADR.
+
+| ID | Feature | Source | Descoped by |
+|----|---------|--------|-------------|
+| F-604 | Instructor earnings & payouts | Instructor Earnings | ADR-037 (2026-10-05, user decision): instructors are not paid through the platform; the platform sells courses |

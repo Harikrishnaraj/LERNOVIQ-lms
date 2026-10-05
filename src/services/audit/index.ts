@@ -12,6 +12,7 @@ export const AUDIT_ACTIONS = [
   "course.rejected",
   "course.published",
   "course.archived",
+  "course.price_changed",
   "user.role_changed",
   "user.suspended",
   "user.reinstated",

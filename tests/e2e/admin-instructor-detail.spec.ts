@@ -34,7 +34,7 @@ test.describe("admin instructor detail", () => {
     await cleanup(svc, { learnerIds, courseIds, userIds });
   });
 
-  test("shows courses, rating distribution and an honest revenue-unavailable state (T-132)", async ({ page }) => {
+  test("shows courses and rating distribution, with no revenue or payout sections (T-132, ADR-037)", async ({ page }) => {
     test.setTimeout(180_000);
     const done = await loginAsRole(page, "admin");
     try {
@@ -50,10 +50,9 @@ test.describe("admin instructor detail", () => {
       await expect(page.getByRole("heading", { name: "Rating distribution" })).toBeVisible();
       await expect(page.getByText("1 total ratings across all courses")).toBeVisible();
 
-      await expect(page.getByRole("heading", { name: "Revenue", exact: true })).toBeVisible();
-      await expect(page.getByText("No revenue data")).toBeVisible();
-
-      await expect(page.getByText("This instructor has not saved payout details yet.")).toBeVisible();
+      // Instructors are not paid through the platform (ADR-037).
+      await expect(page.getByRole("heading", { name: "Revenue", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: "Payout details" })).toHaveCount(0);
     } finally {
       await done();
     }

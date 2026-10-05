@@ -3,14 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCourseForEditing } from "./queries";
-import { validatePricing, wouldCreateCycle, type PricingInput } from "./pricing-rules";
+import { validateCourseSettings, wouldCreateCycle, type CourseSettingsInput } from "./pricing-rules";
 
-export type PricingResult =
+export type CourseSettingsResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
-/** Saves price, currency, certificate switch, visibility and prerequisites of the version being authored. */
-export async function savePricing(courseId: string, input: PricingInput): Promise<PricingResult> {
+/**
+ * Saves the certificate switch, visibility and prerequisites of the version being authored. The price
+ * is not the instructor's to set (ADR-037): admins set it with setCoursePriceAction.
+ */
+export async function saveCourseSettings(courseId: string, input: CourseSettingsInput): Promise<CourseSettingsResult> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,7 +23,7 @@ export async function savePricing(courseId: string, input: PricingInput): Promis
   if (!course) return { ok: false, error: "This course is not available." };
   if (!course.editable) return { ok: false, error: "This course is locked while it is in review or published." };
 
-  const parsed = validatePricing(input);
+  const parsed = validateCourseSettings(input);
   if (!parsed.ok) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: parsed.errors };
   const v = parsed.value;
 
@@ -49,8 +52,6 @@ export async function savePricing(courseId: string, input: PricingInput): Promis
   const { data, error } = await supabase
     .from("course_versions")
     .update({
-      price_cents: v.priceCents,
-      currency: v.currency,
       certificate_enabled: v.certificateEnabled,
       visibility: v.visibility,
     })

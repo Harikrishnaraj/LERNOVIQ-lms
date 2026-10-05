@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Lock } from "lucide-react";
 import { CourseSteps } from "@/components/course-authoring/course-steps";
-import { PricingForm } from "@/components/course-authoring/pricing-form";
+import { CourseSettingsForm } from "@/components/course-authoring/pricing-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -13,9 +13,9 @@ import { nextBuiltStep } from "@/features/course-authoring/steps";
 import { isCourseStatus } from "@/features/courses/course-status";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Pricing & settings" };
+export const metadata: Metadata = { title: "Course settings" };
 
-export default async function PricingPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default async function CourseSettingsPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params;
   const supabase = await createClient();
   const {
@@ -33,7 +33,7 @@ export default async function PricingPage({ params }: { params: Promise<{ course
     <>
       <PageHeader
         title={course.version.title}
-        description="Pricing, certificate, visibility and prerequisites."
+        description="Certificate, visibility and prerequisites. The price is set by the platform."
         actions={<StatusBadge kind="course" status={status} />}
       />
       <CourseSteps courseId={course.courseId} current="pricing" />
@@ -45,7 +45,7 @@ export default async function PricingPage({ params }: { params: Promise<{ course
         </p>
       )}
 
-      <PricingForm courseId={course.courseId} initial={pricing} disabled={!course.editable} />
+      <CourseSettingsForm courseId={course.courseId} initial={pricing} disabled={!course.editable} />
 
       {next && (
         <div className="mt-8 max-w-2xl border-t border-border pt-6">

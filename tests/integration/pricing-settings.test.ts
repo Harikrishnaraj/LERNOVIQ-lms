@@ -10,7 +10,8 @@ let currentClient: SupabaseClient;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { savePricing } from "@/features/course-authoring/pricing-actions";
+import { saveCourseSettings } from "@/features/course-authoring/pricing-actions";
+import { setCoursePriceAction } from "@/features/admin/course-price-actions";
 import { enrollInCourse } from "@/features/enrollment/enroll";
 
 const hasLiveProject = Boolean(
@@ -20,16 +21,14 @@ const hasLiveProject = Boolean(
 );
 
 const input = (over = {}) => ({
-  mode: "free",
-  amount: "",
-  currency: "USD",
   certificateEnabled: true,
   visibility: "public",
   prerequisiteIds: [] as string[],
   ...over,
 });
 
-// F-202 pricing & settings: saved, enforced in the catalog and at enrollment (action AND RLS).
+// F-202 course settings (instructor) and the platform-set price (admin, ADR-037): saved, enforced in
+// the catalog and at enrollment (action AND RLS).
 describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", () => {
   const svc = hasLiveProject ? serviceClient() : (null as never);
   const tag = uniqueTag("pr");
@@ -43,6 +42,7 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
   let owner: { id: string; client: SupabaseClient };
   let other: { id: string; client: SupabaseClient };
   let learner: { id: string; client: SupabaseClient };
+  let admin: { id: string; client: SupabaseClient };
   let a: Awaited<ReturnType<typeof createCourse>>; // course being configured (draft)
   let b: Awaited<ReturnType<typeof createCourse>>; // published prerequisite
   let c: Awaited<ReturnType<typeof createCourse>>; // published course that requires b
@@ -61,6 +61,7 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
     owner = await user("own", "instructor");
     other = await user("oth", "instructor");
     learner = await user("lrn", "learner");
+    admin = await user("adm", "admin");
     a = await createCourse(svc, owner.id, { slug: `${tag}-a`, title: `${tag} A`, publish: false });
     b = await createCourse(svc, owner.id, { slug: `${tag}-b`, title: `${tag} Basics`, publish: true });
     c = await createCourse(svc, owner.id, { slug: `${tag}-c`, title: `${tag} Advanced`, publish: true });
@@ -71,44 +72,37 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
   afterAll(() => cleanup(svc, { learnerIds, courseIds, userIds }), 120_000);
 
   describe("saving", () => {
-    it("saves a paid price in cents with currency, certificate switch and visibility", async () => {
+    it("saves the certificate switch and visibility, and never touches the price", async () => {
       currentClient = owner.client;
-      expect(await savePricing(a.courseId, input({ mode: "paid", amount: "49.99", currency: "EUR", certificateEnabled: false, visibility: "unlisted" }))).toEqual({ ok: true });
+      await svc.from("course_versions").update({ price_cents: 2500, currency: "GBP" }).eq("id", a.versionId);
+      expect(await saveCourseSettings(a.courseId, input({ certificateEnabled: false, visibility: "unlisted", mode: "paid", amount: "1", priceCents: 1 }))).toEqual({ ok: true });
       const { data } = await svc.from("course_versions").select("price_cents, currency, certificate_enabled, visibility").eq("id", a.versionId).single();
-      expect(data).toEqual({ price_cents: 4999, currency: "EUR", certificate_enabled: false, visibility: "unlisted" });
+      expect(data).toEqual({ price_cents: 2500, currency: "GBP", certificate_enabled: false, visibility: "unlisted" });
       const back = await getPricingForEditing(owner.client, owner.id, a.courseId, a.versionId);
-      expect(back).toMatchObject({ priceCents: 4999, currency: "EUR", certificateEnabled: false, visibility: "unlisted", prerequisiteIds: [] });
-      expect(back!.candidates.map((x) => x.id).sort()).toEqual([b.courseId, c.courseId].sort());
+      expect(back).toMatchObject({ priceCents: 2500, currency: "GBP", certificateEnabled: false, visibility: "unlisted", prerequisiteIds: [] });
+      await saveCourseSettings(a.courseId, input());
+      await svc.from("course_versions").update({ price_cents: 0, currency: "USD" }).eq("id", a.versionId);
     });
 
-    it("switching back to free zeroes the price", async () => {
+    it("validates input with field errors", async () => {
       currentClient = owner.client;
-      await savePricing(a.courseId, input({ mode: "free", amount: "99", visibility: "public" }));
-      const { data } = await svc.from("course_versions").select("price_cents, visibility").eq("id", a.versionId).single();
-      expect(data).toEqual({ price_cents: 0, visibility: "public" });
-    });
-
-    it("validates input with field errors and writes nothing", async () => {
-      currentClient = owner.client;
-      const r = await savePricing(a.courseId, input({ mode: "paid", amount: "0.10", currency: "XXX" }));
-      expect(r).toMatchObject({ ok: false, fieldErrors: { amount: expect.any(String), currency: expect.any(String) } });
-      const { data } = await svc.from("course_versions").select("price_cents").eq("id", a.versionId).single();
-      expect(data!.price_cents).toBe(0);
+      const r = await saveCourseSettings(a.courseId, input({ visibility: "secret" }));
+      expect(r).toMatchObject({ ok: false, fieldErrors: { visibility: expect.any(String) } });
     });
 
     it("stores prerequisites, replaces them on re-save, and only allows own other courses", async () => {
       currentClient = owner.client;
-      expect(await savePricing(a.courseId, input({ prerequisiteIds: [b.courseId] }))).toEqual({ ok: true });
+      expect(await saveCourseSettings(a.courseId, input({ prerequisiteIds: [b.courseId] }))).toEqual({ ok: true });
       let { data } = await svc.from("course_prerequisites").select("prerequisite_course_id").eq("version_id", a.versionId);
       expect(data!.map((r) => r.prerequisite_course_id)).toEqual([b.courseId]);
-      expect(await savePricing(a.courseId, input({ prerequisiteIds: [c.courseId] }))).toEqual({ ok: true });
+      expect(await saveCourseSettings(a.courseId, input({ prerequisiteIds: [c.courseId] }))).toEqual({ ok: true });
       ({ data } = await svc.from("course_prerequisites").select("prerequisite_course_id").eq("version_id", a.versionId));
       expect(data!.map((r) => r.prerequisite_course_id)).toEqual([c.courseId]);
 
       const bad = { ok: false, fieldErrors: { prerequisiteIds: "Choose prerequisites from your other courses." } };
-      expect(await savePricing(a.courseId, input({ prerequisiteIds: [foreign.courseId] }))).toMatchObject(bad);
-      expect(await savePricing(a.courseId, input({ prerequisiteIds: [a.courseId] }))).toMatchObject(bad);
-      await savePricing(a.courseId, input({ prerequisiteIds: [] }));
+      expect(await saveCourseSettings(a.courseId, input({ prerequisiteIds: [foreign.courseId] }))).toMatchObject(bad);
+      expect(await saveCourseSettings(a.courseId, input({ prerequisiteIds: [a.courseId] }))).toMatchObject(bad);
+      await saveCourseSettings(a.courseId, input({ prerequisiteIds: [] }));
     });
 
     it("rejects prerequisite loops", async () => {
@@ -116,7 +110,7 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
       // c requires b; making b require c would loop.
       await svc.from("course_prerequisites").insert({ version_id: c.versionId, prerequisite_course_id: b.courseId });
       await svc.from("course_versions").update({ status: "draft" }).eq("id", b.versionId);
-      const r = await savePricing(b.courseId, input({ prerequisiteIds: [c.courseId] }));
+      const r = await saveCourseSettings(b.courseId, input({ prerequisiteIds: [c.courseId] }));
       expect(r).toMatchObject({ ok: false, fieldErrors: { prerequisiteIds: expect.stringContaining("loop") } });
       await svc.from("course_versions").update({ status: "published" }).eq("id", b.versionId);
     });
@@ -125,18 +119,63 @@ describe.skipIf(!hasLiveProject)("pricing & settings (T-055, live Supabase)", ()
       const denied = { ok: false, error: "This course is not available." };
       for (const who of [other, learner]) {
         currentClient = who.client;
-        expect(await savePricing(a.courseId, input({ mode: "paid", amount: "5" }))).toEqual(denied);
+        expect(await saveCourseSettings(a.courseId, input({ visibility: "unlisted" }))).toEqual(denied);
       }
       currentClient = owner.client;
       await svc.from("course_versions").update({ status: "in_review" }).eq("id", a.versionId);
-      expect(await savePricing(a.courseId, input())).toEqual({ ok: false, error: "This course is locked while it is in review or published." });
+      expect(await saveCourseSettings(a.courseId, input())).toEqual({ ok: false, error: "This course is locked while it is in review or published." });
       await svc.from("course_versions").update({ status: "draft" }).eq("id", a.versionId);
     });
 
-    it("the instructor cannot set visibility or price outside the granted columns", async () => {
-      // status stays protected: a direct API update of a privileged column still fails.
+    it("the instructor cannot write privileged columns directly: status, nor price (ADR-037)", async () => {
       const { error } = await owner.client.from("course_versions").update({ status: "published" }).eq("id", a.versionId);
       expect(error).not.toBeNull();
+      const price = await owner.client.from("course_versions").update({ price_cents: 4999 }).eq("id", a.versionId);
+      expect(price.error).not.toBeNull();
+      const cur = await owner.client.from("course_versions").update({ currency: "EUR" }).eq("id", a.versionId);
+      expect(cur.error).not.toBeNull();
+      const rpc = await owner.client.rpc("admin_set_course_price", { p_course_id: a.courseId, p_price_cents: 4999, p_currency: "USD" });
+      expect(rpc.error?.code).toBe("42501");
+      const { data } = await svc.from("course_versions").select("price_cents, currency").eq("id", a.versionId).single();
+      expect(data).toEqual({ price_cents: 0, currency: "USD" });
+    });
+  });
+
+  describe("platform price (admin, ADR-037)", () => {
+    it("an admin sets the price for every version of a course, audited", async () => {
+      currentClient = admin.client;
+      expect(await setCoursePriceAction(c.courseId, { mode: "paid", amount: "49.99", currency: "EUR" })).toEqual({ ok: true });
+      const { data } = await svc.from("course_versions").select("price_cents, currency").eq("course_id", c.courseId);
+      expect(data!.length).toBeGreaterThan(0);
+      for (const v of data!) expect(v).toEqual({ price_cents: 4999, currency: "EUR" });
+      const { data: audit } = await svc
+        .from("audit_logs")
+        .select("actor_id, metadata")
+        .eq("action", "course.price_changed")
+        .eq("resource_id", c.courseId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      expect(audit).toMatchObject({ actor_id: admin.id, metadata: { price_cents: 4999, currency: "EUR" } });
+
+      expect(await setCoursePriceAction(c.courseId, { mode: "free", amount: "", currency: "EUR" })).toEqual({ ok: true });
+      const { data: free } = await svc.from("course_versions").select("price_cents").eq("course_id", c.courseId);
+      for (const v of free!) expect(v.price_cents).toBe(0);
+    });
+
+    it("rejects an invalid price, and refuses instructors and learners", async () => {
+      currentClient = admin.client;
+      expect(await setCoursePriceAction(c.courseId, { mode: "paid", amount: "0.10", currency: "XXX" })).toMatchObject({
+        ok: false,
+        fieldErrors: { amount: expect.any(String), currency: expect.any(String) },
+      });
+      for (const who of [owner, learner]) {
+        currentClient = who.client;
+        expect(await setCoursePriceAction(c.courseId, { mode: "paid", amount: "5", currency: "USD" })).toEqual({
+          ok: false,
+          error: "You do not have permission to change course prices.",
+        });
+      }
     });
   });
 

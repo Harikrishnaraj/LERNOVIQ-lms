@@ -67,7 +67,7 @@ test.describe("submit for review", () => {
     await expect(page.getByText("Please check the quiz.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Submit for review" })).toHaveCount(0);
 
-    // Locked: the pricing screen is now read-only.
+    // Locked: the settings screen is now read-only.
     await page.goto(`/instructor/courses/${c.courseId}/pricing`);
     await expect(page.getByRole("button", { name: "Save settings" })).toBeDisabled();
   });

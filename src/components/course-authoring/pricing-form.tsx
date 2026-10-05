@@ -4,19 +4,15 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { savePricing } from "@/features/course-authoring/pricing-actions";
-import {
-  CURRENCIES,
-  MAX_PREREQUISITES,
-  VISIBILITY_OPTIONS,
-  formatCentsAsAmount,
-  validatePricing,
-} from "@/features/course-authoring/pricing-rules";
+import { saveCourseSettings } from "@/features/course-authoring/pricing-actions";
+import { MAX_PREREQUISITES, VISIBILITY_OPTIONS, validateCourseSettings } from "@/features/course-authoring/pricing-rules";
 import type { PricingForEditing } from "@/features/course-authoring/pricing";
+import { formatPrice } from "@/lib/utils/format";
 
 const field = "h-10 w-full rounded-input border border-border bg-surface px-3 text-sm";
 
-export function PricingForm({
+/** Course settings the instructor controls. The price is shown read-only: the platform sets it (ADR-037). */
+export function CourseSettingsForm({
   courseId,
   initial,
   disabled = false,
@@ -26,9 +22,6 @@ export function PricingForm({
   disabled?: boolean;
 }) {
   const router = useRouter();
-  const [mode, setMode] = useState(initial.priceCents > 0 ? "paid" : "free");
-  const [amount, setAmount] = useState(initial.priceCents > 0 ? formatCentsAsAmount(initial.priceCents) : "");
-  const [currency, setCurrency] = useState<string>(initial.currency);
   const [certificate, setCertificate] = useState(initial.certificateEnabled);
   const [visibility, setVisibility] = useState<string>(initial.visibility);
   const [prereqs, setPrereqs] = useState<string[]>(initial.prerequisiteIds);
@@ -42,8 +35,8 @@ export function PricingForm({
     e.preventDefault();
     setFormError(null);
     setSaved(false);
-    const input = { mode, amount, currency, certificateEnabled: certificate, visibility, prerequisiteIds: prereqs };
-    const check = validatePricing(input); // instant feedback; the server validates again
+    const input = { certificateEnabled: certificate, visibility, prerequisiteIds: prereqs };
+    const check = validateCourseSettings(input); // instant feedback; the server validates again
     if (!check.ok) {
       setErrors(check.errors);
       return;
@@ -51,7 +44,7 @@ export function PricingForm({
     setErrors({});
     setSaving(true);
     try {
-      const r = await savePricing(courseId, input);
+      const r = await saveCourseSettings(courseId, input);
       if (r.ok) {
         setSaved(true);
         router.refresh();
@@ -81,41 +74,13 @@ export function PricingForm({
         </div>
       )}
 
-      <fieldset className="space-y-3" disabled={busy}>
-        <legend className="text-base font-semibold">Price</legend>
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="mode" value="free" checked={mode === "free"} onChange={() => setMode("free")} className="size-4 accent-primary" />
-            Free
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="mode" value="paid" checked={mode === "paid"} onChange={() => setMode("paid")} className="size-4 accent-primary" />
-            Paid
-          </label>
-        </div>
-        {mode === "paid" && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              Price
-              <input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="49.99" className={field} />
-              {errors.amount && <span role="alert" className="text-xs text-danger-text">{errors.amount}</span>}
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium">
-              Currency
-              <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={field}>
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
-        {mode === "paid" && (
-          <p className="text-xs text-text-secondary">Learners cannot buy paid courses until checkout is set up; free courses enroll instantly.</p>
-        )}
-      </fieldset>
+      <section aria-labelledby="price-heading" className="space-y-1">
+        <h2 id="price-heading" className="text-base font-semibold">
+          Price
+        </h2>
+        <p className="text-sm">{formatPrice(initial.priceCents, initial.currency)}</p>
+        <p className="text-xs text-text-secondary">Course prices are set by the platform team, not by instructors.</p>
+      </section>
 
       <fieldset className="space-y-3" disabled={busy}>
         <legend className="text-base font-semibold">Completion</legend>

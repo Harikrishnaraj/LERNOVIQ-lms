@@ -31,7 +31,6 @@ import {
   Star,
   UserCog,
   Users,
-  Wallet,
 } from "lucide-react";
 import type { Portal } from "@/types/portal";
 
@@ -261,13 +260,6 @@ const instructor: PortalNav = {
           icon: Star,
           description: "Learner ratings and feedback.",
           task: "T-109",
-        },
-        {
-          label: "Earnings",
-          href: "/instructor/earnings",
-          icon: Wallet,
-          description: "Revenue and payouts.",
-          task: "T-186",
         },
         {
           label: "Certificates",
