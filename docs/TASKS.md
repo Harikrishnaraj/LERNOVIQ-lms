@@ -153,7 +153,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-184** Coupons (percent/fixed, limits, expiry). — F-602
 - [ ] **T-185** Refunds (admin-initiated, audited, revokes access per policy). — F-603
 - ~~T-186 Instructor earnings + payouts (`instructor_payouts`).~~ Descoped by ADR-037 (F-604).
-- [~] **T-252** Platform-set course prices (ADR-037): `course.price` permission, `admin_set_course_price` RPC and admin price control; instructors see the price read-only and cannot write it (column grants revoked); instructor money UI removed. — F-202
+- [x] **T-252** Platform-set course prices (ADR-037): `course.price` permission, `admin_set_course_price` RPC and admin price control; instructors see the price read-only and cannot write it (column grants revoked); instructor money UI removed. — F-202
 - [ ] **T-187** Admin Commerce/Revenue: net revenue, by channel, orders table. — F-605
 - [ ] **T-188** Tests: TEST_PLAN §14. — F-600…F-605
 
