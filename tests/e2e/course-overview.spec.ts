@@ -54,8 +54,10 @@ test.describe("course overview", () => {
     await expect(stats.getByText("$25.00")).toBeVisible();
     await expect(page.getByRole("status").filter({ hasText: /items? to finish/ })).toBeVisible();
 
-    for (const name of ["Basics", "Curriculum", "Pricing", "Preview", "Readiness", "Submit", "Assessments"]) {
-      await expect(page.getByRole("link", { name: new RegExp(`^${name}`) }).first()).toBeVisible();
+    // Scoped to the builder steps: the portal sidebar also has a "Settings" link (hidden on phones).
+    const steps = page.getByRole("region", { name: "Build your course" });
+    for (const name of ["Basics", "Curriculum", "Settings", "Preview", "Readiness", "Submit", "Assessments"]) {
+      await expect(steps.getByRole("link", { name: new RegExp(`^${name}`) }).first()).toBeVisible();
     }
     await page.getByRole("link", { name: /^Curriculum/ }).click();
     await expect(page).toHaveURL(/\/curriculum$/);
