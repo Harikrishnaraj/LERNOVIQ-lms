@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/services/supabase/admin";
 import {
   decideStart,
-  gradeAttempt,
+  gradeWithManualScores,
   isExpired,
   isManualType,
   shouldRevealKey,
@@ -36,6 +36,10 @@ export interface ResultQuestion {
   earned: number;
   /** null = awaiting manual review */
   correct: boolean | null;
+  /** Essay/coding questions: graded by the instructor (T-252). */
+  manual: boolean;
+  /** The instructor's feedback on this question, once graded ("" otherwise). */
+  feedback: string;
   yourAnswer: string | string[] | null;
   options: { id: string; label: string }[];
   /** Present only when the key may be revealed. */
@@ -50,7 +54,14 @@ export interface AssessmentPageState {
   attempts: AttemptView[];
   inProgress: AttemptView | null;
   latest: AttemptView | null;
-  result: { questions: ResultQuestion[]; revealed: boolean; score: number; maxScore: number } | null;
+  result: {
+    questions: ResultQuestion[];
+    revealed: boolean;
+    score: number;
+    maxScore: number;
+    /** The instructor's overall feedback on a graded attempt ("" otherwise). */
+    feedback: string;
+  } | null;
   start: StartDecision;
 }
 
@@ -121,7 +132,8 @@ export async function getAssessmentPageState(
   let result: AssessmentPageState["result"] = null;
   if (latestRow) {
     const keyed = await loadKeyedQuestions(admin, assessmentId);
-    const grade = gradeAttempt(keyed, latestRow.answers, assessment.passMark);
+    const manual = latestRow.manual_scores ?? {};
+    const grade = gradeWithManualScores(keyed, latestRow.answers, assessment.passMark, manual);
     const revealed = shouldRevealKey(
       finished.map((a) => ({ status: a.status, passed: a.passed })),
       assessment.maxAttempts,
@@ -130,6 +142,7 @@ export async function getAssessmentPageState(
       revealed,
       score: grade.score,
       maxScore: grade.maxScore,
+      feedback: latestRow.feedback ?? "",
       questions: keyed.map((q) => {
         const r = grade.results.find((x) => x.questionId === q.id)!;
         const learnerQ = assessment.questions.find((x) => x.id === q.id)!;
@@ -141,6 +154,8 @@ export async function getAssessmentPageState(
           points: q.points,
           earned: r.earned,
           correct: r.correct,
+          manual: isManualType(q.type),
+          feedback: manual[q.id]?.feedback ?? "",
           yourAnswer: answer ?? null,
           options: learnerQ.options,
           ...(revealed && !isManualType(q.type)

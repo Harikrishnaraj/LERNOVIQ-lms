@@ -3,6 +3,9 @@ import {
   computeExpiry,
   decideStart,
   gradeAttempt,
+  gradeWithManualScores,
+  regradeBlockedReason,
+  validateManualGrade,
   isExpired,
   isPastGrace,
   normalizeText,
@@ -133,5 +136,107 @@ describe("retry rules", () => {
     expect(shouldRevealKey([fail, pass], 3)).toBe(true);
     expect(shouldRevealKey([fail, fail, fail], 3)).toBe(true);
     expect(shouldRevealKey([fail, fail, fail], null)).toBe(false);
+  });
+});
+
+// T-252: manual grading of essay/coding questions.
+describe("gradeWithManualScores", () => {
+  const mixed = [
+    q({ id: "m", type: "mcq", points: 2, correctOptionIds: ["b"] }),
+    q({ id: "e", type: "essay", points: 5 }),
+    q({ id: "c", type: "coding", points: 3 }),
+  ];
+
+  it("stays pending (auto-graded part only) until every manual question is scored", () => {
+    const r = gradeWithManualScores(mixed, { m: "b" }, 70, { e: { points: 5, feedback: "" } });
+    expect(r).toMatchObject({ score: 2, maxScore: 2, passed: null, pendingManual: true });
+  });
+
+  it("scores every question once all manual marks exist, and decides pass/fail", () => {
+    const pass = gradeWithManualScores(mixed, { m: "b" }, 70, {
+      e: { points: 4, feedback: "" },
+      c: { points: 2, feedback: "" },
+    });
+    expect(pass).toMatchObject({ score: 8, maxScore: 10, percent: 80, passed: true, pendingManual: false });
+    expect(pass.results.find((x) => x.questionId === "e")).toEqual({ questionId: "e", correct: false, earned: 4 });
+
+    const fail = gradeWithManualScores(mixed, { m: "a" }, 70, {
+      e: { points: 5, feedback: "" },
+      c: { points: 1, feedback: "" },
+    });
+    expect(fail).toMatchObject({ score: 6, maxScore: 10, percent: 60, passed: false });
+  });
+
+  it("handles an essay-only assessment and an exact pass-mark boundary", () => {
+    const essayOnly = [q({ id: "e", type: "essay", points: 10 })];
+    expect(gradeWithManualScores(essayOnly, {}, 70, { e: { points: 7, feedback: "" } })).toMatchObject({
+      score: 7,
+      maxScore: 10,
+      percent: 70,
+      passed: true,
+    });
+    expect(gradeWithManualScores(essayOnly, {}, 70, { e: { points: 0, feedback: "" } }).passed).toBe(false);
+  });
+
+  it("matches gradeAttempt when there are no manual questions", () => {
+    const auto = [q({ id: "m", type: "mcq", correctOptionIds: ["b"] })];
+    expect(gradeWithManualScores(auto, { m: "b" }, 70, {})).toEqual(gradeAttempt(auto, { m: "b" }, 70));
+  });
+});
+
+describe("validateManualGrade", () => {
+  const qs = [
+    { id: "m", type: "mcq" as const, points: 2 },
+    { id: "e", type: "essay" as const, points: 5 },
+    { id: "c", type: "coding" as const, points: 3 },
+  ];
+
+  it("accepts whole points within bounds and trims feedback", () => {
+    expect(
+      validateManualGrade(qs, { points: { e: 5, c: 0 }, feedback: { e: "  Clear  " }, overall: " Well done " }),
+    ).toEqual({
+      ok: true,
+      scores: { e: { points: 5, feedback: "Clear" }, c: { points: 0, feedback: "" } },
+      feedback: "Well done",
+    });
+  });
+
+  it("rejects missing, fractional, negative and out-of-range points", () => {
+    for (const bad of [{ e: 5 }, { e: 2.5, c: 1 }, { e: -1, c: 1 }, { e: 6, c: 1 }, { e: "5", c: 1 }]) {
+      expect(validateManualGrade(qs, { points: bad, feedback: {}, overall: "" }).ok).toBe(false);
+    }
+    expect(validateManualGrade(qs, { points: { e: 6, c: 1 }, feedback: {}, overall: "" })).toEqual({
+      ok: false,
+      error: "Question 2: enter a whole number of points from 0 to 5.",
+    });
+  });
+
+  it("refuses to hand-score an auto-graded or unknown question", () => {
+    expect(validateManualGrade(qs, { points: { e: 1, c: 1, m: 2 }, feedback: {}, overall: "" }).ok).toBe(false);
+    expect(validateManualGrade(qs, { points: { e: 1, c: 1, x: 1 }, feedback: {}, overall: "" }).ok).toBe(false);
+  });
+
+  it("limits feedback length and tolerates malformed input", () => {
+    const long = "x".repeat(5001);
+    expect(validateManualGrade(qs, { points: { e: 1, c: 1 }, feedback: { e: long }, overall: "" }).ok).toBe(false);
+    expect(validateManualGrade(qs, { points: { e: 1, c: 1 }, feedback: {}, overall: "y".repeat(10001) }).ok).toBe(false);
+    expect(validateManualGrade(qs, { points: null, feedback: "nope", overall: 42 }).ok).toBe(false);
+  });
+});
+
+describe("regradeBlockedReason", () => {
+  it("only blocks turning a pass into a fail after the course was completed", () => {
+    expect(regradeBlockedReason(true, false, true)).toMatch(/already completed the course/);
+    expect(regradeBlockedReason(true, false, false)).toBeNull();
+    expect(regradeBlockedReason(false, true, true)).toBeNull();
+    expect(regradeBlockedReason(null, false, true)).toBeNull();
+    expect(regradeBlockedReason(true, true, true)).toBeNull();
+  });
+});
+
+describe("retry rules while an attempt awaits grading", () => {
+  it("blocks a new attempt until the submitted one is graded", () => {
+    expect(decideStart([{ status: "submitted", passed: null }], 3)).toEqual({ ok: false, reason: "awaiting_review" });
+    expect(decideStart([{ status: "graded", passed: false }], 3)).toEqual({ ok: true, attemptNumber: 2 });
   });
 });

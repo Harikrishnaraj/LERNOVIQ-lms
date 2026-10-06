@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { tryEvaluateCompletion } from "@/features/completion/evaluate";
 import { sanitizeAnswers, type AnswerableQuestion } from "./answers";
-import { gradeAttempt, type Answers, type GradableQuestion, type GradeResult } from "./grading";
+import { gradeAttempt, type Answers, type GradableQuestion, type GradeResult, type ManualScores } from "./grading";
 import type { QuestionType } from "./learner";
 
 // Server-only helpers (never import from client components): they read answer keys through the
@@ -22,10 +22,15 @@ export interface AttemptRow {
   max_score: number | null;
   percent: number | null;
   passed: boolean | null;
+  /** Instructor marks for essay/coding questions (T-252); {} until graded. */
+  manual_scores: ManualScores;
+  /** Instructor's overall feedback; "" until graded. */
+  feedback: string;
+  graded_at: string | null;
 }
 
 export const ATTEMPT_COLUMNS =
-  "id, assessment_id, enrollment_id, user_id, attempt_number, status, started_at, expires_at, submitted_at, answers, score, max_score, percent, passed";
+  "id, assessment_id, enrollment_id, user_id, attempt_number, status, started_at, expires_at, submitted_at, answers, score, max_score, percent, passed, manual_scores, feedback, graded_at";
 
 export interface KeyedQuestion extends GradableQuestion {
   prompt: string;

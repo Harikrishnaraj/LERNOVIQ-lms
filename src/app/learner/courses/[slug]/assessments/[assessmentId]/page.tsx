@@ -85,6 +85,7 @@ export default async function AssessmentPage({
                 revealed={result.revealed}
                 score={result.score}
                 maxScore={result.maxScore}
+                feedback={result.feedback}
                 attemptsUsed={attempts.length}
                 maxAttempts={assessment.maxAttempts}
               />
@@ -105,9 +106,11 @@ export default async function AssessmentPage({
                 />
               </Card>
             ) : (
-              start.reason === "no_attempts_left" && (
+              (start.reason === "no_attempts_left" || start.reason === "awaiting_review") && (
                 <p role="status" className="text-sm text-text-secondary">
-                  You have used all your attempts for this assessment.
+                  {start.reason === "awaiting_review"
+                    ? "Your instructor is grading your last attempt. You can try again once it's graded, if you need to."
+                    : "You have used all your attempts for this assessment."}
                 </p>
               )
             )}

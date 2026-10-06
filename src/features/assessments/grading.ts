@@ -108,6 +108,117 @@ export function gradeAttempt(
   };
 }
 
+// ------------------------------------------------------------------ manual grading (T-252)
+
+/** The instructor's mark for one essay/coding question. */
+export interface ManualScore {
+  points: number;
+  feedback: string;
+}
+
+/** Keyed by question id; only essay/coding questions appear. */
+export type ManualScores = Record<string, ManualScore>;
+
+/**
+ * The attempt grade including the instructor's manual scores. Until every manual question has a
+ * score the result is the auto-graded one (pending, `passed` null); once all are scored the
+ * score, maximum and percent cover every question and `passed` is decided against the pass mark.
+ */
+export function gradeWithManualScores(
+  questions: GradableQuestion[],
+  answers: Answers,
+  passMark: number,
+  manual: ManualScores,
+): GradeResult {
+  const auto = gradeAttempt(questions, answers, passMark);
+  if (!auto.pendingManual) return auto;
+
+  let score = auto.score;
+  let maxScore = auto.maxScore;
+  let pendingManual = false;
+  const results = auto.results.map((r) => {
+    const q = questions.find((x) => x.id === r.questionId)!;
+    if (!isManualType(q.type)) return r;
+    maxScore += q.points;
+    const mark = manual[q.id];
+    if (!mark) {
+      pendingManual = true;
+      return r;
+    }
+    score += mark.points;
+    return { questionId: q.id, correct: mark.points === q.points, earned: mark.points };
+  });
+  if (pendingManual) return { ...auto, results };
+
+  const percent = maxScore > 0 ? Math.round((score / maxScore) * 10000) / 100 : 0;
+  return { score, maxScore, percent, passed: percent >= passMark, pendingManual: false, results };
+}
+
+export const MAX_QUESTION_FEEDBACK = 5000;
+export const MAX_OVERALL_FEEDBACK = 10000;
+
+export type ManualGradeCheck =
+  | { ok: true; scores: ManualScores; feedback: string }
+  | { ok: false; error: string };
+
+/**
+ * Validates an instructor's grade: every essay/coding question needs a whole number of points from
+ * 0 to its maximum, nothing else may be scored, and feedback is trimmed and length-limited.
+ */
+export function validateManualGrade(
+  questions: Pick<GradableQuestion, "id" | "type" | "points">[],
+  input: { points: unknown; feedback: unknown; overall: unknown },
+): ManualGradeCheck {
+  const points = isRecord(input.points) ? input.points : {};
+  const feedback = isRecord(input.feedback) ? input.feedback : {};
+  const manual = questions.filter((q) => isManualType(q.type));
+  const manualIds = new Set(manual.map((q) => q.id));
+  if (Object.keys(points).some((id) => !manualIds.has(id))) {
+    return { ok: false, error: "Only essay and coding questions can be graded by hand." };
+  }
+
+  const scores: ManualScores = {};
+  for (const q of manual) {
+    // Numbered by position in the whole assessment, as the grading screen labels them.
+    const n = questions.indexOf(q) + 1;
+    const p = points[q.id];
+    if (typeof p !== "number" || !Number.isInteger(p) || p < 0 || p > q.points) {
+      return { ok: false, error: `Question ${n}: enter a whole number of points from 0 to ${q.points}.` };
+    }
+    const note = typeof feedback[q.id] === "string" ? (feedback[q.id] as string).trim() : "";
+    if (note.length > MAX_QUESTION_FEEDBACK) {
+      return { ok: false, error: `Question ${n}: feedback can be at most ${MAX_QUESTION_FEEDBACK} characters.` };
+    }
+    scores[q.id] = { points: p, feedback: note };
+  }
+
+  const overall = typeof input.overall === "string" ? input.overall.trim() : "";
+  if (overall.length > MAX_OVERALL_FEEDBACK) {
+    return { ok: false, error: `Overall feedback can be at most ${MAX_OVERALL_FEEDBACK} characters.` };
+  }
+  return { ok: true, scores, feedback: overall };
+}
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+/**
+ * Completing a course is one-way (the enrollment is marked completed, a certificate may be issued
+ * and a course.completed webhook sent), so a re-grade may not turn a passed attempt into a failed
+ * one once the learner has completed the course. Returns the reason to refuse, or null.
+ */
+export function regradeBlockedReason(
+  previouslyPassed: boolean | null,
+  nowPassed: boolean,
+  courseCompleted: boolean,
+): string | null {
+  if (previouslyPassed === true && !nowPassed && courseCompleted) {
+    return "This learner has already completed the course with this pass, so it can't be changed to a fail. An admin can revoke their certificate if needed.";
+  }
+  return null;
+}
+
 // ------------------------------------------------------------------ attempt rules
 
 export interface AttemptSummary {
@@ -130,13 +241,15 @@ export function isPastGrace(expiresAt: string | null, now: Date): boolean {
 
 export type StartDecision =
   | { ok: true; attemptNumber: number }
-  | { ok: false; reason: "in_progress" | "no_attempts_left" };
+  | { ok: false; reason: "in_progress" | "awaiting_review" | "no_attempts_left" };
 
 /**
- * Retry rules: one attempt at a time; at most `maxAttempts` attempts in total (null = unlimited).
+ * Retry rules: one attempt at a time; no new attempt while one awaits the instructor's grading;
+ * at most `maxAttempts` attempts in total (null = unlimited).
  */
 export function decideStart(attempts: AttemptSummary[], maxAttempts: number | null): StartDecision {
   if (attempts.some((a) => a.status === "in_progress")) return { ok: false, reason: "in_progress" };
+  if (attempts.some((a) => a.status === "submitted")) return { ok: false, reason: "awaiting_review" };
   if (maxAttempts !== null && attempts.length >= maxAttempts) {
     return { ok: false, reason: "no_attempts_left" };
   }
