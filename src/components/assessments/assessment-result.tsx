@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, MessageSquare, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { AttemptView, ResultQuestion } from "@/features/assessments/state";
@@ -22,6 +22,7 @@ export function AssessmentResult({
   revealed,
   score,
   maxScore,
+  feedback,
   attemptsUsed,
   maxAttempts,
 }: {
@@ -31,6 +32,8 @@ export function AssessmentResult({
   revealed: boolean;
   score: number;
   maxScore: number;
+  /** The instructor's overall feedback on a graded attempt. */
+  feedback: string;
   attemptsUsed: number;
   maxAttempts: number | null;
 }) {
@@ -59,6 +62,14 @@ export function AssessmentResult({
             Not passed
           </Badge>
         )}
+        {feedback && (
+          <div className="mt-2 space-y-1 border-t border-border pt-3">
+            <p className="inline-flex items-center gap-1 text-sm font-medium">
+              <MessageSquare className="size-4" aria-hidden="true" /> Feedback from your instructor
+            </p>
+            <p className="text-sm whitespace-pre-wrap">{feedback}</p>
+          </div>
+        )}
       </Card>
 
       {!revealed && (
@@ -79,6 +90,10 @@ export function AssessmentResult({
                   <span className="inline-flex shrink-0 items-center gap-1 text-sm text-warning-text">
                     <Clock className="size-4" aria-hidden="true" /> Pending review
                   </span>
+                ) : q.manual ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-sm text-text">
+                    <CheckCircle2 className="size-4" aria-hidden="true" /> {q.earned} / {q.points} points
+                  </span>
                 ) : q.correct ? (
                   <span className="inline-flex shrink-0 items-center gap-1 text-sm text-success-text">
                     <CheckCircle2 className="size-4" aria-hidden="true" /> Correct
@@ -90,8 +105,16 @@ export function AssessmentResult({
                 )}
               </div>
               <p className="text-sm text-text-secondary">
-                Your answer: <span className="text-text">{describeAnswer(q)}</span>
+                Your answer:{" "}
+                <span className={q.type === "coding" ? "font-mono whitespace-pre-wrap text-text" : "whitespace-pre-wrap text-text"}>
+                  {describeAnswer(q)}
+                </span>
               </p>
+              {q.feedback && (
+                <p className="text-sm text-text-secondary">
+                  Instructor feedback: <span className="whitespace-pre-wrap text-text">{q.feedback}</span>
+                </p>
+              )}
               {revealed && q.correctOptionIds && q.correctOptionIds.length > 0 && (
                 <p className="text-sm text-text-secondary">
                   Correct answer:{" "}

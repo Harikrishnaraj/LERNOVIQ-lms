@@ -109,7 +109,9 @@ export async function startAttempt(assessmentId: string): Promise<StartResult> {
       error:
         decision.reason === "no_attempts_left"
           ? "You have used all your attempts for this assessment."
-          : "You already have an attempt in progress.",
+          : decision.reason === "awaiting_review"
+            ? "Your last attempt is waiting for your instructor to grade it."
+            : "You already have an attempt in progress.",
     };
   }
 

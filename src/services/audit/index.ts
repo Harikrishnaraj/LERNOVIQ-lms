@@ -28,6 +28,7 @@ export const AUDIT_ACTIONS = [
   "enrollment.bulk_enroll",
   "certificate.revoked",
   "assessment.attempt_reset",
+  "assessment.attempt_graded",
   "certificate.reissued",
   "content.resource_deleted",
   "content.scorm_package_deleted",
