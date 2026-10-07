@@ -37,12 +37,12 @@ tab) rather than silently skipping, so a missing backup is visible rather than s
 
 ### Restoring data from a backup
 
-1. Download the `modern-lms-db-backup-<run-id>` artifact from the relevant workflow run (Actions
+1. Download the `lernoviq-lms-db-backup-<run-id>` artifact from the relevant workflow run (Actions
    tab → the run → Artifacts), or use one downloaded and stored off-platform.
 2. Restore into a project with the schema already in place (a fresh project after step "Restoring
    the schema" below, or the existing project in a genuine recovery scenario):
    ```bash
-   pg_restore --dbname="$SUPABASE_DB_URL" --clean --if-exists modern-lms-backup.dump
+   pg_restore --dbname="$SUPABASE_DB_URL" --clean --if-exists lernoviq-lms-backup.dump
    ```
    `--clean --if-exists` drops existing objects before recreating them, so this is safe to run
    against a project that already has the schema (from migrations) but stale or no data.

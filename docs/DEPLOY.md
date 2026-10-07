@@ -9,7 +9,7 @@ Production runs on one Ubuntu VPS as three Docker containers (`deploy/docker-com
 GitHub Actions does the deploying. After the Check job and every E2E shard pass, the `deploy` job:
 
 1. builds the image and pushes it to GitHub's container registry (`ghcr.io`, private);
-2. copies the compose file and Caddyfile to `~/modern-lms` on the VPS and writes `~/modern-lms/.env`;
+2. copies the compose file and Caddyfile to `~/lernoviq-lms` on the VPS and writes `~/lernoviq-lms/.env`;
 3. runs `docker compose pull && docker compose up -d`;
 4. checks that the site answers.
 
@@ -31,17 +31,17 @@ When you have a domain, point two DNS **A records** at the VPS (for example `lms
 ### 1. Create a deploy key (on your computer)
 
 ```bash
-ssh-keygen -t ed25519 -C github-actions-deploy -f modern-lms-deploy -N ""
+ssh-keygen -t ed25519 -C github-actions-deploy -f lernoviq-lms-deploy -N ""
 ```
 
-This creates `modern-lms-deploy` (private) and `modern-lms-deploy.pub` (public).
+This creates `lernoviq-lms-deploy` (private) and `lernoviq-lms-deploy.pub` (public).
 
 ### 2. Prepare the VPS (as root)
 
 Copy `deploy/setup-vps.sh` to the server and run it with the **public** key:
 
 ```bash
-sudo bash setup-vps.sh "$(cat modern-lms-deploy.pub)"
+sudo bash setup-vps.sh "$(cat lernoviq-lms-deploy.pub)"
 ```
 
 The script:
@@ -60,7 +60,7 @@ In GitHub, open the repo → Settings → Secrets and variables → Actions → 
 |---|---|
 | `VPS_HOST` | The VPS public IPv4 address |
 | `VPS_USER` | `deploy` |
-| `VPS_SSH_KEY` | The whole **private** key file `modern-lms-deploy` |
+| `VPS_SSH_KEY` | The whole **private** key file `lernoviq-lms-deploy` |
 | `PROD_SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
 | `PROD_SUPABASE_ANON_KEY` | The same page, the `anon` `public` key |
 | `PROD_SUPABASE_SERVICE_ROLE_KEY` | The same page, the `service_role` key (full DB access: secret only) |
@@ -89,7 +89,7 @@ Push to `main`, or open Actions → CI → Run workflow. The job prints the URL 
 
 ## Operating
 
-On the VPS, as `deploy`, run these from `~/modern-lms`:
+On the VPS, as `deploy`, run these from `~/lernoviq-lms`:
 
 | Task | Command |
 |---|---|
