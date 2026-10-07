@@ -26,7 +26,7 @@ export default async function HomePage() {
         One platform. Three workspaces built for the job.
       </h1>
       <p className="mt-3 max-w-lg text-text-secondary">
-        Learn, teach and operate learning — all in Modern LMS.
+        Learn, teach and operate learning — all in LERNOVIQ.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href="/courses" className={buttonClasses({ variant: "secondary", size: "lg" })}>

@@ -23,7 +23,7 @@ const jetbrains = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Modern LMS", template: "%s · Modern LMS" },
+  title: { default: "LERNOVIQ", template: "%s · LERNOVIQ" },
   description: "Learn, teach and operate learning in one platform.",
 };
 

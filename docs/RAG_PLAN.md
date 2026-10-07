@@ -1,4 +1,4 @@
-# Modern LMS — RAG Implementation Plan
+# LERNOVIQ — RAG Implementation Plan
 
 **Status:** Proposed — waiting on the decisions in §1. Not started.
 **Covers:** T-220–T-225 (F-800, F-801, F-802) and the parts of T-200 (F-700) and T-201 (F-701) that

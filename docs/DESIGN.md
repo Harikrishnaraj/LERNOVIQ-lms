@@ -1,8 +1,8 @@
-# Modern LMS — Design System
+# LERNOVIQ — Design System
 
 ## 1. Design Goal
 
-Create one recognizable Modern LMS product across Learner, Instructor and Admin portals while giving each portal a different density and information architecture.
+Create one recognizable LERNOVIQ product across Learner, Instructor and Admin portals while giving each portal a different density and information architecture.
 
 The prototypes already establish a strong visual direction:
 - light learner surfaces,

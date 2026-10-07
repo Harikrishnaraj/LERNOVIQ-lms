@@ -56,7 +56,7 @@ function Brand({ portal }: { portal: Portal }) {
       </span>
       <span className="leading-tight">
         <span className={cn("block font-display text-[15px] font-bold", THEME[portal].brand)}>
-          Modern LMS
+          LERNOVIQ
         </span>
         <span
           className={cn(
@@ -344,7 +344,7 @@ export function PortalShell({
             <Menu className="size-5" aria-hidden="true" />
           </button>
           <div className="lg:hidden">
-            <span className="font-display text-[15px] font-bold">Modern LMS</span>
+            <span className="font-display text-[15px] font-bold">LERNOVIQ</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             {unreadNotifications !== undefined && <NotificationBell href={`/${portal}/notifications`} unread={unreadNotifications} />}

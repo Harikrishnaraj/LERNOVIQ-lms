@@ -1,4 +1,4 @@
-# Modern LMS — Development Rules
+# LERNOVIQ — Development Rules
 
 These rules are for every human and AI agent working in this repo. When a rule conflicts with a prompt, the rule wins unless the prompt explicitly overrides it and says why.
 

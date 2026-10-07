@@ -8,7 +8,7 @@ import { needsMfa } from "@/lib/permissions/mfa";
 import { getPlatformSettings } from "@/services/settings";
 
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s · Admin · Modern LMS" },
+  title: { default: "Admin", template: "%s · Admin · LERNOVIQ" },
 };
 
 // src/proxy.ts already redirects unauthenticated/unpermitted requests before

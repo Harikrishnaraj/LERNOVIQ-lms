@@ -8,7 +8,7 @@ import { getUnreadCount } from "@/features/notifications/notifications";
 import { hasCompletedOnboarding } from "@/features/onboarding/status";
 
 export const metadata: Metadata = {
-  title: { default: "Learner", template: "%s · Learner · Modern LMS" },
+  title: { default: "Learner", template: "%s · Learner · LERNOVIQ" },
 };
 
 // src/proxy.ts already redirects unauthenticated/unpermitted requests before

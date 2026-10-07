@@ -34,9 +34,9 @@ test.describe("instructor verification", () => {
     await page.waitForURL("/learner");
 
     await page.goto("/learner/settings");
-    await expect(page.getByRole("heading", { name: "Teach on Modern LMS" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Teach on LERNOVIQ" })).toBeVisible();
     await page
-      .getByLabel("Why would you like to teach on Modern LMS?")
+      .getByLabel("Why would you like to teach on LERNOVIQ?")
       .fill("I have five years of professional experience I would like to share with learners.");
     await page.getByRole("button", { name: "Apply to teach" }).click();
     await expect(page.getByText("Pending review")).toBeVisible();

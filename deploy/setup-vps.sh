@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time VPS preparation for Ubuntu 22.04/24.04 (ADR-036, docs/DEPLOY.md). Run as root:
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/modern-lms/<branch>/deploy/setup-vps.sh | bash -s -- "<public key>"
+#   curl -fsSL https://raw.githubusercontent.com/<owner>/LERNOVIQ-lms/<branch>/deploy/setup-vps.sh | bash -s -- "<public key>"
 # or copy the file over and run: sudo bash setup-vps.sh "<public key>"
 # Installs Docker, opens SSH/HTTP/HTTPS in the firewall, and creates a `deploy` user (member of the
 # docker group) that GitHub Actions logs in as with the given SSH public key.

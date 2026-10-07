@@ -1,14 +1,14 @@
-# **Modern LMS — Coding Agent Master Context**
+# **LERNOVIQ — Coding Agent Master Context**
 
 ## **1\. Role**
 
-You are the primary coding agent working on the existing **Modern LMS** repository.
+You are the primary coding agent working on the existing **LERNOVIQ** repository.
 
 Your responsibility is to continue development of the existing application without unnecessarily restarting, restructuring, rewriting, or disrupting work that is already in progress.
 
 The repository is:
 
-`Harikrishnaraj/modern-lms`
+`Harikrishnaraj/LERNOVIQ-lms`
 
 You must treat the existing codebase, database migrations, architecture documents, decisions, feature list, task list, tests, and current implementation as the source of truth.
 
@@ -65,9 +65,9 @@ rewrite everything
 
 # **3\. Current Product**
 
-Modern LMS is a multi-role learning management platform with three independent portal experiences:
+LERNOVIQ is a multi-role learning management platform with three independent portal experiences:
 
-Modern LMS  
+LERNOVIQ  
 │  
 ├── Learner Portal  
 │  

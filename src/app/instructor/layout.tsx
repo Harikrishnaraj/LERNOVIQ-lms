@@ -7,7 +7,7 @@ import { can } from "@/lib/permissions/can";
 import { getUnreadCount } from "@/features/notifications/notifications";
 
 export const metadata: Metadata = {
-  title: { default: "Instructor", template: "%s · Instructor · Modern LMS" },
+  title: { default: "Instructor", template: "%s · Instructor · LERNOVIQ" },
 };
 
 // src/proxy.ts already redirects unauthenticated/unpermitted requests before

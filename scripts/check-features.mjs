@@ -103,7 +103,7 @@ const doneTasks = [...tasks.values()].filter((t) => t.done).length;
 const doneFeatures = status.filter((s) => s.done).length;
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
-console.log("\nModern LMS — feature coverage\n");
+console.log("\nLERNOVIQ — feature coverage\n");
 const sections = [...new Set(status.map((s) => s.section))];
 for (const sec of sections) {
   const rows = status.filter((s) => s.section === sec);

@@ -1,4 +1,4 @@
-# Modern LMS
+# LERNOVIQ
 
 A multi-role learning platform with separate **Learner**, **Instructor** and **Admin** portals on one shared design system.
 
