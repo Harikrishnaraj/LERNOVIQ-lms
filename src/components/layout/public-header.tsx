@@ -19,7 +19,11 @@ export async function PublicHeader() {
           <span className="flex size-9 items-center justify-center rounded-control bg-primary text-white">
             <GraduationCap className="size-5" aria-hidden="true" />
           </span>
-          <span className="font-display text-[15px] font-bold">LERNOVIQ</span>
+          {/* One unbreakable word: below sm it would push the nav off a 375px screen, so only the
+              mark shows there and the name stays as the link's accessible label. */}
+          <span className="sr-only font-display text-[15px] font-bold sm:not-sr-only">
+            LERNOVIQ
+          </span>
         </Link>
         <nav aria-label="Main" className="flex items-center gap-2">
           <Link href="/courses" className={buttonClasses({ variant: "ghost", size: "sm" })}>
