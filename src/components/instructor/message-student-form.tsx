@@ -18,7 +18,7 @@ export function MessageStudentForm({ enrollmentId, max }: { enrollmentId: string
     setBusy(false);
     if (r.ok) {
       setText("");
-      setNotice({ ok: true, text: "Message sent." });
+      setNotice({ ok: true, text: r.notice ?? "Message sent." });
     } else {
       setNotice({ ok: false, text: r.error });
     }

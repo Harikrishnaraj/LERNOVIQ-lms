@@ -30,6 +30,7 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
   const learnerIds: string[] = [];
 
   let admin: { id: string; client: SupabaseClient };
+  let support: { id: string; client: SupabaseClient };
   let instructor: { id: string; client: SupabaseClient };
   let learner: { id: string; client: SupabaseClient };
   let courseA: Awaited<ReturnType<typeof createCourse>>;
@@ -45,6 +46,7 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
 
   beforeAll(async () => {
     admin = await user("admin", "admin", `${tag} Admin`);
+    support = await user("sup", "support_agent", `${tag} Support`);
     instructor = await user("ins", "instructor", `${tag} Instructor`);
     learner = await user("lrn", "learner", `${tag} Learner`);
 
@@ -86,5 +88,13 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
 
     const asLearner = await getPayoutDetails(learner.client, instructor.id);
     expect(asLearner).toBeNull();
+  });
+
+  it("hides payout details from support agents, who can still read the rest of the detail (GAP-123)", async () => {
+    currentClient = instructor.client;
+    await updatePayoutDetailsAction({ method: "paypal", reference: "instructor@example.com" });
+
+    expect(await getAdminInstructorDetail(support.client, instructor.id)).toMatchObject({ userId: instructor.id });
+    expect(await getPayoutDetails(support.client, instructor.id)).toBeNull();
   });
 });

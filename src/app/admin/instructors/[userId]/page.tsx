@@ -33,9 +33,11 @@ export default async function AdminInstructorDetailPage({ params }: { params: Pr
     );
   }
 
+  // Payout references are financial data: only roles that manage users may read them (GAP-123).
+  const canSeePayout = await can(supabase, user.id, "user.manage");
   const [detail, payout] = await Promise.all([
     getAdminInstructorDetail(supabase, userId),
-    getPayoutDetails(supabase, userId),
+    canSeePayout ? getPayoutDetails(supabase, userId) : Promise.resolve(null),
   ]);
   if (!detail) notFound();
 
@@ -131,7 +133,9 @@ export default async function AdminInstructorDetailPage({ params }: { params: Pr
           <Card>
             <CardHeader title="Payout details" description="Set by the instructor themselves, ahead of real payout processing." />
             <CardContent className="space-y-3 text-sm">
-              {payout ? (
+              {!canSeePayout ? (
+                <p className="text-text-secondary">Payout details are visible to administrators only.</p>
+              ) : payout ? (
                 <>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary">Method</span>
