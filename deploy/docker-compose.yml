@@ -1,7 +1,7 @@
 # Production stack on the VPS (ADR-036). GitHub Actions copies this file and the Caddyfile to
-# ~/modern-lms on the server, writes ~/modern-lms/.env (image tag, hostnames, server secrets) and
+# ~/lernoviq-lms on the server, writes ~/lernoviq-lms/.env (image tag, hostnames, server secrets) and
 # runs `docker compose up -d`. See docs/DEPLOY.md.
-name: modern-lms
+name: lernoviq-lms
 
 services:
   app:

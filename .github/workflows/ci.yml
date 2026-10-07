@@ -229,8 +229,8 @@ jobs:
           APP_IMAGE: ${{ steps.names.outputs.image }}
         run: |
           ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_SSH_PORT" -o BatchMode=yes)
-          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/modern-lms'
-          scp -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:modern-lms/"
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms'
+          scp -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:lernoviq-lms/"
           umask 077
           {
             echo "APP_IMAGE=$APP_IMAGE"
@@ -245,7 +245,7 @@ jobs:
             echo "RESEND_FROM_EMAIL=$PROD_RESEND_FROM_EMAIL"
             echo "CRON_SECRET=$PROD_CRON_SECRET"
           } > "$RUNNER_TEMP/server.env"
-          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'umask 077; cat > ~/modern-lms/.env' < "$RUNNER_TEMP/server.env"
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'umask 077; cat > ~/lernoviq-lms/.env' < "$RUNNER_TEMP/server.env"
           rm -f "$RUNNER_TEMP/server.env"
 
       - name: Roll out
@@ -258,7 +258,7 @@ jobs:
           # The token goes over stdin, so it never appears in a process list on the server.
           printf '%s' "$GHCR_TOKEN" | ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
-            'cd ~/modern-lms && docker compose pull && docker compose up -d --remove-orphans; rc=$?; docker logout ghcr.io >/dev/null; docker image prune -f >/dev/null; exit $rc'
+            'cd ~/lernoviq-lms && docker compose pull && docker compose up -d --remove-orphans; rc=$?; docker logout ghcr.io >/dev/null; docker image prune -f >/dev/null; exit $rc'
 
       - name: Smoke check
         if: steps.gate.outputs.ready == 'true'

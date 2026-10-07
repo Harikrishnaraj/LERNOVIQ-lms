@@ -325,6 +325,6 @@ Improve:
 
 **Reason:** User decision (2026-10-07): the repository and local folder were renamed from `modern-lms` to `LERNOVIQ-lms`, and the user chose to rebrand the app as "LERNOVIQ".
 
-**Consequences:** Names of resources that live outside the repo keep `modern-lms` until they are renamed there, so the repo still matches them: the hosted Supabase project (`modern-lms`, `ctrizucnfaqescligsuu`) and `supabase/config.toml`'s `project_id`; the VPS deploy directory `~/modern-lms` and the compose project `name: modern-lms` (renaming them in the repo alone would start a second stack while the old one still holds ports 80/443); the deploy key file names in `docs/DEPLOY.md`; and the nightly backup artifact names. Historical entries in `MEMORY.md`, earlier ADRs and `docs/audits/` keep the old name.
+**Consequences:** The hosted Supabase project keeps its name (`modern-lms`, `ctrizucnfaqescligsuu`), and so does `supabase/config.toml`'s `project_id`, which mirrors it. Historical entries in `MEMORY.md`, earlier ADRs and `docs/audits/` keep the old name. A follow-up (2026-10-07) also renamed the VPS deploy directory to `~/lernoviq-lms`, the compose project to `lernoviq-lms`, the deploy key file names and the backup artifact names. Nothing needed moving on the server: the deploy job had never run, because its secrets were not set yet.
 
 **Status:** Accepted (user decision).

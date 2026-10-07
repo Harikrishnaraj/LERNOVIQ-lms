@@ -34,6 +34,6 @@ touch /home/deploy/.ssh/authorized_keys
 grep -qxF "$PUBKEY" /home/deploy/.ssh/authorized_keys || echo "$PUBKEY" >> /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
-install -d -m 700 -o deploy -g deploy /home/deploy/modern-lms
+install -d -m 700 -o deploy -g deploy /home/deploy/lernoviq-lms
 
 echo "VPS ready. Add the matching private key to GitHub as VPS_SSH_KEY, VPS_USER=deploy."

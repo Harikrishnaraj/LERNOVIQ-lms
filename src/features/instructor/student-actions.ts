@@ -5,7 +5,7 @@ import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit
 import { notify } from "@/services/notifications";
 import { getStudentDetail, validateStudentMessage } from "./student-detail";
 
-export type MessageResult = { ok: true } | { ok: false; error: string };
+export type MessageResult = { ok: true; notice?: string } | { ok: false; error: string };
 
 /**
  * Sends a short note to one student as an in-app notification (full two-way threads arrive with
@@ -24,17 +24,14 @@ export async function messageStudent(enrollmentId: string, message: string): Pro
   if (!student) return { ok: false, error: "This student is not available." };
   if (!(await rateLimit("instructor-message", await clientIp(), user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
 
-  const { data: threadId } = await supabase.rpc("get_or_create_thread", {
+  const { data: threadId, error: threadError } = await supabase.rpc("get_or_create_thread", {
     p_course_id: student.courseId,
     p_learner_id: student.userId,
   });
-  if (threadId) {
-    await supabase.from("direct_messages").insert({
-      thread_id: threadId,
-      sender_id: user.id,
-      body: parsed.text,
-    });
-  }
+  const { error: insertError } = threadId
+    ? await supabase.from("direct_messages").insert({ thread_id: threadId, sender_id: user.id, body: parsed.text })
+    : { error: threadError ?? new Error("no thread") };
+  if (insertError) return { ok: false, error: "We could not send that message. Please try again." };
 
   const sent = await notify({
     userId: student.userId,
@@ -43,5 +40,9 @@ export async function messageStudent(enrollmentId: string, message: string): Pro
     body: parsed.text,
     href: `/learner/courses/${(await supabase.from("courses").select("slug").eq("id", student.courseId).maybeSingle()).data?.slug ?? ""}`,
   });
-  return sent ? { ok: true } : { ok: false, error: "The student has turned off these notifications, so the message was not delivered." };
+  // The message is already stored in the thread; only the alert can be missing (GAP-127). `notify`
+  // returns false when the student turned these notifications off, or if the alert failed.
+  return sent
+    ? { ok: true }
+    : { ok: true, notice: "Message saved in your conversation, but the student was not alerted (they may have turned off course notifications)." };
 }

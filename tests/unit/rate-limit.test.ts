@@ -37,10 +37,32 @@ describe("rateLimit", () => {
     expect(await rateLimit("login", "1.1.1.1", "a@b.com")).toBe(false);
   });
 
-  it("fails open when the limiter errors", async () => {
+  it("fails open when the limiter errors on an ordinary action", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     rpcMock.mockResolvedValue({ data: null, error: { message: "boom" } });
-    expect(await rateLimit("password-reset", "x")).toBe(true);
+    expect(await rateLimit("discussion-post", "x")).toBe(true);
+  });
+
+  it("fails closed when the limiter errors on an auth action (GAP-124)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    rpcMock.mockResolvedValue({ data: null, error: { message: "boom" } });
+    for (const action of ["login", "password-reset", "verify-email"] as const) {
+      expect(await rateLimit(action, "x", "a@b.com")).toBe(false);
+    }
+  });
+
+  it("without a service key, stays open in development but closes auth actions in production", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    expect(await rateLimit("login", "x")).toBe(true);
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      expect(await rateLimit("login", "x")).toBe(false);
+      expect(await rateLimit("discussion-post", "x")).toBe(true);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 
   it("takes the first X-Forwarded-For hop as the client IP", async () => {
