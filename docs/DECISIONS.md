@@ -266,7 +266,7 @@ Improve:
 
 **Reason:** User decision (2026-10-01). Stripe covers checkout, subscriptions, coupons, refunds and payouts (Connect) in one provider; the adapter keeps a second provider (for example Razorpay for India) possible later without touching feature code.
 
-**Status:** Deferred (2026-10-01) — the user put the payment provider decision on hold shortly after choosing Stripe ("for payment we will decide later"). Kept as the leading option; commerce tasks T-180–T-188 stay open until a provider is confirmed.
+**Status:** Superseded by ADR-038 (Dodo Payments, 2026-10-07). Was: Deferred (2026-10-01) — the user put the payment provider decision on hold shortly after choosing Stripe ("for payment we will decide later"). Kept as the leading option; commerce tasks T-180–T-188 stay open until a provider is confirmed.
 
 ## ADR-032 — Production Hosting on Cloudflare Workers (vinext)
 
@@ -346,3 +346,10 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 
 **Status:** Accepted (user decision). Descopes F-604 / T-186; amends F-202, F-220 and F-403.
 
+## ADR-038 — Dodo Payments Replaces Stripe (Test Mode First)
+
+**Decision:** Learner commerce (T-180–T-185, T-187, T-188) uses **Dodo Payments** (a Merchant of Record), behind the payment adapter required by ADR-015. This supersedes ADR-031. Development and QA use Dodo **test mode** only (`environment: "test_mode"`); live keys are a separate, later decision. Enrollment in a paid course happens only after a verified Dodo webhook (Standard Webhooks signature checked via the SDK `unwrap()`, `webhook-id` stored for idempotency), never from the browser return URL.
+
+**Reason:** User decision (2026-10-07). Dodo handles tax/VAT and chargebacks as the legal seller. The platform is the only seller (ADR-037: instructors are not paid in the app, T-186 descoped), so Dodo's lack of split payouts does not matter. Design notes: checkout uses pre-created Dodo products, so each paid course maps to a Dodo `product_id`; discount codes are created in Dodo and passed via `discount_codes`, so T-184 coupons mirror them.
+
+**Status:** Accepted. Needs the user to supply test-mode `DODO_PAYMENTS_API_KEY` and `DODO_PAYMENTS_WEBHOOK_KEY` before T-180 can be built.

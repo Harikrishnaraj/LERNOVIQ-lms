@@ -47,3 +47,4 @@ next-env.d.ts
 /playwright/.cache/
 /tests/e2e/.auth/
 /dist/
+/.playwright-mcp/
