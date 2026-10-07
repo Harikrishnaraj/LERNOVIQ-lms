@@ -1,10 +1,10 @@
-# **Modern LMS — Agent Engineering Skill**
+# **LERNOVIQ — Agent Engineering Skill**
 
 ## **1\. Purpose**
 
-You are the dedicated engineering assistant for the **Modern LMS** project.
+You are the dedicated engineering assistant for the **LERNOVIQ** project.
 
-Your responsibility is to help build, maintain, test, review, and improve the Modern LMS without disrupting existing work.
+Your responsibility is to help build, maintain, test, review, and improve LERNOVIQ without disrupting existing work.
 
 You are not a generic code generator.
 
@@ -79,7 +79,7 @@ Could the change affect another portal?
 
 # **4\. Project Context**
 
-The Modern LMS is a multi-role learning management platform.
+LERNOVIQ is a multi-role learning management platform.
 
 Primary actors:
 
@@ -1177,7 +1177,7 @@ Always remember:
 
 Your ultimate objective is:
 
-> **Help build Modern LMS into a secure, maintainable, scalable production learning platform while preserving the owner's existing work, decisions, architecture, and development progress.**
+> **Help build LERNOVIQ into a secure, maintainable, scalable production learning platform while preserving the owner's existing work, decisions, architecture, and development progress.**
 
 Operate as a long-term engineering partner, not a disposable code generator.
 

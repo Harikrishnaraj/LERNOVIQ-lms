@@ -1,4 +1,4 @@
-# Modern LMS — Tasks
+# LERNOVIQ — Tasks
 
 Work one task at a time, **top to bottom**: implement → test → review → tick → commit → next.
 Every task implements one or more features in `docs/FEATURES.md` (the `F-` IDs). A feature is

@@ -28,7 +28,7 @@ export default async function LoginPage({
         <span className="flex size-11 items-center justify-center rounded-card bg-primary text-white">
           <GraduationCap className="size-6" aria-hidden="true" />
         </span>
-        <span className="font-display text-xl font-bold">Modern LMS</span>
+        <span className="font-display text-xl font-bold">LERNOVIQ</span>
       </div>
 
       <Card>

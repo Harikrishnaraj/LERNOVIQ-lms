@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Modern LMS design tokens — source of truth is docs/DESIGN.md.
+ * LERNOVIQ design tokens — source of truth is docs/DESIGN.md.
  * Use these via Tailwind utilities (bg-surface, text-text-secondary, border-border, bg-primary …).
  * Do not use raw hex values in components.
  */

@@ -13,7 +13,7 @@ export function buildScormShim(options: { version: "1.2" | "2004"; seedCmi: Reco
   return `<script>(function(){
 var CMI = ${seed};
 function commit(status){
-  try { window.parent.postMessage({ source: "modern-lms-scorm", status: status, cmi: CMI }, "*"); } catch (e) {}
+  try { window.parent.postMessage({ source: "lernoviq-scorm", status: status, cmi: CMI }, "*"); } catch (e) {}
 }
 var api = {
   Get: function(k){ return Object.prototype.hasOwnProperty.call(CMI, k) ? String(CMI[k]) : ""; },

@@ -19,7 +19,7 @@ export async function PublicHeader() {
           <span className="flex size-9 items-center justify-center rounded-control bg-primary text-white">
             <GraduationCap className="size-5" aria-hidden="true" />
           </span>
-          <span className="font-display text-[15px] font-bold">Modern LMS</span>
+          <span className="font-display text-[15px] font-bold">LERNOVIQ</span>
         </Link>
         <nav aria-label="Main" className="flex items-center gap-2">
           <Link href="/courses" className={buttonClasses({ variant: "ghost", size: "sm" })}>

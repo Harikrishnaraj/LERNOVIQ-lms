@@ -1,8 +1,8 @@
-# Modern LMS — Product Requirements Document
+# LERNOVIQ — Product Requirements Document
 
 ## 1. Purpose
 
-Modern LMS is a multi-role learning platform for:
+LERNOVIQ is a multi-role learning platform for:
 
 - Learners who discover, enroll in, and complete learning.
 - Instructors who create, publish, teach, and optimize courses.

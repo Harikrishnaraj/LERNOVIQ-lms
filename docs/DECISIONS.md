@@ -1,4 +1,4 @@
-# Modern LMS — Architecture & Product Decisions
+# LERNOVIQ — Architecture & Product Decisions
 
 This document records durable decisions so AI coding agents do not repeatedly reconsider established choices.
 
@@ -318,3 +318,13 @@ Improve:
 
 **Status:** Accepted (user decision).
 
+
+## ADR-037 — Product and Repository Renamed to LERNOVIQ
+
+**Decision:** The product is called **LERNOVIQ** (all caps) everywhere users see it: page titles, portal and auth headers, the landing page, certificate verification text, the apply-to-teach copy, and the course page's structured data. The GitHub repository is `Harikrishnaraj/LERNOVIQ-lms` and the npm package is `lernoviq-lms`. The internal SCORM `postMessage` tag is `lernoviq-scorm`; the shim is injected when content is served, so stored packages need no change.
+
+**Reason:** User decision (2026-10-07): the repository and local folder were renamed from `modern-lms` to `LERNOVIQ-lms`, and the user chose to rebrand the app as "LERNOVIQ".
+
+**Consequences:** Names of resources that live outside the repo keep `modern-lms` until they are renamed there, so the repo still matches them: the hosted Supabase project (`modern-lms`, `ctrizucnfaqescligsuu`) and `supabase/config.toml`'s `project_id`; the VPS deploy directory `~/modern-lms` and the compose project `name: modern-lms` (renaming them in the repo alone would start a second stack while the old one still holds ports 80/443); the deploy key file names in `docs/DEPLOY.md`; and the nightly backup artifact names. Historical entries in `MEMORY.md`, earlier ADRs and `docs/audits/` keep the old name.
+
+**Status:** Accepted (user decision).
