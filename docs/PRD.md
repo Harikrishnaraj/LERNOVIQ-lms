@@ -71,7 +71,7 @@ The prototypes are treated as the primary UX source. The implementation should p
 
 ## 3. Product Problem
 
-A modern LMS needs one coherent platform while serving three very different jobs:
+LERNOVIQ needs one coherent platform while serving three very different jobs:
 
 - Learners need low-friction discovery, focused learning, progress visibility, assessments, certificates, and contextual assistance.
 - Instructors need a guided course-production workflow and actionable learner analytics.

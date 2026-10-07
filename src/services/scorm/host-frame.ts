@@ -15,7 +15,7 @@ export function buildHostFrame(options: { shim: string; launchPath: string }): s
 <script>(function(){
 var sco = document.getElementById("sco");
 window.addEventListener("message", function(e){
-  if (e.source === sco.contentWindow && e.data && e.data.source === "modern-lms-scorm") {
+  if (e.source === sco.contentWindow && e.data && e.data.source === "lernoviq-scorm") {
     try { window.parent.postMessage(e.data, "*"); } catch (err) {}
   }
 });

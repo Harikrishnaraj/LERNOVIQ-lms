@@ -361,7 +361,7 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 **Reason:** User decision (2026-10-07): "understand the style guidelines and logos design and implement all the changes" and "name this project as LERNOVIQ".
 
 **Consequences:**
-- The repository folder, GitHub repo, Docker image, compose services, Supabase local `project_id` and the SCORM message namespace keep the `modern-lms` name: renaming them would break deploys, local data and running SCORM packages.
+- Everything this repo names was renamed too (2026-10-07, user request "rename all"): VPS folder `~/lernoviq` and compose project `lernoviq` (safe: no production deploy has run yet, T-250 is open), backup artifacts, Supabase local `project_id`, the SCORM message tag `lernoviq-scorm`. Names of outside resources keep `modern-lms` until those are renamed: the GitHub repo `Harikrishnaraj/modern-lms` (and the GHCR image derived from it), the hosted Supabase project (ref `ctrizucnfaqescligsuu`), the local folder, and the deleted Cloudflare Worker in history entries.
 - The browser favicon is still Next.js's default until approved favicon artwork exists.
 
 **Status:** Accepted.

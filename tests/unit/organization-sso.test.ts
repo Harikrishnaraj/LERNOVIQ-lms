@@ -10,7 +10,7 @@ const { redirectMock, oauthMock, exchangeMock, rpcMock, rolesMock, headerStore }
   exchangeMock: vi.fn(),
   rpcMock: vi.fn(),
   rolesMock: vi.fn(async () => ({ data: [{ role_id: "learner" }] })),
-  headerStore: { host: "preview-123.modern-lms.workers.dev" } as Record<string, string>,
+  headerStore: { host: "preview-123.lernoviq.workers.dev" } as Record<string, string>,
 }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers(headerStore) }));
@@ -62,7 +62,7 @@ describe("signInWithGoogle", () => {
     const opts = oauthMock.mock.calls[0][0];
     expect(opts.provider).toBe("google");
     const back = new URL(opts.options.redirectTo);
-    expect(back.origin).toBe("https://preview-123.modern-lms.workers.dev");
+    expect(back.origin).toBe("https://preview-123.lernoviq.workers.dev");
     expect(back.pathname).toBe("/auth/callback");
     expect(back.searchParams.get("sso")).toBe("google");
     expect(back.searchParams.get("next")).toBe("/learner/paths");

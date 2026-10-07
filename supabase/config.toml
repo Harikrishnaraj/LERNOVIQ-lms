@@ -2,7 +2,7 @@
 # project (T-251, ADR-034); developers can use it too with `npx supabase start`.
 # Settings the tests depend on mirror the hosted `modern-lms` project: email confirmation on,
 # TOTP MFA on, Google provider on, sign-ups open, anonymous sign-ins off.
-project_id = "modern-lms"
+project_id = "lernoviq"
 
 [api]
 enabled = true

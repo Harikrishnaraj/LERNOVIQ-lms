@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { HOST_FRAME_PATH } from "@/services/scorm/host-frame";
 
 interface ScormMessage {
-  source: "modern-lms-scorm";
+  source: "lernoviq-scorm";
   status: "commit" | "finish";
   cmi: Record<string, string>;
 }
@@ -13,7 +13,7 @@ function isScormMessage(data: unknown): data is ScormMessage {
   return (
     typeof data === "object" &&
     data !== null &&
-    (data as { source?: unknown }).source === "modern-lms-scorm" &&
+    (data as { source?: unknown }).source === "lernoviq-scorm" &&
     typeof (data as { cmi?: unknown }).cmi === "object"
   );
 }
