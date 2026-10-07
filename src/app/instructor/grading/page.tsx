@@ -87,7 +87,7 @@ export default async function GradingQueuePage({
             className={cn(
               "rounded-control border px-3 py-1.5 text-sm font-medium",
               k === kind
-                ? "border-primary bg-primary-light text-primary"
+                ? "border-primary bg-primary-light text-primary-dark"
                 : "border-border text-text-secondary hover:text-text",
             )}
           >

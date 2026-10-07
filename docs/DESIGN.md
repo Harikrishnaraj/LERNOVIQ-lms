@@ -1,12 +1,12 @@
-# Modern LMS — Design System
+# LERNOVIQ — Design System
 
 ## 1. Design Goal
 
-Create one recognizable Modern LMS product across Learner, Instructor and Admin portals while giving each portal a different density and information architecture.
+Create one recognizable LERNOVIQ product across Learner, Instructor and Admin portals while giving each portal a different density and information architecture.
 
 The prototypes already establish a strong visual direction:
 - light learner surfaces,
-- strong blue/indigo primary actions,
+- strong brand-blue primary actions,
 - dark instructor navigation,
 - enterprise admin console density,
 - rounded cards,
@@ -37,7 +37,10 @@ Recommended:
 - Body: Inter
 - Monospace: JetBrains Mono
 
-The supplied learner and instructor prototypes already use this combination.
+The supplied learner and instructor prototypes already use this combination. The LERNOVIQ brand
+guidelines (§25) ask for "Aptos / Arial / a clean geometric sans serif"; Aptos has no web licence,
+so the UI keeps these self-hosted clean sans faces. The LERNOVIQ wordmark is artwork, never set in
+any font.
 
 Type scale:
 
@@ -62,7 +65,7 @@ Use heavier display typography for page headings and regular body typography for
 ```text
 Background:       #F8FAFC
 Surface:          #FFFFFF
-Text:             #0F172A
+Text:             #0A1F54   (brand Navy)
 Text secondary:   #64748B
 Text muted:       #94A3B8
 Border:           #E2E8F0
@@ -72,11 +75,16 @@ Border subtle:    #F1F5F9
 ### Brand
 
 ```text
-Primary:          #4F46E5
-Primary dark:     #3730A3
-Primary light:    #EEF2FF
-Blue:             #2563EB
+Primary:          #0066FF   (brand Blue; buttons, links, focus, icons)
+Primary dark:     #0052CC   (text on primary-light tints: 6.1:1)
+Primary light:    #EBF3FF
+Blue:             #0066FF
 ```
+
+Brand palette (guidelines §2): Navy `#0A1F54`, Blue `#0066FF`, Cyan `#00E5FF`, Green `#00D951`,
+Red `#FF0000`, White `#FFFFFF`. Cyan, Green and Red belong to the logo only: Cyan and Green fail
+contrast on white, and Red would read as an error state. Brand Blue as text on the primary-light
+tint is 4.33:1 (below WCAG AA), so text there uses primary-dark; icons may stay primary (3:1).
 
 ### Semantic
 
@@ -97,8 +105,7 @@ Do not use status colors as decoration. They communicate meaning.
 Light shell.
 
 Primary emphasis:
-- Blue.
-- Indigo.
+- Brand blue.
 - Green progress/success.
 - Purple AI.
 
@@ -111,8 +118,8 @@ Dark sidebar + light workspace.
 The supplied prototype's dark navigation is effective for distinguishing the teaching workspace.
 
 Use:
-- Dark sidebar: `#0F172A`
-- Active navigation: indigo tint.
+- Dark sidebar: `#0A1F54` (brand Navy); the logo sits on a white band at its top (§25).
+- Active navigation: brand-blue tint.
 - Workspace: `#F8FAFC`
 - Cards: white.
 
@@ -505,3 +512,28 @@ Change:
 - direct route state → URL-based routing.
 - localStorage auth simulation → real authentication.
 - prototype-only notifications → persistent notification model.
+
+## 25. Brand & Logo (LERNOVIQ)
+
+Source of truth: `docs/brand/LERNOVIQ_Brand_Guidelines.pdf` (v1.1, October 2026). Master artwork
+is in `docs/brand/`; app assets are in `src/assets/brand/`. Decision: ADR-039.
+
+- Product name: **LERNOVIQ**. Legal name: LERNOVIQ AI TECHNOLOGIES PRIVATE LIMITED.
+- Tagline, exactly: "Intelligence. Amplified." (one period after each word).
+- Domains in copy are lowercase: www.lernoviq.com, www.lernoviq.in.
+- Show the logo only through `<BrandLogo>` (`src/components/brand/brand-logo.tsx`). It uses the
+  approved artwork, raises any width below the minimum (primary 120 px, secondary 96 px) and adds
+  the clear space X (height of the emblem's smallest square) as padding.
+- Never: the L emblem alone (there is no approved symbol-only logo), the wordmark retyped in a
+  font, recolouring, stretching, rotating, shadows or other effects, crops, busy or low-contrast
+  backgrounds. Dark navy needs reversed artwork, which does not exist yet.
+
+| Place | Lockup | Width |
+| --- | --- | --- |
+| Landing page | Primary | 280 px |
+| Auth pages | Primary | 200 px |
+| Public header | Primary | 120 px |
+| Portal sidebar and mobile drawer | Primary, on a white band | 128 px |
+| Mobile top bar (64 px tall) | None: too short for the minimum size, so it shows the portal name | n/a |
+| iOS home-screen icon (`src/app/apple-icon.png`) | Secondary, on white | 117 px in a 180 px tile |
+| Browser favicon | Not branded yet: 16 to 48 px is below the 96 px minimum | n/a |

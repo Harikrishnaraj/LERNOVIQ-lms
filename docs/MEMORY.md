@@ -1,4 +1,4 @@
-# Modern LMS — Project Memory
+# LERNOVIQ — Project Memory
 
 ## Purpose
 
@@ -295,15 +295,15 @@ Key areas:
 Light interface:
 - white sidebar,
 - light gray workspace,
-- blue primary,
+- brand-blue primary (#0066FF),
 - indigo/purple AI accent,
 - progress-focused cards.
 
 ### Instructor
 
 Dark sidebar:
-- `#0F172A`
-- indigo active state,
+- `#0A1F54` (brand Navy), logo on a white band at the top,
+- brand-blue active state,
 - light workspace,
 - guided course creation.
 
@@ -502,3 +502,6 @@ READ
 ```
 
 This follows the final workflow in the supplied guide.
+
+- **Payments provider: Dodo Payments (ADR-038, user decision 2026-10-07):** supersedes the deferred Stripe ADR-031 for learner commerce (T-180–T-185, T-187, T-188). Still blocked on the user's test-mode `DODO_PAYMENTS_API_KEY` / `DODO_PAYMENTS_WEBHOOK_KEY` in `.env.local`. Main was also brought up to date: merged `origin/main-p2cnzw` (ADR-037) into `origin/main`; the pricing task was renumbered T-253 because T-252 was already manual grading. **Known issue:** the `20261005100000_platform_course_pricing.sql` migration is not yet applied to the hosted Supabase project (it drops `instructor_payout_details`; waiting for the user's go-ahead), so 3 tests in `tests/integration/pricing-settings.test.ts` fail against it.
+- **LERNOVIQ rebrand (ADR-039, T-254, 2026-10-07):** product renamed from "Modern LMS" to LERNOVIQ in UI, metadata, docs and `package.json` (`lernoviq`). Brand guide + master artwork in `docs/brand/`; app logos in `src/assets/brand/` shown only via `src/components/brand/brand-logo.tsx` (enforces 120/96 px minimums + clear space). Tokens: Navy text and instructor sidebar, brand Blue primary, `primary-dark` for text on blue tints (12 spots switched). Logo placements are in DESIGN.md §25. **Known issues:** browser favicon is still Next.js's default (sizes below the 96 px minimum; needs approved favicon artwork from the user); the folder, repo, Docker/compose names and Supabase `project_id` intentionally stay `modern-lms`; the Claude Docs user guide published earlier still says "Modern LMS".

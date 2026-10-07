@@ -1,4 +1,4 @@
-# Modern LMS — Architecture
+# LERNOVIQ — Architecture
 
 ## 1. Architectural Summary
 

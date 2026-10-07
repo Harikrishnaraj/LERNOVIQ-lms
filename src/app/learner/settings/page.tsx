@@ -59,7 +59,7 @@ export default async function LearnerSettingsPage() {
         {!isInstructor && (
           <section aria-labelledby="teach-heading" className="space-y-4">
             <h2 id="teach-heading" className="text-base font-semibold">
-              Teach on Modern LMS
+              Teach on LERNOVIQ
             </h2>
             <ApplyToTeach application={application} />
           </section>

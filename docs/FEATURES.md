@@ -1,4 +1,4 @@
-# Modern LMS — Feature Registry
+# LERNOVIQ — Feature Registry
 
 The complete list of features this product must ship. Sources: `PRD.md` (§8, §12–§16), the three
 prototypes (LearnSphere learner, Instructor Portal, Admin Console) and `SECURITY.md`/`TEST_PLAN.md`.

@@ -41,7 +41,7 @@ export function VoteButton({ type, id, discussionId, votes, voted, own }: { type
         title={own ? "You cannot upvote your own post" : undefined}
         className={cn(
           "inline-flex items-center gap-1 rounded-control border px-2 py-1 text-xs",
-          voted ? "border-primary bg-primary-light text-primary" : "border-border text-text-secondary hover:bg-border-subtle",
+          voted ? "border-primary bg-primary-light text-primary-dark" : "border-border text-text-secondary hover:bg-border-subtle",
           own && "cursor-not-allowed opacity-60",
         )}
       >

@@ -1,4 +1,4 @@
-# Modern LMS — Architecture & Product Decisions
+# LERNOVIQ — Architecture & Product Decisions
 
 This document records durable decisions so AI coding agents do not repeatedly reconsider established choices.
 
@@ -353,3 +353,15 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 **Reason:** User decision (2026-10-07). Dodo handles tax/VAT and chargebacks as the legal seller. The platform is the only seller (ADR-037: instructors are not paid in the app, T-186 descoped), so Dodo's lack of split payouts does not matter. Design notes: checkout uses pre-created Dodo products, so each paid course maps to a Dodo `product_id`; discount codes are created in Dodo and passed via `discount_codes`, so T-184 coupons mirror them.
 
 **Status:** Accepted. Needs the user to supply test-mode `DODO_PAYMENTS_API_KEY` and `DODO_PAYMENTS_WEBHOOK_KEY` before T-180 can be built.
+
+## ADR-039 — Rebrand to LERNOVIQ
+
+**Decision:** The product is named **LERNOVIQ** (LERNOVIQ AI TECHNOLOGIES PRIVATE LIMITED) and follows `docs/brand/LERNOVIQ_Brand_Guidelines.pdf` v1.1. The logo is shown only as the supplied artwork through `BrandLogo`, which enforces the minimum sizes and clear space; the wordmark is never retyped and the L emblem is never used alone. Colour tokens move to the brand palette: Navy text and instructor sidebar, brand Blue primary, and a darker blue (`#0052CC`) for text on blue tints, where brand Blue misses WCAG AA. Fonts stay Inter and Plus Jakarta Sans: the guide's preferred Aptos has no web licence. Places too small for the minimum logo size (the 64 px mobile top bar, the browser favicon) show no logo rather than an unapproved derivative.
+
+**Reason:** User decision (2026-10-07): "understand the style guidelines and logos design and implement all the changes" and "name this project as LERNOVIQ".
+
+**Consequences:**
+- The repository folder, GitHub repo, Docker image, compose services, Supabase local `project_id` and the SCORM message namespace keep the `modern-lms` name: renaming them would break deploys, local data and running SCORM packages.
+- The browser favicon is still Next.js's default until approved favicon artwork exists.
+
+**Status:** Accepted.

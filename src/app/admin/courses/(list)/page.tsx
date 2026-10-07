@@ -73,7 +73,7 @@ export default async function AdminCoursesPage({
                 key={v}
                 href={href(query, { view: v })}
                 aria-current={query.view === v ? "true" : undefined}
-                className={cn("px-3 py-1.5 text-sm capitalize", query.view === v ? "bg-primary-light font-semibold text-primary" : "text-text-secondary")}
+                className={cn("px-3 py-1.5 text-sm capitalize", query.view === v ? "bg-primary-light font-semibold text-primary-dark" : "text-text-secondary")}
               >
                 {v}
               </Link>

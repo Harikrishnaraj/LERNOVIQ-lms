@@ -23,8 +23,9 @@ const jetbrains = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Modern LMS", template: "%s · Modern LMS" },
-  description: "Learn, teach and operate learning in one platform.",
+  title: { default: "LERNOVIQ", template: "%s · LERNOVIQ" },
+  applicationName: "LERNOVIQ",
+  description: "Learn, teach and operate learning in one platform. Intelligence. Amplified.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

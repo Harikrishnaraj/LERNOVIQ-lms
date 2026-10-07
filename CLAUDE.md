@@ -1,4 +1,4 @@
-# Modern LMS — agent instructions
+# LERNOVIQ — agent instructions
 
 Before any change, read `docs/RULES.md` and follow it. For non-trivial work also read
 `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/DESIGN.md`, `docs/FEATURES.md`, `docs/TASKS.md`,

@@ -55,7 +55,7 @@ export function InstructorPinButton({
             ? cn(
                 "rounded-control border px-2.5 py-1.5",
                 pinned
-                  ? "border-primary bg-primary-light text-primary"
+                  ? "border-primary bg-primary-light text-primary-dark"
                   : "border-border bg-surface text-text-secondary hover:text-text",
               )
             : cn(
@@ -195,7 +195,7 @@ export function InstructorReplyForm({ discussionId }: { discussionId: string }) 
       className="space-y-3 rounded-card border border-primary/30 bg-surface p-4"
     >
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+        <span className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary-dark">
           Official Instructor Reply
         </span>
       </div>

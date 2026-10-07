@@ -56,7 +56,7 @@ export default async function AdminAnalyticsPage({
                 key={r}
                 href={`/admin/analytics?range=${r}`}
                 aria-current={r === range ? "true" : undefined}
-                className={cn("px-3 py-1.5 text-sm", r === range ? "bg-primary-light font-semibold text-primary" : "text-text-secondary")}
+                className={cn("px-3 py-1.5 text-sm", r === range ? "bg-primary-light font-semibold text-primary-dark" : "text-text-secondary")}
               >
                 {r} days
               </Link>

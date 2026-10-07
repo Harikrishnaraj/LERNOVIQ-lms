@@ -61,7 +61,7 @@ export default async function VerifyCertificatePage({
           <p className="text-sm">
             {revoked && cert.revokedAt
               ? `Revoked on ${dateFormat.format(new Date(cert.revokedAt))}. It should no longer be relied on.`
-              : "It was issued by Modern LMS and has not been revoked."}
+              : "It was issued by LERNOVIQ and has not been revoked."}
           </p>
         </div>
       </div>

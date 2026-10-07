@@ -46,7 +46,7 @@ export function ApplyToTeach({ application }: { application: InstructorApplicati
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <label htmlFor={messageId} className="text-sm font-medium text-text">
-            Why would you like to teach on Modern LMS?
+            Why would you like to teach on LERNOVIQ?
           </label>
           <textarea
             id={messageId}

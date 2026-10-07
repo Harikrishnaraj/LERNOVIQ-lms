@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { GraduationCap, MailCheck } from "lucide-react";
+import { MailCheck } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ResendVerificationButton } from "@/components/forms/resend-verification-button";
 import { resendVerification } from "@/features/auth/resend-verification";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export const metadata = { title: "Verify your email" };
 
@@ -15,11 +16,8 @@ export default async function VerifyEmailPage({
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-16">
-      <div className="mb-8 flex items-center gap-3">
-        <span className="flex size-11 items-center justify-center rounded-card bg-primary text-white">
-          <GraduationCap className="size-6" aria-hidden="true" />
-        </span>
-        <span className="font-display text-xl font-bold">Modern LMS</span>
+      <div className="mb-6 flex justify-center">
+        <BrandLogo width={200} />
       </div>
 
       {error === "link_invalid" && (

@@ -7,7 +7,7 @@ import { normalizeCertificateCode } from "@/features/certificates/queries";
 
 export const metadata: Metadata = {
   title: "Verify a certificate",
-  description: "Check that a Modern LMS certificate is genuine.",
+  description: "Check that a LERNOVIQ certificate is genuine.",
 };
 
 export default async function VerifyLookupPage({

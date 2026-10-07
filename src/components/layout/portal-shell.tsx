@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
-import { Bell, GraduationCap, LogOut, Menu, MoreHorizontal, UserCircle, X } from "lucide-react";
+import { Bell, LogOut, Menu, MoreHorizontal, UserCircle, X } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { NAVIGATION, activeNavHref, allNavItems, type NavItem } from "@/config/navigation";
 import type { Portal } from "@/types/portal";
 import { cn } from "@/lib/utils/cn";
@@ -11,19 +12,17 @@ import { cn } from "@/lib/utils/cn";
 /* Per-portal visual treatment (DESIGN.md §5). Structure is shared; only density and palette differ. */
 const THEME: Record<
   Portal,
-  { aside: string; brand: string; groupLabel: string; item: string; active: string; idle: string }
+  { aside: string; groupLabel: string; item: string; active: string; idle: string }
 > = {
   learner: {
     aside: "bg-surface border-r border-border",
-    brand: "text-text",
     groupLabel: "text-text-secondary",
     item: "gap-3 px-3 py-2 text-sm",
-    active: "bg-primary-light text-primary font-semibold",
+    active: "bg-primary-light text-primary-dark font-semibold",
     idle: "text-text-secondary hover:bg-border-subtle hover:text-text",
   },
   instructor: {
     aside: "bg-sidebar-dark border-r border-sidebar-dark-border",
-    brand: "text-white",
     groupLabel: "text-sidebar-dark-muted",
     item: "gap-3 px-3 py-2 text-sm",
     active: "bg-primary/25 text-white font-semibold",
@@ -31,7 +30,6 @@ const THEME: Record<
   },
   admin: {
     aside: "bg-surface border-r border-border",
-    brand: "text-text",
     groupLabel: "text-text-secondary",
     item: "gap-2.5 px-2.5 py-1.5 text-[13px]",
     active: "bg-primary-light text-primary-dark font-semibold",
@@ -39,7 +37,6 @@ const THEME: Record<
   },
   org_admin: {
     aside: "bg-surface border-r border-border",
-    brand: "text-text",
     groupLabel: "text-text-secondary",
     item: "gap-2.5 px-2.5 py-1.5 text-[13px]",
     active: "bg-primary-light text-primary-dark font-semibold",
@@ -47,25 +44,14 @@ const THEME: Record<
   },
 };
 
+/** Logo + portal name. Always on white: the logo has no approved artwork for dark backgrounds. */
 function Brand({ portal }: { portal: Portal }) {
   const nav = NAVIGATION[portal];
   return (
-    <Link href={nav.home} className="flex items-center gap-2.5 rounded-control">
-      <span className="flex size-9 items-center justify-center rounded-control bg-primary text-white">
-        <GraduationCap className="size-5" aria-hidden="true" />
-      </span>
-      <span className="leading-tight">
-        <span className={cn("block font-display text-[15px] font-bold", THEME[portal].brand)}>
-          Modern LMS
-        </span>
-        <span
-          className={cn(
-            "block text-[10px] font-semibold tracking-wider uppercase",
-            THEME[portal].groupLabel,
-          )}
-        >
-          {nav.label}
-        </span>
+    <Link href={nav.home} className="block w-fit rounded-control">
+      <BrandLogo width={128} />
+      <span className="block px-1 text-[11px] font-semibold tracking-wider text-text-secondary uppercase">
+        {nav.label}
       </span>
     </Link>
   );
@@ -170,18 +156,18 @@ function NavDrawer({
       }}
     >
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-start justify-between bg-surface px-3 py-3">
           <Brand portal={portal} />
           <button
             type="button"
             onClick={close}
-            className={cn("rounded-control p-2", THEME[portal].idle)}
+            className="rounded-control p-2 text-text-secondary hover:bg-border-subtle hover:text-text"
             aria-label="Close navigation"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 pb-6">
+        <div className="flex-1 overflow-y-auto px-3 pt-4 pb-6">
           <NavTree portal={portal} onNavigate={close} />
         </div>
       </div>
@@ -323,10 +309,10 @@ export function PortalShell({
       </a>
 
       <aside className={cn("sticky top-0 hidden h-dvh w-60 shrink-0 flex-col lg:flex", t.aside)}>
-        <div className="px-4 py-5">
+        <div className="bg-surface px-3 py-3">
           <Brand portal={portal} />
         </div>
-        <div className="flex-1 overflow-y-auto px-3 pb-6">
+        <div className="flex-1 overflow-y-auto px-3 pt-4 pb-6">
           <NavTree portal={portal} />
         </div>
       </aside>
@@ -343,9 +329,8 @@ export function PortalShell({
           >
             <Menu className="size-5" aria-hidden="true" />
           </button>
-          <div className="lg:hidden">
-            <span className="font-display text-[15px] font-bold">Modern LMS</span>
-          </div>
+          {/* Too short for the logo's minimum size (brand §3.2), so the logo lives in the drawer. */}
+          <span className="font-display text-[15px] font-bold lg:hidden">{NAVIGATION[portal].label}</span>
           <div className="ml-auto flex items-center gap-2">
             {unreadNotifications !== undefined && <NotificationBell href={`/${portal}/notifications`} unread={unreadNotifications} />}
             {user && <UserMenu email={user.email} profileHref={profileHref} onLogout={onLogout} />}

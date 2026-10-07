@@ -71,7 +71,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
     "@type": "Course",
     name: course.title,
     description: course.subtitle ?? course.description.slice(0, 300),
-    provider: { "@type": "Organization", name: "Modern LMS" },
+    provider: {
+      "@type": "Organization",
+      name: "LERNOVIQ",
+      legalName: "LERNOVIQ AI TECHNOLOGIES PRIVATE LIMITED",
+      url: "https://www.lernoviq.com",
+    },
     inLanguage: course.language,
     ...(course.ratingCount > 0 && {
       aggregateRating: {

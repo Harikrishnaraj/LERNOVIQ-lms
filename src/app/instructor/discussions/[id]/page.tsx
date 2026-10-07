@@ -184,7 +184,7 @@ export default async function InstructorDiscussionDetailPage({
             </div>
             <div className="flex items-center gap-2">
               {t.pinned && (
-                <span className="inline-flex items-center gap-1 rounded bg-primary-light px-2 py-0.5 text-xs font-semibold text-primary">
+                <span className="inline-flex items-center gap-1 rounded bg-primary-light px-2 py-0.5 text-xs font-semibold text-primary-dark">
                   <Pin className="size-3" aria-hidden="true" /> Pinned
                 </span>
               )}

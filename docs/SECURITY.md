@@ -1,4 +1,4 @@
-# Modern LMS — Security Requirements
+# LERNOVIQ — Security Requirements
 
 ## 1. Security Objective
 

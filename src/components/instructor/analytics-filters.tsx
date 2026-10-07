@@ -71,7 +71,7 @@ export function AnalyticsFilters({
             className={cn(
               "px-3 py-1.5 text-sm transition-colors",
               r === selectedRange
-                ? "bg-primary-light font-semibold text-primary"
+                ? "bg-primary-light font-semibold text-primary-dark"
                 : "text-text-secondary hover:text-text",
             )}
           >

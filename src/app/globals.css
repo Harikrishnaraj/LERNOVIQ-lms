@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Modern LMS design tokens — source of truth is docs/DESIGN.md.
+ * LERNOVIQ design tokens — source of truth is docs/DESIGN.md (brand: docs/brand/, ADR-039).
  * Use these via Tailwind utilities (bg-surface, text-text-secondary, border-border, bg-primary …).
  * Do not use raw hex values in components.
  */
@@ -9,7 +9,7 @@
   /* Core */
   --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-text: #0f172a;
+  --color-text: #0a1f54; /* brand Navy: primary text */
   --color-text-secondary: #64748b;
   /* Muted text must still meet WCAG AA: 4.76:1 on surface, 4.55:1 on background (#94a3b8 was 2.56:1). */
   --color-text-muted: #64748b;
@@ -18,12 +18,14 @@
   /* Neutral badge text: 7:1 on border-subtle (text-secondary there is only 4.3:1, below WCAG AA). */
   --color-neutral-text: #475569;
 
-  /* Brand */
-  --color-primary: #4f46e5;
-  --color-primary-dark: #3730a3;
-  --color-primary-light: #eef2ff;
-  --color-blue: #2563eb;
-  --color-blue-light: #eff6ff;
+  /* Brand (LERNOVIQ palette). Primary is brand Blue: white text on it is 4.83:1, and it passes as
+   * text on white (4.83:1) and background (4.62:1). On the primary-light tint it is only 4.33:1,
+   * so text on that tint uses primary-dark (6.11:1). Brand Red and Green belong to the logo only. */
+  --color-primary: #0066ff;
+  --color-primary-dark: #0052cc;
+  --color-primary-light: #ebf3ff;
+  --color-blue: #0066ff;
+  --color-blue-light: #ebf3ff;
 
   /* Semantic (meaning only — never decoration) */
   --color-success: #10b981;
@@ -41,11 +43,11 @@
   --color-ai: #7c3aed;
   --color-ai-light: #f5f3ff;
 
-  /* Instructor dark sidebar */
-  --color-sidebar-dark: #0f172a;
-  --color-sidebar-dark-border: #1e293b;
-  --color-sidebar-dark-text: #cbd5e1;
-  --color-sidebar-dark-muted: #94a3b8; /* 6.9:1 on sidebar-dark (WCAG AA) */
+  /* Instructor dark sidebar: brand Navy */
+  --color-sidebar-dark: #0a1f54;
+  --color-sidebar-dark-border: #1b3170;
+  --color-sidebar-dark-text: #cbd5e1; /* 10.6:1 on sidebar-dark */
+  --color-sidebar-dark-muted: #94a3b8; /* 6.1:1 on sidebar-dark (WCAG AA) */
 
   /* Typography */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

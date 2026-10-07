@@ -1,4 +1,4 @@
-# Modern LMS — Test Plan
+# LERNOVIQ — Test Plan
 
 ## 1. Testing Philosophy
 

@@ -105,7 +105,7 @@ export default async function LearnerCalendarPage({
                 key={v}
                 href={href(query, { view: v })}
                 aria-current={v === query.view ? "true" : undefined}
-                className={cn("px-3 py-1.5 text-sm capitalize", v === query.view ? "bg-primary-light font-semibold text-primary" : "text-text-secondary")}
+                className={cn("px-3 py-1.5 text-sm capitalize", v === query.view ? "bg-primary-light font-semibold text-primary-dark" : "text-text-secondary")}
               >
                 {v}
               </Link>

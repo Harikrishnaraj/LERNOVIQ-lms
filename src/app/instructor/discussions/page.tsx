@@ -138,7 +138,7 @@ export default async function InstructorDiscussionsPage({
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-xs",
-                  f.id === filter ? "bg-primary-light text-primary font-semibold" : "bg-border-subtle text-text-secondary",
+                  f.id === filter ? "bg-primary-light text-primary-dark font-semibold" : "bg-border-subtle text-text-secondary",
                 )}
               >
                 {count}
@@ -257,7 +257,7 @@ export default async function InstructorDiscussionsPage({
                       {t.courseTitle}
                     </span>
                     {t.pinned && (
-                      <span className="inline-flex items-center gap-1 rounded bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
+                      <span className="inline-flex items-center gap-1 rounded bg-primary-light px-2 py-0.5 text-xs font-medium text-primary-dark">
                         <Pin className="size-3" aria-hidden="true" /> Pinned
                       </span>
                     )}

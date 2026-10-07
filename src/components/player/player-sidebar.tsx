@@ -60,7 +60,7 @@ export function PlayerSidebar({
               );
               const cls = cn(
                 "flex items-center gap-2 rounded-control px-2 py-2 text-sm",
-                current ? "bg-primary-light font-semibold text-primary" : "text-text",
+                current ? "bg-primary-light font-semibold text-primary-dark" : "text-text",
               );
               return (
                 <li key={lesson.id}>

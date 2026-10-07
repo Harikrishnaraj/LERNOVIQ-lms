@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GraduationCap } from "lucide-react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { buttonClasses } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getPortalPathForUser } from "@/features/auth/roles";
@@ -19,14 +19,12 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col items-center justify-center px-4 py-16 text-center">
-      <span className="flex size-14 items-center justify-center rounded-card bg-primary text-white">
-        <GraduationCap className="size-7" aria-hidden="true" />
-      </span>
+      <BrandLogo width={280} />
       <h1 className="mt-6 text-3xl font-extrabold tracking-tight md:text-4xl">
         One platform. Three workspaces built for the job.
       </h1>
       <p className="mt-3 max-w-lg text-text-secondary">
-        Learn, teach and operate learning — all in Modern LMS.
+        Learn, teach and operate learning — all in LERNOVIQ.
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link href="/courses" className={buttonClasses({ variant: "secondary", size: "lg" })}>
