@@ -1,14 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
 import { getAdminInstructorDetail } from "@/features/admin/instructor-detail";
 
-let currentClient: SupabaseClient;
-vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
-vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-
-import { updatePayoutDetailsAction } from "@/features/instructor/settings-actions";
-import { getPayoutDetails } from "@/features/instructor/settings";
 
 const hasLiveProject = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -75,16 +69,5 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
   it("returns null for a user who is not an instructor, and rejects a non-admin caller", async () => {
     expect(await getAdminInstructorDetail(admin.client, learner.id)).toBeNull();
     await expect(getAdminInstructorDetail(learner.client, instructor.id)).rejects.toThrow();
-  });
-
-  it("lets staff read an instructor's saved payout details, but not other regular users", async () => {
-    currentClient = instructor.client;
-    await updatePayoutDetailsAction({ method: "paypal", reference: "instructor@example.com" });
-
-    const asAdmin = await getPayoutDetails(admin.client, instructor.id);
-    expect(asAdmin).toMatchObject({ payoutMethod: "paypal", payoutReference: "instructor@example.com" });
-
-    const asLearner = await getPayoutDetails(learner.client, instructor.id);
-    expect(asLearner).toBeNull();
   });
 });

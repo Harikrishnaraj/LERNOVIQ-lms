@@ -5,7 +5,6 @@ import {
   Activity,
   BarChart3,
   ClipboardCheck,
-  DollarSign,
   GraduationCap,
   PlusCircle,
   Users,
@@ -19,7 +18,6 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  formatCurrency,
   formatDuration,
   getInstructorAssessmentAnalytics,
   getInstructorCourses,
@@ -85,7 +83,7 @@ export default async function InstructorAnalyticsPage({
 
   const totals = summarizeInstructorAnalytics(points, breakdown);
   const hasNoCourses = courses.length === 0;
-  const hasNoActivity = totals.totalEnrollments === 0 && totals.activeLearners === 0 && totals.totalRevenueCents === 0;
+  const hasNoActivity = totals.totalEnrollments === 0 && totals.activeLearners === 0;
 
   function buildTabUrl(tab: TabId) {
     const params = new URLSearchParams();
@@ -159,7 +157,7 @@ export default async function InstructorAnalyticsPage({
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* KPI Cards */}
-              <dl aria-label="Key performance indicators" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <dl aria-label="Key performance indicators" className="grid gap-4 sm:grid-cols-3">
                 <Card className="p-5">
                   <div className="flex items-center justify-between">
                     <dt className="text-sm font-medium text-text-secondary">Enrollments</dt>
@@ -204,30 +202,13 @@ export default async function InstructorAnalyticsPage({
                     Studied or submitted work
                   </p>
                 </Card>
-
-                <Card className="p-5">
-                  <div className="flex items-center justify-between">
-                    <dt className="text-sm font-medium text-text-secondary">Revenue</dt>
-                    <div className="rounded-control bg-primary-light/50 p-2 text-primary">
-                      <DollarSign className="size-4" aria-hidden="true" />
-                    </div>
-                  </div>
-                  <dd className="mt-2 text-3xl font-bold tracking-tight text-text">
-                    {formatCurrency(totals.totalRevenueCents)}
-                  </dd>
-                  <p className="mt-1 text-xs text-text-secondary">
-                    {totals.totalEnrollments > 0
-                      ? `Avg ${formatCurrency(totals.avgRevenuePerLearnerCents)} / student`
-                      : "From paid enrollments"}
-                  </p>
-                </Card>
               </dl>
 
               {hasNoActivity ? (
                 <EmptyState
                   icon={BarChart3}
                   title="No activity in this period"
-                  description="Enrollments, completions, active learners, and revenue will chart here as students engage with your courses."
+                  description="Enrollments, completions and active learners will chart here as students engage with your courses."
                 />
               ) : (
                 <div className="space-y-6">
@@ -258,7 +239,6 @@ export default async function InstructorAnalyticsPage({
                               <th scope="col" className="px-6 py-3.5 text-right">Completions</th>
                               <th scope="col" className="px-6 py-3.5 text-right">Completion Rate</th>
                               <th scope="col" className="px-6 py-3.5 text-right">Active Learners</th>
-                              <th scope="col" className="px-6 py-3.5 text-right">Revenue</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/60">
@@ -283,9 +263,6 @@ export default async function InstructorAnalyticsPage({
                                 </td>
                                 <td className="px-6 py-4 text-right font-mono text-xs text-text">
                                   {c.activeLearners.toLocaleString("en-US")}
-                                </td>
-                                <td className="px-6 py-4 text-right font-mono text-xs font-semibold text-text">
-                                  {formatCurrency(c.revenueCents)}
                                 </td>
                               </tr>
                             ))}

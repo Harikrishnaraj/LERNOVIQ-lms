@@ -32,7 +32,7 @@ test.describe("instructor settings", () => {
     await cleanup(svc, { learnerIds: [], courseIds, userIds });
   });
 
-  test("saves a public profile and payout details, and the profile shows on the published course (T-112)", async ({
+  test("saves a public profile, and it shows on the published course (T-112)", async ({
     page,
   }) => {
     test.setTimeout(180_000);
@@ -51,20 +51,13 @@ test.describe("instructor settings", () => {
     await page.getByRole("button", { name: "Save public profile" }).click();
     await expect(page.getByText("Public profile saved.")).toBeVisible();
 
-    // 2. Payout details.
-    await page.getByLabel("Payout method").selectOption("paypal");
-    await page.getByLabel("Payout reference").fill("teacher@example.com");
-    await page.getByRole("button", { name: "Save payout details" }).click();
-    await expect(page.getByText("Payout details saved.")).toBeVisible();
-
-    // 3. Reload: both sections persist.
+    // 2. Reload: it persists. Instructors have no payout settings (ADR-037).
     await page.reload();
     await expect(page.getByLabel("Headline")).toHaveValue("Lead Instructor");
     await expect(page.getByLabel("Bio")).toHaveValue("I teach practical, hands-on design courses.");
-    await expect(page.getByLabel("Payout method")).toHaveValue("paypal");
-    await expect(page.getByLabel("Payout reference")).toHaveValue("teacher@example.com");
+    await expect(page.getByText(/payout/i)).toHaveCount(0);
 
-    // 4. The public profile shows on the published course page.
+    // 3. The public profile shows on the published course page.
     await page.goto(`/courses/${tag}-course`);
     await expect(page.getByRole("heading", { name: "About the instructor" })).toBeVisible();
     await expect(page.getByText("Lead Instructor")).toBeVisible();

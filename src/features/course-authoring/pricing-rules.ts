@@ -1,4 +1,5 @@
-// Pricing & settings rules (pure, unit-tested): money parsing, validation, prerequisite cycles.
+// Course settings and price rules (pure, unit-tested): money parsing, validation, prerequisite cycles.
+// Instructors set certificate/visibility/prerequisites; only the platform sets the price (ADR-037).
 
 export const CURRENCIES = ["USD", "EUR", "GBP", "INR"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -25,41 +26,23 @@ export function formatCentsAsAmount(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
-export interface PricingInput {
-  mode: string;
-  amount: string;
-  currency: string;
+export interface CourseSettingsInput {
   certificateEnabled: boolean;
   visibility: string;
   prerequisiteIds: string[];
 }
 
-export interface PricingSettings {
-  priceCents: number;
-  currency: Currency;
+export interface CourseSettings {
   certificateEnabled: boolean;
   visibility: Visibility;
   prerequisiteIds: string[];
 }
 
-export type PricingValidation =
-  | { ok: true; value: PricingSettings }
-  | { ok: false; errors: Record<string, string> };
+export type Validation<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> };
 
-export function validatePricing(input: PricingInput): PricingValidation {
+/** The instructor's course settings: certificate switch, visibility and prerequisites. */
+export function validateCourseSettings(input: CourseSettingsInput): Validation<CourseSettings> {
   const errors: Record<string, string> = {};
-
-  let priceCents = 0;
-  if (input?.mode !== "free" && input?.mode !== "paid") errors.mode = "Choose free or paid.";
-  else if (input.mode === "paid") {
-    const cents = parseAmountToCents(input.amount ?? "");
-    if (cents === null) errors.amount = "Enter a price like 49.99.";
-    else if (cents < MIN_PRICE_CENTS) errors.amount = "The minimum price is 1.00. Choose Free for no charge.";
-    else if (cents > MAX_PRICE_CENTS) errors.amount = "The maximum price is 9,999.99.";
-    else priceCents = cents;
-  }
-
-  if (!(CURRENCIES as readonly string[]).includes(input?.currency)) errors.currency = "Choose a currency.";
   if (!VISIBILITY_OPTIONS.some((v) => v.value === input?.visibility)) errors.visibility = "Choose a visibility.";
 
   const prereq = Array.isArray(input?.prerequisiteIds) ? input.prerequisiteIds : [];
@@ -71,13 +54,34 @@ export function validatePricing(input: PricingInput): PricingValidation {
   return {
     ok: true,
     value: {
-      priceCents,
-      currency: input.currency as Currency,
       certificateEnabled: Boolean(input.certificateEnabled),
       visibility: input.visibility as Visibility,
       prerequisiteIds: unique,
     },
   };
+}
+
+export interface CoursePriceInput {
+  mode: string;
+  amount: string;
+  currency: string;
+}
+
+/** A course price set by the platform (admin): free, or between MIN and MAX in a supported currency. */
+export function validateCoursePrice(input: CoursePriceInput): Validation<{ priceCents: number; currency: Currency }> {
+  const errors: Record<string, string> = {};
+  let priceCents = 0;
+  if (input?.mode !== "free" && input?.mode !== "paid") errors.mode = "Choose free or paid.";
+  else if (input.mode === "paid") {
+    const cents = parseAmountToCents(input.amount ?? "");
+    if (cents === null) errors.amount = "Enter a price like 49.99.";
+    else if (cents < MIN_PRICE_CENTS) errors.amount = "The minimum price is 1.00. Choose Free for no charge.";
+    else if (cents > MAX_PRICE_CENTS) errors.amount = "The maximum price is 9,999.99.";
+    else priceCents = cents;
+  }
+  if (!(CURRENCIES as readonly string[]).includes(input?.currency)) errors.currency = "Choose a currency.";
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  return { ok: true, value: { priceCents, currency: input.currency as Currency } };
 }
 
 /**

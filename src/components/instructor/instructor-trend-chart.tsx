@@ -77,14 +77,13 @@ export function InstructorTrendChart({ points }: { points: InstructorDailyPoint[
         </summary>
         <div className="mt-2 max-h-64 overflow-auto rounded-control border border-border">
           <table className="w-full text-left text-xs">
-            <caption className="sr-only">Daily student activity and revenue</caption>
+            <caption className="sr-only">Daily student activity</caption>
             <thead className="sticky top-0 bg-surface-subtle font-semibold text-text">
               <tr>
                 <th scope="col" className="p-2">Date</th>
                 <th scope="col" className="p-2 text-right">Enrollments</th>
                 <th scope="col" className="p-2 text-right">Completions</th>
                 <th scope="col" className="p-2 text-right">Active Learners</th>
-                <th scope="col" className="p-2 text-right">Revenue</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle font-mono text-xs">
@@ -94,9 +93,6 @@ export function InstructorTrendChart({ points }: { points: InstructorDailyPoint[
                   <td className="p-2 text-right text-text">{p.enrollments}</td>
                   <td className="p-2 text-right text-text">{p.completions}</td>
                   <td className="p-2 text-right text-text">{p.activeLearners}</td>
-                  <td className="p-2 text-right text-text">
-                    {p.revenueCents > 0 ? `$${(p.revenueCents / 100).toFixed(2)}` : "$0.00"}
-                  </td>
                 </tr>
               ))}
             </tbody>

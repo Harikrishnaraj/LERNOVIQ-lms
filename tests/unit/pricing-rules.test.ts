@@ -3,19 +3,15 @@ import {
   formatCentsAsAmount,
   parseAmountToCents,
   unmetPrerequisites,
-  validatePricing,
+  validateCoursePrice,
+  validateCourseSettings,
   wouldCreateCycle,
-  type PricingInput,
+  type CoursePriceInput,
+  type CourseSettingsInput,
 } from "@/features/course-authoring/pricing-rules";
 
-const base: PricingInput = {
-  mode: "free",
-  amount: "",
-  currency: "USD",
-  certificateEnabled: true,
-  visibility: "public",
-  prerequisiteIds: [],
-};
+const price: CoursePriceInput = { mode: "free", amount: "", currency: "USD" };
+const base: CourseSettingsInput = { certificateEnabled: true, visibility: "public", prerequisiteIds: [] };
 
 describe("parseAmountToCents", () => {
   it("converts decimal strings without float errors", () => {
@@ -37,39 +33,43 @@ describe("parseAmountToCents", () => {
   });
 });
 
-describe("validatePricing", () => {
+describe("validateCoursePrice (admin, ADR-037)", () => {
   it("accepts free (price forced to 0) and paid courses", () => {
-    expect(validatePricing({ ...base, amount: "99" })).toMatchObject({ ok: true, value: { priceCents: 0 } });
-    expect(validatePricing({ ...base, mode: "paid", amount: "49.99", currency: "EUR" })).toMatchObject({
+    expect(validateCoursePrice({ ...price, amount: "99" })).toMatchObject({ ok: true, value: { priceCents: 0 } });
+    expect(validateCoursePrice({ mode: "paid", amount: "49.99", currency: "EUR" })).toMatchObject({
       ok: true,
       value: { priceCents: 4999, currency: "EUR" },
     });
   });
 
   it("enforces the price range for paid courses", () => {
-    expect(validatePricing({ ...base, mode: "paid", amount: "0.50" })).toMatchObject({ ok: false, errors: { amount: expect.stringContaining("minimum") } });
-    expect(validatePricing({ ...base, mode: "paid", amount: "10000" })).toMatchObject({ ok: false, errors: { amount: expect.stringContaining("maximum") } });
-    expect(validatePricing({ ...base, mode: "paid", amount: "abc" })).toMatchObject({ ok: false, errors: { amount: expect.any(String) } });
-    expect(validatePricing({ ...base, mode: "paid", amount: "1.00" })).toMatchObject({ ok: true, value: { priceCents: 100 } });
+    expect(validateCoursePrice({ ...price, mode: "paid", amount: "0.50" })).toMatchObject({ ok: false, errors: { amount: expect.stringContaining("minimum") } });
+    expect(validateCoursePrice({ ...price, mode: "paid", amount: "10000" })).toMatchObject({ ok: false, errors: { amount: expect.stringContaining("maximum") } });
+    expect(validateCoursePrice({ ...price, mode: "paid", amount: "abc" })).toMatchObject({ ok: false, errors: { amount: expect.any(String) } });
+    expect(validateCoursePrice({ ...price, mode: "paid", amount: "1.00" })).toMatchObject({ ok: true, value: { priceCents: 100 } });
   });
 
-  it("rejects unknown mode, currency and visibility", () => {
-    expect(validatePricing({ ...base, mode: "donation" })).toMatchObject({ ok: false, errors: { mode: expect.any(String) } });
-    expect(validatePricing({ ...base, currency: "BTC" })).toMatchObject({ ok: false, errors: { currency: expect.any(String) } });
-    expect(validatePricing({ ...base, visibility: "secret" })).toMatchObject({ ok: false, errors: { visibility: expect.any(String) } });
+  it("rejects an unknown mode or currency", () => {
+    expect(validateCoursePrice({ ...price, mode: "donation" })).toMatchObject({ ok: false, errors: { mode: expect.any(String) } });
+    expect(validateCoursePrice({ ...price, currency: "BTC" })).toMatchObject({ ok: false, errors: { currency: expect.any(String) } });
+  });
+});
+
+describe("validateCourseSettings (instructor)", () => {
+  it("rejects an unknown visibility", () => {
+    expect(validateCourseSettings({ ...base, visibility: "secret" })).toMatchObject({ ok: false, errors: { visibility: expect.any(String) } });
   });
 
   it("limits and de-duplicates prerequisites", () => {
-    expect(validatePricing({ ...base, prerequisiteIds: ["a", "b"] })).toMatchObject({ ok: true, value: { prerequisiteIds: ["a", "b"] } });
-    expect(validatePricing({ ...base, prerequisiteIds: ["a", "a"] })).toMatchObject({ ok: false });
-    expect(validatePricing({ ...base, prerequisiteIds: ["a", "b", "c", "d", "e", "f"] })).toMatchObject({ ok: false });
+    expect(validateCourseSettings({ ...base, prerequisiteIds: ["a", "b"] })).toMatchObject({ ok: true, value: { prerequisiteIds: ["a", "b"] } });
+    expect(validateCourseSettings({ ...base, prerequisiteIds: ["a", "a"] })).toMatchObject({ ok: false });
+    expect(validateCourseSettings({ ...base, prerequisiteIds: ["a", "b", "c", "d", "e", "f"] })).toMatchObject({ ok: false });
   });
 
-  it("keeps the certificate flag and visibility", () => {
-    expect(validatePricing({ ...base, certificateEnabled: false, visibility: "unlisted" })).toMatchObject({
-      ok: true,
-      value: { certificateEnabled: false, visibility: "unlisted" },
-    });
+  it("keeps the certificate flag and visibility, and carries no price", () => {
+    const r = validateCourseSettings({ ...base, certificateEnabled: false, visibility: "unlisted" });
+    expect(r).toMatchObject({ ok: true, value: { certificateEnabled: false, visibility: "unlisted" } });
+    expect(r.ok && "priceCents" in r.value).toBe(false);
   });
 });
 

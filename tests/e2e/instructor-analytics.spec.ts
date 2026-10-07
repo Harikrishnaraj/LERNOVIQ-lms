@@ -150,11 +150,11 @@ test.describe("instructor analytics", () => {
     await expect(kpiCards.getByText("Enrollments")).toBeVisible();
     await expect(kpiCards.getByText("Completion Rate")).toBeVisible();
     await expect(kpiCards.getByText("Active Learners")).toBeVisible();
-    await expect(kpiCards.getByText("Revenue")).toBeVisible();
+    // Revenue belongs to the platform, not the instructor (ADR-037).
+    await expect(kpiCards.getByText("Revenue")).toHaveCount(0);
 
     // Check KPI values
     await expect(kpiCards.getByText("50%")).toBeVisible(); // 1 of 2 completed = 50%
-    await expect(kpiCards.getByText("$70")).toBeVisible(); // 2 * $35 = $70
 
     // Check Trend chart and Breakdown table
     await expect(page.getByText("Daily Engagement & Enrollments")).toBeVisible();

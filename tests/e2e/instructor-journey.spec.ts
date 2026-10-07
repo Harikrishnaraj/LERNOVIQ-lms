@@ -34,7 +34,7 @@ test.describe("instructor journey", () => {
     await cleanup(svc, { courseIds, userIds });
   });
 
-  test("create, build, price, preview, check readiness and submit", async ({ page }) => {
+  test("create, build, configure, preview, check readiness and submit", async ({ page }) => {
     test.setTimeout(300_000);
     const title = `${tag} Journey Course`;
 
@@ -103,11 +103,11 @@ test.describe("instructor journey", () => {
     await page.getByRole("button", { name: "Add question" }).last().click();
     await expect(questionRow(page, "1. Is this a journey?")).toBeVisible();
 
-    // Pricing: paid, then preview.
+    // Settings (the price is the platform's, ADR-037), then preview.
     await page.goto(`/instructor/courses/${courseId}/pricing`);
     await page.waitForLoadState("networkidle");
-    await page.getByLabel("Paid").check();
-    await page.getByPlaceholder("49.99").fill("19.99");
+    await expect(page.getByText("Course prices are set by the platform team, not by instructors.")).toBeVisible();
+    await page.getByLabel("Who can find this course").selectOption("unlisted");
     await page.getByRole("button", { name: "Save settings" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
 

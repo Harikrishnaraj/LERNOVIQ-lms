@@ -260,7 +260,7 @@ The supplied guide recommends separating app, components, features, services, li
 /instructor/messages
 /instructor/analytics
 /instructor/reviews
-/instructor/earnings
+/instructor/earnings  (removed, ADR-037)
 /instructor/certificates
 /instructor/resources
 /instructor/question-bank
@@ -332,7 +332,7 @@ subscriptions
 payments
 refunds
 coupons
-instructor_payouts
+instructor_payouts  (not built: instructor payouts descoped, ADR-037)
 reviews
 ai_conversations
 ai_messages

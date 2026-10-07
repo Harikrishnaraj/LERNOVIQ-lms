@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HEADLINE_MAX, BIO_MAX, PAYOUT_REFERENCE_MAX, validateBio, validateHeadline, validatePayoutDetails } from "@/features/instructor/settings";
+import { HEADLINE_MAX, BIO_MAX, validateBio, validateHeadline } from "@/features/instructor/settings";
 
 describe("validateHeadline", () => {
   it("trims and allows a normal headline", () => {
@@ -26,31 +26,5 @@ describe("validateBio", () => {
 
   it("treats blank input as null", () => {
     expect(validateBio("  ")).toEqual({ ok: true, value: null });
-  });
-});
-
-describe("validatePayoutDetails", () => {
-  it("accepts a valid method and reference", () => {
-    expect(validatePayoutDetails({ method: "paypal", reference: " you@example.com " })).toEqual({
-      ok: true,
-      value: { method: "paypal", reference: "you@example.com" },
-    });
-  });
-
-  it("rejects an invalid method", () => {
-    expect(validatePayoutDetails({ method: "crypto", reference: "abc" }).ok).toBe(false);
-  });
-
-  it("rejects a blank reference", () => {
-    expect(validatePayoutDetails({ method: "paypal", reference: "  " }).ok).toBe(false);
-  });
-
-  it("rejects a reference over the limit", () => {
-    expect(validatePayoutDetails({ method: "other", reference: "x".repeat(PAYOUT_REFERENCE_MAX + 1) }).ok).toBe(false);
-  });
-
-  it("rejects malformed input", () => {
-    expect(validatePayoutDetails(null).ok).toBe(false);
-    expect(validatePayoutDetails("nope").ok).toBe(false);
   });
 });

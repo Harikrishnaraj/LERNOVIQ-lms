@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CheckCircle2, ChevronLeft, XCircle } from "lucide-react";
+import { CoursePriceForm } from "@/components/admin/course-price-form";
 import { DecisionPanel } from "@/components/admin/decision-panel";
 import { ReviewNotes } from "@/components/admin/review-notes";
 import { PermissionDeniedState } from "@/components/feedback/states";
@@ -34,7 +35,11 @@ export default async function CourseReviewPage({ params }: { params: Promise<{ c
       </>
     );
   }
-  const [course, canReview] = await Promise.all([getCourseForReview(supabase, courseId), can(supabase, user.id, "course.review")]);
+  const [course, canReview, canPrice] = await Promise.all([
+    getCourseForReview(supabase, courseId),
+    can(supabase, user.id, "course.review"),
+    can(supabase, user.id, "course.price"),
+  ]);
   if (!course) notFound();
 
   const beingReviewed = course.status === "submitted" || course.status === "in_review";
@@ -146,6 +151,14 @@ export default async function CourseReviewPage({ params }: { params: Promise<{ c
                 Decision
               </h2>
               <DecisionPanel courseId={course.courseId} actions={decisions} failingChecks={course.report.missing.length} />
+            </section>
+          )}
+          {canPrice && (
+            <section aria-labelledby="price-heading" className="rounded-card border border-border bg-surface p-5">
+              <h2 id="price-heading" className="mb-3 text-base font-semibold">
+                Price
+              </h2>
+              <CoursePriceForm courseId={course.courseId} priceCents={course.priceCents} currency={course.currency} />
             </section>
           )}
           <section aria-labelledby="checklist-heading" className="rounded-card border border-border bg-surface p-5">

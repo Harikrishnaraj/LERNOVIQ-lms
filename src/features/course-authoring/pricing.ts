@@ -11,7 +11,7 @@ export interface PricingForEditing {
   candidates: { id: string; title: string }[];
 }
 
-/** Current pricing/settings of the version being authored plus the choosable prerequisites. */
+/** Current settings (and the platform-set price, read-only) of the version being authored, plus the choosable prerequisites. */
 export async function getPricingForEditing(
   supabase: SupabaseClient,
   userId: string,

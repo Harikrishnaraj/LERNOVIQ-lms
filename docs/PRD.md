@@ -216,7 +216,7 @@ Admin login → MFA → Overview → Pending actions → User/Course/Organizatio
 - Moderate discussions.
 - Review ratings.
 - View analytics.
-- View earnings.
+- ~~View earnings.~~ Removed: instructors are not paid through the platform (ADR-037).
 - Use AI assistant.
 
 ### Admin
@@ -316,7 +316,7 @@ The product architecture supports:
 - Coupons.
 - Refunds.
 - Payment status.
-- Instructor earnings.
+- ~~Instructor earnings.~~ Removed (ADR-037); course prices are set by the platform.
 
 Commerce implementation should be isolated behind a payment service interface so payment provider changes do not affect course/learning domain logic.
 

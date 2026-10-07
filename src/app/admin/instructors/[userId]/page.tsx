@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CircleDollarSign, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { getAdminInstructorDetail } from "@/features/admin/instructor-detail";
-import { getPayoutDetails, PAYOUT_METHODS } from "@/features/instructor/settings";
-import { EmptyState, PermissionDeniedState } from "@/components/feedback/states";
+import { PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -33,15 +32,11 @@ export default async function AdminInstructorDetailPage({ params }: { params: Pr
     );
   }
 
-  const [detail, payout] = await Promise.all([
-    getAdminInstructorDetail(supabase, userId),
-    getPayoutDetails(supabase, userId),
-  ]);
+  const detail = await getAdminInstructorDetail(supabase, userId);
   if (!detail) notFound();
 
   const totalRatings = Object.values(detail.ratingDistribution).reduce((a, b) => a + b, 0);
   const totalLearners = detail.courses.reduce((n, c) => n + c.learners, 0);
-  const payoutMethodLabel = payout ? PAYOUT_METHODS.find((m) => m.value === payout.payoutMethod)?.label ?? payout.payoutMethod : null;
 
   return (
     <>
@@ -97,20 +92,6 @@ export default async function AdminInstructorDetailPage({ params }: { params: Pr
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader
-              title="Revenue"
-              description="Not available yet — payment processing has not been built for this platform."
-            />
-            <CardContent>
-              <EmptyState
-                icon={CircleDollarSign}
-                title="No revenue data"
-                description="This screen will show real revenue once checkout and payouts are implemented."
-              />
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -125,26 +106,6 @@ export default async function AdminInstructorDetailPage({ params }: { params: Pr
                 <span className="text-text-secondary">Courses</span>
                 <span>{detail.courses.length}</span>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader title="Payout details" description="Set by the instructor themselves, ahead of real payout processing." />
-            <CardContent className="space-y-3 text-sm">
-              {payout ? (
-                <>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary">Method</span>
-                    <span>{payoutMethodLabel}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-text-secondary">Reference</span>
-                    <span className="truncate">{payout.payoutReference}</span>
-                  </div>
-                </>
-              ) : (
-                <p className="text-text-secondary">This instructor has not saved payout details yet.</p>
-              )}
             </CardContent>
           </Card>
 
