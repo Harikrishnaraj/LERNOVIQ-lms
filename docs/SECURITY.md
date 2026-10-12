@@ -391,3 +391,15 @@ Before production:
 [ ] Backups configured
 [ ] Recovery tested
 ```
+
+## 27. Content Server (SCORM Dispatch)
+
+ADR-038. Dispatch launches come from other companies' LMSs, so:
+- Every dispatch ID is signed (HMAC, server-side secret); unsigned or altered IDs are refused.
+- Launch checks, in order: signature, licence not revoked, not expired, course still in the licence, embedding origin in the licence's allowlist, seat limit (only a new learner can exceed it).
+- Content tokens are short-lived and bound to one dispatch and registration; they are refreshed by the launcher, never stored in the client LMS.
+- The content origin's `frame-ancestors` allows only that licence's origins for dispatch responses. The app origin is never framed.
+- No learner PII is stored: the LMS learner ID is kept only as a keyed hash; no names or emails.
+- Launch and content endpoints are rate-limited per dispatch and per IP.
+- Creating, changing and revoking licences and downloading dispatch packages are audit events.
+- Revoking a licence stops new launches and token refreshes immediately.

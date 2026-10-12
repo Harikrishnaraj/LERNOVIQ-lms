@@ -47,3 +47,7 @@ next-env.d.ts
 /playwright/.cache/
 /tests/e2e/.auth/
 /dist/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
