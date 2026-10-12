@@ -340,3 +340,23 @@ Improve:
 **Consequences:** New tables (content clients, licences, dispatches, registrations) with RLS that only admins with a new `content_server.manage` permission can use; the launch and content endpoints are public but gated by signatures, licence state and rate limits (SECURITY §27). Content served to a dispatch must be embeddable from the client's allowed LMS origins, so the content origin's `frame-ancestors` becomes per-licence for dispatch launches only; the app origin's CSP is unchanged. Pricing model (per active learner, per licence or flat fee) is still open; Phase 1 records registrations so any of them can be billed later. Tests need a stand-in LMS page that implements the SCORM 1.2 API.
 
 **Status:** Accepted (user decision). Features F-520–F-525, tasks T-170–T-177.
+
+## ADR-039 — AI Tutor and RAG Providers: Claude Haiku 5.5 and OpenAI Embeddings
+
+**Decision:** The four open decisions in `docs/RAG_PLAN.md` §1 are settled:
+
+1. **Answer model:** Claude Haiku 5.5 (`claude-haiku-5-5`) through the Anthropic API, behind the chat adapter in `src/services/ai/` (ADR-015). The model ID is configuration, not code, so a later move to Sonnet or Opus is a config change plus an eval run.
+2. **Embeddings:** OpenAI `text-embedding-3-small` through the embedding adapter in `src/services/embeddings/`. Vectors are stored as `vector(1536)` (the model's native size, under pgvector's 2,000-dimension HNSW limit).
+3. **First-version scope:** published lesson text only. Admin/org documents (needed by F-802) come next, then lesson attachments.
+4. **Keys:** none exist yet. Steps 1–4 of the plan are built and tested against deterministic fake providers; `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are needed before step 5 (tutor UI) and are added as GitHub secrets that the deploy job writes into the VPS `.env` (ADR-036).
+
+**Reason:** User decision (2026-10-12). Haiku 5.5 is the cheapest current Claude model ($0.10 / $0.50 per million input/output tokens for prompts up to 100K tokens, which covers every tutor request), which matters for a tutor every learner can call. OpenAI embeddings are hosted (no extra container on the VPS) and inexpensive.
+
+**Consequences:**
+- Changing the embedding provider or model later means a new migration for the vector size and re-embedding every chunk; `knowledge_chunks` records the embedding model name so a re-index can find stale rows.
+- Haiku 5.5's default effort is `medium`; the adapter sets it explicitly. It has no server-side refusal fallback, so a `refusal` stop reason is handled as a recoverable "couldn't answer" message (RAG_PLAN §6).
+- Hint-only mode, off-topic redirects and the relevance cutoff matter more with a smaller model; the retrieval eval (T-225) and a manual tutor smoke run decide whether Haiku is good enough or the config moves up a tier.
+- Two AI vendors receive data: lesson text and learner questions go to Anthropic (answers) and OpenAI (embeddings). SECURITY §16 and the privacy notice must name both.
+- CI never calls either provider (fakes only).
+
+**Status:** Accepted (user decision). Unblocks T-200 (adapters), T-220–T-222; T-201/T-224 still need the keys.

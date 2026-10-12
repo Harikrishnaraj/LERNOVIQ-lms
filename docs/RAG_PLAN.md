@@ -1,6 +1,6 @@
 # LERNOVIQ — RAG Implementation Plan
 
-**Status:** Proposed — waiting on the decisions in §1. Not started.
+**Status:** Decisions in §1 settled (ADR-039, 2026-10-12). Not started; steps 1–4 can begin with fake providers.
 **Covers:** T-220–T-225 (F-800, F-801, F-802) and the parts of T-200 (F-700) and T-201 (F-701) that
 RAG cannot work without.
 **Based on:** `main` at `f3c8333` (2026-10-05). Organizations, SSO, security headers, logging,
@@ -10,16 +10,14 @@ ADR-017 (permission-aware retrieval), SECURITY §16, PRD §12, TEST_PLAN §15 an
 
 ---
 
-## 1. Decisions only the user can make
+## 1. Decisions (settled — ADR-039)
 
-These change the schema or need credentials, so they must be settled before building.
-
-| # | Decision | Options | Recommendation |
-| --- | --- | --- | --- |
-| 1 | **Answer model** | Claude API, or a self-hosted open-source model on the VPS (ADR-035/036) | **Claude**, behind the adapter so it can be swapped later. A tutor needs a strong model, and a CPU-only VPS cannot run one at usable speed. |
-| 2 | **Embedding model** | Anthropic has **no embeddings API**, so this is a separate provider: a hosted API (e.g. Voyage AI or OpenAI), or a small open model self-hosted on the VPS | User's choice. It fixes the vector size in the schema (e.g. `vector(1024)`); changing provider later means re-embedding everything. Self-hosting embeddings is cheap, unlike self-hosting the answer model. |
-| 3 | **What the first version searches** | (a) published lesson text only; (b) also lesson attachments (PDF/DOCX); (c) also admin/org-uploaded knowledge documents | Start with **(a)**: no file parsing, and it already uses the course access rules. Then (c), which the admin screen (F-802) needs, then (b). |
-| 4 | **Keys** | `ANTHROPIC_API_KEY` and an embedding key, stored in GitHub secrets for the VPS `.env` (ADR-036) | Needed before anything is tested end to end. |
+| # | Decision | Chosen |
+| --- | --- | --- |
+| 1 | **Answer model** | **Claude Haiku 5.5** (`claude-haiku-5-5`) via the Anthropic API, behind the chat adapter. Model ID is config. |
+| 2 | **Embedding model** | **OpenAI `text-embedding-3-small`**, stored as `vector(1536)`. Anthropic has no embeddings API. |
+| 3 | **What the first version searches** | **(a) published lesson text only.** Then admin/org documents (F-802), then lesson attachments. |
+| 4 | **Keys** | **Not available yet.** Build steps 1–4 with fakes; `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` go into GitHub secrets for the VPS `.env` before step 5. |
 
 Per CLAUDE.md "Blocked?", no provider is stubbed and ticked: missing keys are recorded in
 `MEMORY.md` under Known Issues.
@@ -62,7 +60,7 @@ New code follows the existing `src/services/*` pattern:
   - `status`: `pending` → `processing` → `ready` | `failed`, plus `error` and `content_hash`.
 - **`knowledge_chunks`**: `source_id`, scope columns copied from the source (so filtering needs no
   joins), `lesson_id` (for "open this lesson" links), `position`, `content`, `token_count`,
-  `embedding vector(N)`, and a `tsvector` column for keyword search.
+  `embedding vector(1536)`, `embedding_model`, and a `tsvector` column for keyword search.
   - HNSW index on `embedding`; GIN index on the `tsvector`.
 - **`knowledge_jobs`**: the work queue, with `attempts` and `last_error`.
 - **RLS:** no direct client access to either table. Reads go only through the retrieval
@@ -186,11 +184,11 @@ role.
 
 | Step | Task | Needs |
 | --- | --- | --- |
-| 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Decisions 1, 2, 4 |
-| 2 | T-220: schema, pgvector, RLS | Decision 2 (vector size) |
+| 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Fakes only; real keys later |
+| 2 | T-220: schema, pgvector, RLS | `vector(1536)` |
 | 3 | T-221: lesson ingestion, cron worker, publish trigger | Steps 1–2 |
 | 4 | T-222: retrieval function and isolation tests | Step 3 |
-| 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4 |
+| 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, both API keys |
 | 6 | T-223: admin knowledge base and document uploads | Step 4 |
 | 7 | T-225: remaining TEST_PLAN §17 items and the eval | All |
 
