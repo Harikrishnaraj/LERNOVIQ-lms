@@ -1,6 +1,6 @@
 # LERNOVIQ — RAG Implementation Plan
 
-**Status:** Decisions in §1 settled (ADR-039, revised by ADR-040, 2026-10-12). Step 1 (T-200) in progress.
+**Status:** Decisions in §1 settled (ADR-039, revised by ADR-040, 2026-10-12). Step 1 (T-200) done; step 2 (T-220) waits on the embedding-provider choice.
 **Covers:** T-220–T-225 (F-800, F-801, F-802) and the parts of T-200 (F-700) and T-201 (F-701) that
 RAG cannot work without.
 **Based on:** `main` at `f3c8333` (2026-10-05). Organizations, SSO, security headers, logging,
