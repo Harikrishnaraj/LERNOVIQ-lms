@@ -117,6 +117,17 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-503 | Organization reports                  | PRD §14                      | Completion/overdue/hours report + export             |
 | F-504 | Organization SSO                      | PRD §8                       | SSO login maps users into the right org              |
 
+## Content server (SCORM dispatch)
+
+| ID    | Feature                                | Source                   | Done when                                                                 |
+| ----- | -------------------------------------- | ------------------------ | ------------------------------------------------------------------------- |
+| F-520 | Content clients & licences             | ADR-038                  | Admin creates clients with courses, seats, expiry, allowed domains; revoke works; audited |
+| F-521 | Dispatch package export (SCORM 1.2)    | ADR-038                  | Downloaded zip imports into a SCORM 1.2 LMS and contains no course files  |
+| F-522 | Dispatch launch & licence enforcement  | ADR-038, SECURITY §27    | Valid launch plays; revoked, expired, over-seat, bad-signature or wrong-domain launches are refused |
+| F-523 | Tracking relay to the client LMS       | ADR-038                  | Progress, score and completion reach the client LMS's SCORM API; resume works |
+| F-524 | Dispatch usage reporting               | ADR-038                  | Registrations and launches per client/course/month; CSV export; no learner PII stored |
+| F-525 | Content server security & tests        | SECURITY §27, TEST_PLAN §25 | TEST_PLAN §25 passes end to end against a stand-in LMS                |
+
 ## Commerce
 
 | ID    | Feature                          | Source                 | Done when                                                  |
