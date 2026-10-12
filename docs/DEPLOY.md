@@ -66,6 +66,8 @@ In GitHub, open the repo → Settings → Secrets and variables → Actions → 
 | `PROD_SUPABASE_SERVICE_ROLE_KEY` | The same page, the `service_role` key (full DB access: secret only) |
 | `PROD_RESEND_API_KEY` | Optional. Resend key for announcement emails. |
 | `PROD_CRON_SECRET` | Optional. Any long random string; enables scheduled reports. |
+| `PROD_ANTHROPIC_API_KEY` | Optional until the AI tutor ships. Anthropic API key (console.anthropic.com → API keys); tutor answers (ADR-039). |
+| `PROD_OPENAI_API_KEY` | Optional until the AI tutor ships. OpenAI API key; embeddings for RAG search (ADR-039). |
 | `VPS_KNOWN_HOSTS` | Optional. Output of `ssh-keyscan -H <ip>`; pins the server's host key. |
 
 Optional repository **variables** (the Variables tab):
