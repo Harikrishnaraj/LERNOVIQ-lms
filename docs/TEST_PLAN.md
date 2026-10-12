@@ -399,17 +399,17 @@ A feature is not complete until:
 Content server (ADR-038, SECURITY §27). Use a stand-in LMS page in the E2E suite that implements the SCORM 1.2 API (`window.API`) and records every call.
 
 ```text
-[ ] Dispatch zip contains a valid SCORM 1.2 manifest and no course files
-[ ] Stand-in LMS imports the zip and launches the course
-[ ] Progress, score and completion reach the stand-in LMS's API
-[ ] Relaunch resumes from the LMS's stored suspend data / location
-[ ] Revoked licence: launch refused with a clear message
-[ ] Expired licence: launch refused
-[ ] Seat limit: a new learner over the limit is refused; existing learners still launch
-[ ] Altered dispatch ID or signature: refused
-[ ] Launch from an origin not in the allowlist: content not framed
-[ ] Expired content token: refreshed during a session; refused after revoke
-[ ] Usage report counts registrations and launches correctly; CSV matches
-[ ] No learner name or email stored anywhere in LERNOVIQ
-[ ] Non-admin users cannot read or change clients, licences or dispatches (UI + HTTP + RLS)
+[x] Dispatch zip contains a valid SCORM 1.2 manifest and no course files
+[x] Stand-in LMS imports the zip and launches the course
+[x] Progress, score and completion reach the stand-in LMS's API
+[x] Relaunch resumes from the LMS's stored suspend data / location
+[x] Revoked licence: launch refused with a clear message
+[x] Expired licence: launch refused
+[x] Seat limit: a new learner over the limit is refused; existing learners still launch
+[x] Altered dispatch ID or signature: refused
+[x] Launch from an origin not in the allowlist: content not framed
+[x] Content requests are refused as soon as the licence is revoked or expires
+[x] Usage report counts registrations and launches correctly; CSV matches
+[x] No learner name or email stored anywhere in LERNOVIQ
+[x] Non-admin users cannot read or change clients, licences or dispatches (UI + HTTP + RLS)
 ```

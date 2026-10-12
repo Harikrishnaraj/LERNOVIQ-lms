@@ -47,7 +47,7 @@ async function route(request: NextRequest, requestHeaders: Headers): Promise<Nex
   const pathname = request.nextUrl.pathname;
 
   // The SCORM content origin runs untrusted package code with allow-same-origin, so it serves
-  // package files only (/api/scorm, excluded by the matcher): no login page, app pages or other
+  // package files only (/api/scorm and /api/dispatch, excluded by the matcher): no login page, app pages or other
   // APIs, so there is never a session on that origin for package code to use.
   const contentHost = scormContentHost(process.env.NEXT_PUBLIC_SCORM_CONTENT_ORIGIN, process.env.NEXT_PUBLIC_APP_URL);
   if (contentHost && request.headers.get("host") === contentHost) {
@@ -111,5 +111,5 @@ async function route(request: NextRequest, requestHeaders: Headers): Promise<Nex
 export const config = {
   // Everything except static assets and the SCORM file route, so the content-origin guard above
   // sees every other request; session work still only runs for SESSION_PATHS.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/scorm/).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/scorm/|api/dispatch/).*)"],
 };

@@ -69,6 +69,8 @@ const SCORM_HEADERS = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
 ];
 
+const DISPATCH_HEADERS = SCORM_HEADERS.filter((h) => h.key !== "Content-Security-Policy");
+
 const nextConfig: NextConfig = {
   // The Docker image (Dockerfile, ADR-036) builds with NEXT_OUTPUT=standalone so the runtime image
   // carries only traced files; CI and local `next build` / `next start` stay on the default output.
@@ -81,8 +83,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // Every route except SCORM package files gets the strict set (X-Frame-Options: DENY etc.).
-      { source: "/:path((?!api/scorm/).*)", headers: SECURITY_HEADERS },
+      { source: "/:path((?!api/scorm/|api/dispatch/).*)", headers: SECURITY_HEADERS },
       { source: "/api/scorm/:path*", headers: SCORM_HEADERS },
+      // Content-server dispatch (ADR-038) is framed by customers' LMSs: the route sets its own
+      // per-licence CSP (frame-ancestors), so only the headers that never vary are set here.
+      { source: "/api/dispatch/:path*", headers: DISPATCH_HEADERS },
     ];
   },
 };
