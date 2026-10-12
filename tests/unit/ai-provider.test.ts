@@ -36,9 +36,9 @@ describe("getChatProvider", () => {
   it("builds the Groq provider from GROQ_AI_API_KEY, with AI_TUTOR_MODEL overriding the model", () => {
     const provider = getChatProvider({
       GROQ_AI_API_KEY: "gsk_test",
-      AI_TUTOR_MODEL: " llama-3.3-70b-versatile ",
+      AI_TUTOR_MODEL: " openai/gpt-oss-20b ",
     });
-    expect(provider).toMatchObject({ name: "groq", model: "llama-3.3-70b-versatile" });
+    expect(provider).toMatchObject({ name: "groq", model: "openai/gpt-oss-20b" });
   });
 });
 
