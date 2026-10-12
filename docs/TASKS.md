@@ -146,7 +146,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 8b — Content server (SCORM dispatch, ADR-038)
 
-- [ ] **T-170** Schema: `content_clients`, `content_licences` (courses, seat limit, expiry, allowed origins, revoked), `content_dispatches` (signed ID per licence × course), `content_registrations` (keyed hash of LMS learner ID, first/last launch, launch count); `content_server.manage` permission; RLS + isolation tests. — F-520
+- [x] **T-170** Schema: `content_clients`, `content_licences` (courses, seat limit, expiry, allowed origins, revoked), `content_dispatches` (signed ID per licence × course), `content_registrations` (keyed hash of LMS learner ID, first/last launch, launch count); `content_server.manage` permission; RLS + isolation tests. — F-520
 - [ ] **T-171** Admin Content Server screens: client list/detail, create/edit licence, pick SCORM courses, seats/expiry/allowed domains, revoke; audit events; loading/empty/error/permission-denied states. — F-520
 - [ ] **T-172** Dispatch package builder: SCORM 1.2 `imsmanifest.xml` + launcher page carrying only the dispatch ID and signature; download from the licence screen; manifest validated by the existing SCORM parser. — F-521
 - [ ] **T-173** Launch endpoint: verify signature, licence state, expiry, seat count (new learner over limit is refused, existing learners keep access), embedding origin; issue short-lived content token; rate-limited; clear error page for each refusal. — F-522
