@@ -169,7 +169,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 ## Phase 10 — AI
 
-- [ ] **T-200** AI provider adapter + policy service + usage/cost recording (`ai_conversations`, `ai_messages`, `ai_generation_jobs`). — F-700
+- [~] **T-200** AI provider adapter + policy service + usage/cost recording (`ai_conversations`, `ai_messages`, `ai_generation_jobs`). — F-700
 - [ ] **T-201** Learner AI Tutor: contextual to current course/lesson, shows sources, refuses unsupported, hint-only during graded assessments, escalate to discussion. — F-701
 - [ ] **T-202** Instructor AI: outline, objectives, summaries, quiz questions, assignment ideas — editable drafts, never auto-published. — F-702
 - [ ] **T-203** Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. — F-703

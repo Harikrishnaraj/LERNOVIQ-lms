@@ -18,6 +18,9 @@ const LIMITS = {
   "instructor-message": { limit: 20, windowSeconds: 10 * 60 },
   "upload-initiate": { limit: 30, windowSeconds: 10 * 60 },
   "analytics-export": { limit: 20, windowSeconds: 10 * 60 },
+  // AI calls cost money per request (SECURITY §18, ADR-040): a burst limit plus a daily cap per user.
+  "ai-tutor": { limit: 20, windowSeconds: 10 * 60 },
+  "ai-tutor-daily": { limit: 150, windowSeconds: 24 * 60 * 60 },
 } as const;
 
 export type RateLimitedAction = keyof typeof LIMITS;

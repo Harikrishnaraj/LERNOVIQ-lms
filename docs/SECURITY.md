@@ -237,6 +237,12 @@ Define retention for:
 - embeddings,
 - generated content.
 
+Current rules (T-200): tutor conversations (prompts, responses, usage) are kept until 12 months
+after their last message and finished generation jobs for 12 months, then purged weekly
+(`purge_old_ai_records`); deleting an account removes them at once. The answer provider is Groq
+(ADR-040), so learner questions and retrieved lesson text are sent to Groq; the privacy notice
+must say so. Embedding retention is set with the embedding provider (T-220).
+
 ### Graded assessments
 
 If policy disables direct answers during graded assessments:

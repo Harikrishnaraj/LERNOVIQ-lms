@@ -1,6 +1,6 @@
 # LERNOVIQ — RAG Implementation Plan
 
-**Status:** Decisions in §1 settled (ADR-039, 2026-10-12). Not started; steps 1–4 can begin with fake providers.
+**Status:** Decisions in §1 settled (ADR-039, revised by ADR-040, 2026-10-12). Step 1 (T-200) in progress.
 **Covers:** T-220–T-225 (F-800, F-801, F-802) and the parts of T-200 (F-700) and T-201 (F-701) that
 RAG cannot work without.
 **Based on:** `main` at `f3c8333` (2026-10-05). Organizations, SSO, security headers, logging,
@@ -10,14 +10,14 @@ ADR-017 (permission-aware retrieval), SECURITY §16, PRD §12, TEST_PLAN §15 an
 
 ---
 
-## 1. Decisions (settled — ADR-039)
+## 1. Decisions (ADR-039, revised by ADR-040)
 
 | # | Decision | Chosen |
 | --- | --- | --- |
-| 1 | **Answer model** | **Claude Haiku 5.5** (`claude-haiku-5-5`) via the Anthropic API, behind the chat adapter. Model ID is config. |
-| 2 | **Embedding model** | **OpenAI `text-embedding-3-small`**, stored as `vector(1536)`. Anthropic has no embeddings API. |
+| 1 | **Answer model** | **Groq** (`groq-sdk`), default `openai/gpt-oss-120b`, behind the chat adapter. Model ID is config (`AI_TUTOR_MODEL`). |
+| 2 | **Embedding model** | **Open.** Adapter interface + fake only; choose the provider (OpenAI, Ollama, TEI, Transformers.js) before T-220, since it fixes the vector size. |
 | 3 | **What the first version searches** | **(a) published lesson text only.** Then admin/org documents (F-802), then lesson attachments. |
-| 4 | **Keys** | **Not available yet.** Build steps 1–4 with fakes; `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` go into GitHub secrets for the VPS `.env` before step 5. |
+| 4 | **Keys** | `GROQ_AI_API_KEY` (repository secret `PROD_GROQ_AI_API_KEY` for the VPS). Tests and CI use the fake provider. |
 
 Per CLAUDE.md "Blocked?", no provider is stubbed and ticked: missing keys are recorded in
 `MEMORY.md` under Known Issues.
@@ -60,7 +60,7 @@ New code follows the existing `src/services/*` pattern:
   - `status`: `pending` → `processing` → `ready` | `failed`, plus `error` and `content_hash`.
 - **`knowledge_chunks`**: `source_id`, scope columns copied from the source (so filtering needs no
   joins), `lesson_id` (for "open this lesson" links), `position`, `content`, `token_count`,
-  `embedding vector(1536)`, `embedding_model`, and a `tsvector` column for keyword search.
+  `embedding vector(N)` (N fixed by the embedding provider), `embedding_model`, and a `tsvector` column for keyword search.
   - HNSW index on `embedding`; GIN index on the `tsvector`.
 - **`knowledge_jobs`**: the work queue, with `attempts` and `last_error`.
 - **RLS:** no direct client access to either table. Reads go only through the retrieval
@@ -129,11 +129,11 @@ role.
 
 ## 6. Generation and the AI Tutor (T-224, T-201)
 
-- **Sources:** each retrieved chunk is passed to the model as a `document` content block with
-  **citations enabled**. Each citation maps back to its chunk, then to a lesson link
-  (TEST_PLAN §15 "shows sources").
-- **Caching:** a fixed system prompt (grounding rules, refusal and escalation behaviour) is
-  prompt-cached; the per-question chunks come after it.
+- **Sources:** Groq has no built-in citations (ADR-040). Each retrieved chunk is numbered in the
+  prompt (`[S1]`, `[S2]`, …) and the model is told to cite those markers. The app maps each marker
+  back to its chunk, then to a lesson link (TEST_PLAN §15 "shows sources"); unknown markers are dropped.
+- **Prompt order:** a fixed system prompt (grounding rules, refusal and escalation behaviour) comes
+  first and the per-question chunks after it, so any provider-side prefix caching can reuse it.
 - **Policy service**
   - If the learner has an in-progress graded assessment in that course, the tutor switches to
     **hint-only** mode (PRD §12).
@@ -185,10 +185,10 @@ role.
 | Step | Task | Needs |
 | --- | --- | --- |
 | 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Fakes only; real keys later |
-| 2 | T-220: schema, pgvector, RLS | `vector(1536)` |
+| 2 | T-220: schema, pgvector, RLS | Embedding provider chosen (vector size) |
 | 3 | T-221: lesson ingestion, cron worker, publish trigger | Steps 1–2 |
 | 4 | T-222: retrieval function and isolation tests | Step 3 |
-| 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, both API keys |
+| 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, Groq key, `api.groq.com` reachable |
 | 6 | T-223: admin knowledge base and document uploads | Step 4 |
 | 7 | T-225: remaining TEST_PLAN §17 items and the eval | All |
 

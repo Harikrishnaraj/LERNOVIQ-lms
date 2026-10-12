@@ -359,4 +359,22 @@ Improve:
 - Two AI vendors receive data: lesson text and learner questions go to Anthropic (answers) and OpenAI (embeddings). SECURITY §16 and the privacy notice must name both.
 - CI never calls either provider (fakes only).
 
-**Status:** Accepted (user decision). Unblocks T-200 (adapters), T-220–T-222; T-201/T-224 still need the keys.
+**Status:** Accepted (user decision). Items 1, 2 and 4 superseded by ADR-040 (2026-10-12): answers come from Groq, embedding provider still open.
+
+## ADR-040 — AI Tutor Answers Come from Groq; Embedding Provider Still Open
+
+**Decision:** Supersedes ADR-039 items 1, 2 and 4. Item 3 (first version indexes published lesson text only) stands.
+
+1. **Answer model:** Groq (`api.groq.com`, OpenAI-compatible chat API), called through the official `groq-sdk` package behind the chat adapter in `src/services/ai/` (ADR-015). Claude is not used. The default model is `openai/gpt-oss-120b`; `AI_TUTOR_MODEL` overrides it without a code change.
+2. **Embeddings:** not decided. The embedding adapter (`src/services/embeddings/`) ships with its interface and a deterministic fake only. The real provider (OpenAI, Ollama, Hugging Face TEI or Transformers.js) is chosen before T-220, because it fixes the vector size.
+3. **Key:** `GROQ_AI_API_KEY` (server-only). Production reads it from the `PROD_GROQ_AI_API_KEY` repository secret, which the deploy job writes into the VPS `.env`. `AI_PROVIDER=fake` forces the fake provider (tests and CI never call Groq).
+
+**Reason:** User decision (2026-10-12): the user created a Groq key and chose "Groq only" over keeping Claude or running both.
+
+**Consequences:**
+- Groq has no built-in document citations. The tutor numbers each retrieved chunk in the prompt (`[S1]`, `[S2]`, …), and the app parses those markers back to lesson links; a marker that matches no chunk is dropped, never shown.
+- Groq serves open-weight models, which are weaker than frontier models at staying grounded and at hint-only behaviour. The retrieval relevance cutoff, the grounding prompt and the T-225 eval carry more of that load; the model ID is config, so moving to a larger Groq model is a config change.
+- Model prices live in `src/services/ai/pricing.ts` with the date they were checked. A model missing from the table records a null cost rather than a guessed one.
+- One AI vendor (Groq) receives lesson text and learner questions. SECURITY §15 and the privacy notice must name it.
+
+**Status:** Accepted (user decision). Supersedes ADR-039 items 1, 2 and 4.
