@@ -1,11 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EmbeddingProvider } from "@/services/embeddings";
+import { KNOWLEDGE_DOCUMENT_BUCKET } from "@/services/storage";
 import { log } from "@/lib/log";
+import { formatFromMime } from "./document-rules";
+import { ExtractionError, extractDocumentText } from "./extract";
 import { breadcrumb, chunkParagraphs, htmlToParagraphs, sha256, type Chunk } from "./text";
 
-// Lesson indexing worker (T-221, F-800, RAG_PLAN §4). Server-only: runs with the service-role
-// client from /api/cron/knowledge-ingest. Search is keyword-first (ADR-042); embeddings are added
-// only when an embedding provider is configured.
+// Knowledge indexing worker (T-221, F-800, RAG_PLAN §4): published lessons and uploaded
+// documents. Server-only: runs with the service-role client from /api/cron/knowledge-ingest.
+// Search is keyword-first (ADR-042); embeddings are added only when an embedding provider is
+// configured.
 
 export const MAX_ATTEMPTS = 3;
 const EMBED_BATCH = 64;
@@ -30,13 +34,15 @@ export interface IngestOptions {
   embedder: EmbeddingProvider;
   /** Restrict to one course version (tests, and a future "re-index this course" action). */
   versionId?: string;
+  /** Restrict to one source's jobs and skip lesson enqueueing (tests, the E2E run). */
+  sourceId?: string;
   /** Stop claiming new jobs after this long so one cron run never overlaps the next by much. */
   timeBudgetMs?: number;
   batchSize?: number;
 }
 
 export async function runKnowledgeIngest(options: IngestOptions): Promise<IngestSummary> {
-  const { db, versionId } = options;
+  const { db, versionId, sourceId } = options;
   const deadline = Date.now() + (options.timeBudgetMs ?? 45_000);
   const summary: IngestSummary = {
     enqueued: 0,
@@ -47,17 +53,20 @@ export async function runKnowledgeIngest(options: IngestOptions): Promise<Ingest
     failed: 0,
   };
 
-  const { data: enqueued, error: enqueueError } = await db.rpc("enqueue_lesson_sources", {
-    p_version_id: versionId ?? null,
-    p_limit: 500,
-  });
-  if (enqueueError) throw new Error(`enqueue_lesson_sources failed: ${enqueueError.message}`);
-  summary.enqueued = (enqueued as number) ?? 0;
+  if (!sourceId) {
+    const { data: enqueued, error: enqueueError } = await db.rpc("enqueue_lesson_sources", {
+      p_version_id: versionId ?? null,
+      p_limit: 500,
+    });
+    if (enqueueError) throw new Error(`enqueue_lesson_sources failed: ${enqueueError.message}`);
+    summary.enqueued = (enqueued as number) ?? 0;
+  }
 
   while (Date.now() < deadline) {
     const { data, error } = await db.rpc("claim_knowledge_jobs", {
       p_limit: options.batchSize ?? 5,
       p_version_id: versionId ?? null,
+      ...(sourceId ? { p_source_id: sourceId } : {}),
     });
     if (error) throw new Error(`claim_knowledge_jobs failed: ${error.message}`);
     const jobs = (data ?? []) as ClaimedJob[];
@@ -90,16 +99,20 @@ export async function processJob(
     return "succeeded";
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // A damaged, encrypted or image-only document fails the same way every time: mark it failed
+    // now, with its human-readable reason, instead of retrying.
+    const permanent = err instanceof ExtractionError && err.permanent;
     log.warn("knowledge.ingest.job_failed", {
       jobId: job.job_id,
       sourceId: job.source_id,
       attempt: job.attempts,
+      permanent,
       message,
     });
     const { data, error } = await db.rpc("fail_knowledge_job", {
       p_job_id: job.job_id,
       p_error: message,
-      p_max_attempts: MAX_ATTEMPTS,
+      p_max_attempts: permanent ? 1 : MAX_ATTEMPTS,
     });
     if (error)
       log.error("knowledge.ingest.fail_record_failed", {
@@ -119,12 +132,13 @@ interface PreparedSource {
 async function prepareSource(db: SupabaseClient, sourceId: string): Promise<PreparedSource> {
   const { data: source, error } = await db
     .from("knowledge_sources")
-    .select("kind, lesson_id, content_hash")
+    .select("kind, lesson_id, content_hash, title, storage_path, mime_type")
     .eq("id", sourceId)
     .single();
   if (error || !source) throw new Error(`source not found: ${error?.message ?? sourceId}`);
+  if (source.kind === "document") return prepareDocument(db, source as DocumentSource);
   if (source.kind !== "lesson" || !source.lesson_id) {
-    throw new Error(`unsupported source kind: ${source.kind}`);
+    throw new ExtractionError(`unsupported source kind: ${source.kind}`, true);
   }
 
   const { data: lesson, error: lessonError } = await db
@@ -146,6 +160,46 @@ async function prepareSource(db: SupabaseClient, sourceId: string): Promise<Prep
     chunks,
     contentHash: sha256(JSON.stringify([crumb, paragraphs])),
     previousHash: (source.content_hash as string | null) ?? null,
+  };
+}
+
+interface DocumentSource {
+  title: string;
+  content_hash: string | null;
+  storage_path: string | null;
+  mime_type: string | null;
+}
+
+/** Downloads an uploaded document from private storage, extracts its text and chunks it. */
+async function prepareDocument(
+  db: SupabaseClient,
+  source: DocumentSource,
+): Promise<PreparedSource> {
+  const format = formatFromMime(source.mime_type);
+  if (!source.storage_path || !format) {
+    throw new ExtractionError("This document has no stored file to index. Upload it again.", true);
+  }
+  const { data: blob, error } = await db.storage
+    .from(KNOWLEDGE_DOCUMENT_BUCKET)
+    .download(source.storage_path);
+  if (error || !blob) {
+    const message = error?.message ?? "no data";
+    // A missing object stays missing; anything else (network, storage outage) is retried.
+    if (/not.?found|does not exist|404/i.test(message)) {
+      throw new ExtractionError(
+        "The uploaded file is missing from storage. Upload it again.",
+        true,
+      );
+    }
+    throw new Error(`document download failed: ${message}`);
+  }
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const { paragraphs } = await extractDocumentText(bytes, format);
+  const crumb = breadcrumb(source.title);
+  return {
+    chunks: chunkParagraphs(paragraphs, crumb),
+    contentHash: sha256(JSON.stringify([crumb, paragraphs])),
+    previousHash: source.content_hash ?? null,
   };
 }
 
