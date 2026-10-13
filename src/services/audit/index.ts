@@ -64,6 +64,9 @@ export const AUDIT_ACTIONS = [
   "ai.settings_updated",
   "ai.tutor_access_granted",
   "ai.tutor_access_revoked",
+  "knowledge.document_uploaded",
+  "knowledge.source_reindexed",
+  "knowledge.document_deleted",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -21,7 +21,7 @@ const ENTITIES: Record<string, string> = {
   nbsp: " ",
 };
 
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, code: string) => {
     if (code[0] === "#") {
       const n =
@@ -54,6 +54,42 @@ export function htmlToParagraphs(html: string): string[] {
         .trim(),
     )
     .filter((p) => p.length > 0 && p !== "•");
+}
+
+/**
+ * Plain text (an uploaded TXT or Markdown document, or text extracted from a PDF/DOCX) to
+ * paragraphs: blank lines separate paragraphs, runs of spaces collapse, line breaks inside a
+ * paragraph are kept.
+ */
+export function textToParagraphs(text: string): string[] {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split(/\n\s*\n/)
+    .map((p) =>
+      p
+        .replace(/[ \t\f\v\u00a0]+/g, " ")
+        .replace(/ *\n */g, "\n")
+        .trim(),
+    )
+    .filter((p) => p.length > 0);
+}
+
+/**
+ * Markdown to plain-text paragraphs: drops heading markers, code fences, emphasis markers and
+ * link/image targets, keeping their visible text.
+ */
+export function markdownToParagraphs(markdown: string): string[] {
+  const text = markdown
+    .replace(/\r\n?/g, "\n")
+    .replace(/^ {0,3}(`{3,}|~{3,}).*$/gm, "")
+    .replace(/^ {0,3}#{1,6}\s+/gm, "")
+    .replace(/^ {0,3}#{1,6}$/gm, "")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/(\*\*|__)(?=\S)([\s\S]*?\S)\1/g, "$2")
+    .replace(/^ {0,3}>\s?/gm, "")
+    .replace(/^ {0,3}([-*_])( *\1){2,} *$/gm, "");
+  return textToParagraphs(text);
 }
 
 /** Splits an over-long paragraph at sentence ends, then at spaces, so no piece exceeds maxChars. */

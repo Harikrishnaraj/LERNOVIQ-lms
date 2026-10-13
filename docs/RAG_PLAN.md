@@ -142,7 +142,7 @@ role.
   - Off-topic questions get a polite redirect.
   - Low confidence offers "Post this in the course discussion" (escalation, PRD §12).
 - **Safety and cost**
-  - New rate-limit buckets: `ai-tutor` and `ai-ingest` (SECURITY §18).
+  - New rate-limit buckets: `ai-tutor`, `knowledge-upload` and `knowledge-reindex` (SECURITY §18).
   - Every call is recorded in `ai_conversations` / `ai_messages` with tokens and cost (F-700).
   - Timeouts, provider errors and refusals produce a recoverable UI message, never a crash.
 - **UI**
@@ -179,13 +179,39 @@ go to the provider; `hint_only_always` forces hint-only for everyone. Unreadable
 
 ## 7. Knowledge base admin (T-223)
 
-`/admin/rag` replaces the placeholder route.
+`/admin/knowledge` replaces the placeholder route (it was planned as `/admin/rag`).
 
 - Sources list with status and failure reasons; upload; re-index; delete.
 - **Test retrieval:** run a query as a chosen scope and see the ranked chunks with scores. This is
   also the main debugging tool.
-- Org admins get the same screen limited to their own organization.
+- Org admins get the same screen limited to their own organization (not built: the screen requires
+  `knowledge.manage`, which only admin and super_admin hold).
 - Upload, re-index and delete are audited (`recordAudit`).
+
+**As built (2026-10-14):** permission `knowledge.manage`; screen `/admin/knowledge` (`src/app/admin/knowledge/`,
+`src/components/admin/knowledge-*.tsx`, `src/features/knowledge/admin*.ts`).
+
+- **Upload (F-800):** PDF, DOCX, TXT, Markdown up to 10 MB, platform-wide or for one organization.
+  `requestKnowledgeUpload` validates the extension, reported type, size and scope and issues a signed
+  upload ticket for a server-chosen path in the private `knowledge-documents` bucket; the browser
+  uploads directly; `registerKnowledgeDocument` re-validates, checks the stored file's magic bytes
+  (PDF `%PDF-`, DOCX ZIP header, TXT/MD valid UTF-8 without NUL), then creates the `pending` source and
+  its job (`create_document_source`). Rate limits: `knowledge-upload` (30 per 10 min per user), `knowledge-reindex`.
+- **Extraction (T-221):** the cron worker downloads the file with the service role, extracts text
+  (`unpdf` for PDF, `jszip` + `word/document.xml` for DOCX, UTF-8 for TXT/MD), caps it at 300,000
+  characters, chunks it with `chunkParagraphs` (breadcrumb = document title) and completes the job.
+  A corrupt, encrypted, image-only or empty file ends `failed` at once with a readable reason; storage
+  outages retry up to 3 times.
+- **Test retrieval:** `admin_match_knowledge_chunks` is a security-definer function that checks
+  `knowledge.manage` from `auth.uid()` and ranks like `match_knowledge_chunks` over every course and
+  organization (optionally narrowed to one course and/or organization). It is not a service-role
+  bypass of the learner function, which is unchanged and still scopes everyone, admins included.
+- **List/filter:** `admin_list_knowledge_sources` and `admin_knowledge_status_counts` (same permission
+  check). Filters: status (including a Failed view), kind, title/file search, paging.
+- **Re-index / delete:** `requeue_knowledge_source` (lessons and documents; refused while a live job
+  runs). Deleting a document removes the source (chunks and jobs cascade) and then its stored file;
+  lesson sources cannot be deleted (the indexer would recreate them).
+- **Audit:** `knowledge.document_uploaded`, `knowledge.source_reindexed`, `knowledge.document_deleted`.
 
 ---
 
@@ -201,7 +227,7 @@ go to the provider; `hint_only_always` forces hint-only for everyone. Unreadable
   - draft versions are never retrievable.
 - **Provider fakes:** CI must not call paid APIs. The chat and embedding adapters get a
   deterministic fake for tests; real providers are exercised only in a manual smoke run.
-- **Retrieval quality eval:** about 30 question → expected-lesson pairs on the seed courses,
+- **Retrieval quality eval (built, `tests/integration/knowledge-retrieval-quality.test.ts`):** about 30 question → expected-lesson pairs on the seed courses,
   measuring whether the right lesson appears in the retrieved set. It catches regressions when
   chunk size or ranking is tuned.
 
@@ -213,11 +239,11 @@ go to the provider; `hint_only_always` forces hint-only for everyone. Unreadable
 | --- | --- | --- |
 | 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Fakes only; real keys later |
 | 2 | T-220: schema, pgvector (nullable), RLS | Done: ADR-042 |
-| 3 | T-221: lesson ingestion, cron worker (minute sweep instead of a publish trigger) | Built; document upload + status view land with T-223 |
+| 3 | T-221: lesson ingestion, cron worker (minute sweep instead of a publish trigger) | Built, including document upload and extraction (2026-10-14) |
 | 4 | T-222: retrieval function and isolation tests | Built (keyword ranking, ADR-042) |
 | 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, Groq key, `api.groq.com` reachable |
-| 6 | T-223: admin knowledge base and document uploads | Step 4 |
-| 7 | T-225: remaining TEST_PLAN §17 items and the eval | All |
+| 6 | T-223: admin knowledge base and document uploads | Built (2026-10-14) |
+| 7 | T-225: remaining TEST_PLAN §17 items and the eval | Written; integration and E2E run in CI only |
 
 - Each step is its own PR. Each touches more than 3 files, so per CLAUDE.md the plan for each step
   is confirmed before it starts.

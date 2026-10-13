@@ -457,9 +457,9 @@ const admin: PortalNav = {
         },
         {
           label: "Knowledge Base",
-          href: "/admin/rag",
+          href: "/admin/knowledge",
           icon: Library,
-          description: "RAG documents and indexing status.",
+          description: "AI Tutor sources, indexing status and test retrieval.",
           task: "T-223",
         },
       ],

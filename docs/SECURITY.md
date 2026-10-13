@@ -140,6 +140,17 @@ Store uploads outside the application source tree.
 
 For potentially dangerous document formats, use safe processing/sandboxing before indexing or rendering.
 
+Knowledge base documents (T-221, F-800): only users with `knowledge.manage` (admin, super_admin) can
+upload. The extension, the browser-reported type and the 10 MB limit are checked before a signed upload
+ticket is issued for a server-chosen path in the **private** `knowledge-documents` bucket (no
+`storage.objects` policies; the bucket also enforces the size and the four MIME types). After the upload
+the server reads the first 1 KB and checks the magic bytes (PDF `%PDF-`, DOCX `PK\x03\x04`, TXT/Markdown valid
+UTF-8 with no NUL) and removes a file that does not match. Files are never rendered or executed: the
+worker (service role) extracts text only, with `unpdf` (pdf.js build with no eval path) for PDFs and `jszip`
+reading `word/document.xml` (inflated size capped at 40 MB against ZIP bombs) for DOCX; extracted text is
+capped at 300,000 characters and stripped of NUL characters. Retrieved document text stays untrusted input
+for the model (§15). Upload and re-index are rate-limited (`knowledge-upload`, `knowledge-reindex`).
+
 The supplied guide explicitly calls for validating file type, size and filename.
 
 ## 10. Video Security

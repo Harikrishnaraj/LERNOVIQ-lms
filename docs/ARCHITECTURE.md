@@ -290,7 +290,7 @@ The supplied guide recommends separating app, components, features, services, li
 /admin/analytics
 /admin/notifications
 /admin/ai
-/admin/rag
+/admin/knowledge
 /admin/audit
 /admin/integrations
 /admin/settings
