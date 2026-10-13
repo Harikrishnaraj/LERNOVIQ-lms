@@ -35,10 +35,36 @@ function unconfiguredProvider(model: string): ChatProvider {
   };
 }
 
+export interface ChatProviderOptions {
+  /**
+   * Model chosen by an admin (ai_settings.tutor_model, ADR-045). Overrides AI_TUTOR_MODEL; null
+   * or empty falls back to it. The fake provider ignores it.
+   */
+  model?: string | null;
+}
+
+/** The model used when no admin override is set: AI_TUTOR_MODEL, else DEFAULT_TUTOR_MODEL. */
+export function defaultTutorModel(env: Record<string, string | undefined> = process.env): string {
+  return env.AI_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL;
+}
+
+/** Which provider getChatProvider() would return, for the admin screen (never the key itself). */
+export function describeChatProvider(
+  env: Record<string, string | undefined> = process.env,
+): { provider: "fake" | "groq"; configured: boolean; defaultModel: string } {
+  const fake = env.AI_PROVIDER === "fake" || Boolean(env.VITEST);
+  return {
+    provider: fake ? "fake" : "groq",
+    configured: fake || Boolean(env.GROQ_AI_API_KEY?.trim()),
+    defaultModel: defaultTutorModel(env),
+  };
+}
+
 export function getChatProvider(
   env: Record<string, string | undefined> = process.env,
+  options: ChatProviderOptions = {},
 ): ChatProvider {
-  const model = env.AI_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL;
+  const model = options.model?.trim() || defaultTutorModel(env);
   // Tests and CI never reach a paid API (Vitest sets VITEST).
   if (env.AI_PROVIDER === "fake" || env.VITEST) return createFakeProvider();
   const apiKey = env.GROQ_AI_API_KEY?.trim();

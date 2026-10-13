@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, Lock, MessageSquarePlus } from "lucide-react";
+import { BookOpen, CircleOff, Lock, MessageSquarePlus } from "lucide-react";
 import { TutorChat } from "@/components/ai-tutor/tutor-chat";
-import { EmptyState, PermissionDeniedState } from "@/components/feedback/states";
+import { EmptyState, ErrorState, PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { buttonClasses } from "@/components/ui/button";
 import { getTutorMode, hasTutorAccess } from "@/features/ai/policy";
+import { getAiSettings } from "@/features/ai/settings";
 import { getTutorConversation, listTutorConversations } from "@/features/ai/tutor-queries";
 import { getMyLearning } from "@/features/my-learning/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -35,6 +36,32 @@ export default async function AiTutorPage({
   const header = (
     <PageHeader title="AI Tutor" description="Ask questions answered from your course lessons." />
   );
+
+  // Platform kill switch first (ADR-045): when it is off nobody can use the tutor.
+  const settings = await getAiSettings(supabase);
+  if (!settings) {
+    return (
+      <>
+        {header}
+        <ErrorState
+          title="The AI Tutor isn't available right now"
+          description="Try again in a few minutes."
+        />
+      </>
+    );
+  }
+  if (!settings.tutorEnabled) {
+    return (
+      <>
+        {header}
+        <PermissionDeniedState
+          icon={CircleOff}
+          title="The AI Tutor is turned off right now"
+          description="Your administrator has turned the AI Tutor off for everyone. It will be back when they turn it on again."
+        />
+      </>
+    );
+  }
 
   if (!(await hasTutorAccess(supabase))) {
     return (
@@ -75,7 +102,9 @@ export default async function AiTutorPage({
     conversationParam
       ? getTutorConversation(supabase, user.id, conversationParam, course)
       : Promise.resolve(null),
-    getTutorMode(supabase, course.courseId),
+    settings.hintOnlyAlways
+      ? Promise.resolve("hint_only" as const)
+      : getTutorMode(supabase, course.courseId),
   ]);
   const courseHref = `/learner/ai-tutor?course=${encodeURIComponent(course.slug)}`;
 

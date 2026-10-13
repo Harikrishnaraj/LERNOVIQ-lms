@@ -4,6 +4,7 @@ import { searchKnowledge, type RetrievedPassage } from "@/features/knowledge/ret
 import { getMyLearning } from "@/features/my-learning/queries";
 import { log } from "@/lib/log";
 import { getTutorMode, hasTutorAccess, validateQuestion, type TutorMode } from "./policy";
+import { getAiSettings } from "./settings";
 import {
   HISTORY_MESSAGES,
   NO_SOURCES_ANSWER,
@@ -15,14 +16,16 @@ import {
 import { runChatTurn } from "./usage";
 
 // The learner AI Tutor (T-201, T-224, F-701, RAG_PLAN §6). Every question passes, in order: the
-// admin's per-user switch (ADR-043), input checks, the rate limits, enrollment in the course, the
-// assessment policy (hint-only), then permission-aware retrieval (F-801) with the learner's own
-// session. Only then is the provider called, and the answer is stored with the sources it cited.
+// admin's platform settings (kill switch, ADR-045), the admin's per-user switch (ADR-043), input
+// checks, the rate limits and the daily cap, enrollment in the course, the assessment policy
+// (hint-only), then permission-aware retrieval (F-801) with the learner's own session. Only then is
+// the provider called (with the admin's model and answer length), and the answer is stored with
+// the sources it cited.
 
 /** Passages sent to the model per question. */
 export const TUTOR_PASSAGES = 6;
-/** Room for gpt-oss reasoning plus a short answer. */
-const MAX_OUTPUT_TOKENS = 1500;
+/** The daily cap counts questions over a rolling 24 hours. */
+const DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -46,9 +49,11 @@ export interface TutorChatEntry {
 }
 
 export type TutorErrorCode =
+  | "disabled"
   | "no_access"
   | "invalid"
   | "rate_limited"
+  | "daily_limit"
   | "not_enrolled"
   | "not_found"
   | "timeout"
@@ -62,9 +67,10 @@ export type TutorReply =
 export interface TutorDeps {
   /** The learner's own session: access, enrollment, mode and retrieval all run as the learner. */
   supabase: SupabaseClient;
-  /** Service-role client, for recording the turn (ai_* tables grant clients no writes). */
+  /** Service-role client: reads the AI settings and records the turn (no client writes). */
   db: SupabaseClient;
-  provider: ChatProvider;
+  /** The chat provider for the admin's chosen model (null: the server default). */
+  provider: (model: string | null) => ChatProvider;
   userId: string;
   /** Burst limit and daily cap (checkTutorAllowance). */
   allow: () => Promise<boolean>;
@@ -78,6 +84,9 @@ export interface TutorQuestion {
 }
 
 const MESSAGES: Record<TutorErrorCode, string> = {
+  disabled:
+    "The AI Tutor is turned off for everyone right now. Your administrator can turn it back on.",
+  daily_limit: "You've reached today's limit of AI Tutor questions. Try again tomorrow.",
   no_access: "The AI Tutor isn't turned on for your account. Ask an administrator if you need it.",
   invalid: "Type a question first.",
   rate_limited:
@@ -124,6 +133,11 @@ export async function answerTutorQuestion(
 ): Promise<TutorReply> {
   const { supabase, userId } = deps;
 
+  // One uncached read per question, so an admin's change applies to the very next question.
+  const settings = await getAiSettings(deps.db);
+  if (!settings) return fail("unavailable");
+  if (!settings.tutorEnabled) return fail("disabled");
+
   if (!(await hasTutorAccess(supabase))) return fail("no_access");
 
   const checked = validateQuestion(input.question);
@@ -157,6 +171,16 @@ export async function answerTutorQuestion(
 
   if (!(await deps.allow())) return fail("rate_limited", conversationId ?? undefined);
 
+  const asked = await questionsToday(supabase);
+  if (asked === null) return fail("unavailable", conversationId ?? undefined);
+  if (asked >= settings.dailyQuestionCap) {
+    return fail(
+      "daily_limit",
+      conversationId ?? undefined,
+      `You've reached today's limit of ${settings.dailyQuestionCap} AI Tutor questions. Try again tomorrow.`,
+    );
+  }
+
   let course: { slug: string; title: string } | undefined;
   try {
     course = (await getMyLearning(supabase)).find((c) => c.courseId === courseId);
@@ -168,7 +192,9 @@ export async function answerTutorQuestion(
   const lessonTitle = lessonId ? await courseLessonTitle(supabase, courseId, lessonId) : null;
   if (!lessonTitle) lessonId = null;
 
-  const mode = await getTutorMode(supabase, courseId);
+  const mode: TutorMode = settings.hintOnlyAlways
+    ? "hint_only"
+    : await getTutorMode(supabase, courseId);
 
   const history = conversationId ? await recentHistory(supabase, conversationId) : [];
   if (history === null) return unavailable("history_lookup");
@@ -185,7 +211,7 @@ export async function answerTutorQuestion(
 
   const turn = await runChatTurn({
     db: deps.db,
-    provider: deps.provider,
+    provider: deps.provider(settings.tutorModel),
     userId,
     conversationId: conversationId ?? undefined,
     feature: "tutor",
@@ -196,7 +222,7 @@ export async function answerTutorQuestion(
       history,
     ),
     question,
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    maxOutputTokens: settings.maxAnswerTokens,
     ...(fixed
       ? { fixedAnswer: NO_SOURCES_ANSWER }
       : { shapeAnswer: (text: string) => parseCitations(text, passages) }),
@@ -237,6 +263,18 @@ export async function answerTutorQuestion(
 function unavailable(step: string, message?: string): TutorReply {
   log.error("ai.tutor.lookup_failed", { step, message });
   return fail("unavailable");
+}
+
+/** Questions the learner asked the tutor in the last 24 hours (their own, via auth.uid()). */
+async function questionsToday(supabase: SupabaseClient): Promise<number | null> {
+  const { data, error } = await supabase.rpc("ai_tutor_questions_since", {
+    p_since: new Date(Date.now() - DAILY_WINDOW_MS).toISOString(),
+  });
+  if (error || typeof data !== "number") {
+    log.error("ai.tutor.daily_count_failed", { message: error?.message });
+    return null;
+  }
+  return data;
 }
 
 /** The lesson's title when the learner may read it and it belongs to the course; else null. */

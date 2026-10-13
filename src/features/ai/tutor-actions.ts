@@ -21,7 +21,7 @@ export async function askTutor(input: TutorQuestion): Promise<TutorReply> {
       {
         supabase,
         db: createAdminClient(),
-        provider: getChatProvider(),
+        provider: (model) => getChatProvider(process.env, { model }),
         userId: user.id,
         allow: () => checkTutorAllowance(user.id),
       },

@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAssetLinks, resolveVideoSrc } from "@/features/player/media";
 import { TutorChat } from "@/components/ai-tutor/tutor-chat";
 import { getTutorMode, hasTutorAccess } from "@/features/ai/policy";
+import { getAiSettings } from "@/features/ai/settings";
 
 export const metadata: Metadata = { title: "Lesson" };
 
@@ -62,10 +63,14 @@ export default async function LessonPage({
   const assets = await getAssetLinks(supabase, lessonId);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
 
-  // AI Tutor panel (T-201): enrolled learners whose tutor an admin has turned on (ADR-043).
+  // AI Tutor panel (T-201): enrolled learners whose tutor an admin has turned on (ADR-043), while
+  // the platform kill switch is on (ADR-045).
+  const aiSettings = course.enrolled ? await getAiSettings(supabase) : null;
   const tutorMode =
-    course.enrolled && (await hasTutorAccess(supabase))
-      ? await getTutorMode(supabase, course.courseId)
+    aiSettings?.tutorEnabled && (await hasTutorAccess(supabase))
+      ? aiSettings.hintOnlyAlways
+        ? "hint_only"
+        : await getTutorMode(supabase, course.courseId)
       : null;
 
   return (
