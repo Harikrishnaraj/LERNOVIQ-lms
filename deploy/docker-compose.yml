@@ -34,7 +34,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
-  # Hourly trigger for scheduled report exports (src/app/api/cron/scheduled-reports).
+  # Every minute: lesson indexing for AI Tutor search (src/app/api/cron/knowledge-ingest).
+  # Every hour: scheduled report exports (src/app/api/cron/scheduled-reports).
   cron:
     image: curlimages/curl:8.10.1
     restart: unless-stopped
@@ -46,10 +47,16 @@ services:
       - /bin/sh
       - -c
       - |
+        minute=0
         while true; do
-          sleep 3600
-          curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/scheduled-reports || true
+          sleep 60
+          minute=$$((minute + 1))
+          curl -fsS -m 120 -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/knowledge-ingest || true
           echo
+          if [ $$((minute % 60)) -eq 0 ]; then
+            curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/scheduled-reports || true
+            echo
+          fi
         done
 
 volumes:

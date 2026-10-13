@@ -179,7 +179,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 ## Phase 11 — Knowledge base / RAG
 
 - [~] **T-220** `knowledge_documents`, `knowledge_chunks` (pgvector) + RLS by org/course. — F-800
-- [ ] **T-221** Upload + background pipeline: validate → extract → chunk → embed; status + failed documents view. — F-800
+- [~] **T-221** Upload + background pipeline: validate → extract → chunk → embed; status + failed documents view. — F-800
 - [ ] **T-222** Permission-aware retrieval service (search constrained to allowed IDs before ranking). — F-801
 - [ ] **T-223** Admin Knowledge Base: sources, test retrieval, re-index, delete removes from retrieval. — F-802
 - [ ] **T-224** Wire AI Tutor to retrieval. — F-701, F-801
