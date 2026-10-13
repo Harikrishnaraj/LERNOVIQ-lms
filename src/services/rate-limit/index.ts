@@ -21,6 +21,8 @@ const LIMITS = {
   // AI calls cost money per request (SECURITY §18, ADR-040): a burst limit plus a daily cap per user.
   "ai-tutor": { limit: 20, windowSeconds: 10 * 60 },
   "ai-tutor-daily": { limit: 150, windowSeconds: 24 * 60 * 60 },
+  // Knowledge base uploads and re-indexing queue extraction work (SECURITY §18, RAG_PLAN §6).
+  "ai-ingest": { limit: 30, windowSeconds: 10 * 60 },
 } as const;
 
 export type RateLimitedAction = keyof typeof LIMITS;
