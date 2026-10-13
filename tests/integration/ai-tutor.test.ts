@@ -80,7 +80,13 @@ describe.skipIf(!hasLiveProject)("AI Tutor (T-201, T-224, live Supabase)", () =>
 
   const ask = (u: U, input: Partial<TutorQuestion>) =>
     answerTutorQuestion(
-      { supabase: u.client, db: svc, provider: recording(), userId: u.id, allow: async () => true },
+      {
+        supabase: u.client,
+        db: svc,
+        provider: () => recording(),
+        userId: u.id,
+        allow: async () => true,
+      },
       { question: `${word} chlorophyll`, courseId: courseA.courseId, ...input },
     );
 

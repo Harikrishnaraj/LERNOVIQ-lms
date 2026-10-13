@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadEnvLocal } from "./support/env";
+import { loginAsRole } from "./support/role-user";
 import {
   cleanup,
   createCourse,
@@ -76,17 +77,29 @@ test.describe("learner AI Tutor", () => {
 
     learner = await createUserWithRole(svc, `${tag}-lrn`, "learner");
     learnerIds.push(learner.id);
-    await svc
-      .from("enrollments")
-      .insert({
-        user_id: learner.id,
-        course_id: course.courseId,
-        version_id: course.versionId,
-        status: "active",
-      });
+    await svc.from("enrollments").insert({
+      user_id: learner.id,
+      course_id: course.courseId,
+      version_id: course.versionId,
+      status: "active",
+    });
   });
 
+  // The settings are platform-wide; every test below that changes them puts the defaults back.
+  const restoreSettings = () =>
+    svc
+      .from("ai_settings")
+      .update({
+        tutor_enabled: true,
+        tutor_model: null,
+        max_answer_tokens: 1500,
+        daily_question_cap: 150,
+        hint_only_always: false,
+      })
+      .eq("id", true);
+
   test.afterAll(async () => {
+    await restoreSettings();
     await cleanup(svc, { learnerIds, courseIds, userIds });
   });
 
@@ -148,5 +161,126 @@ test.describe("learner AI Tutor", () => {
     const question = `Explain chlorophyll ${tag}`;
     await ask(page, question);
     await expect(page.getByText(`Fake answer to: ${question} [1]`)).toBeVisible();
+  });
+
+  test("shows a recoverable message when the model fails or times out, then works again", async ({
+    page,
+  }) => {
+    await signIn(page);
+    await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+
+    // The offline provider fails on purpose for questions starting with [fake-fail:<reason>].
+    const failing = "[fake-fail:timeout] How does chlorophyll work?";
+    await ask(page, failing);
+    await expect(
+      page.getByRole("alert").filter({ hasText: "took too long to answer" }),
+    ).toBeVisible();
+    // The question stays in the box so the learner can send it again.
+    await expect(page.getByLabel("Your question")).toHaveValue(failing);
+
+    await page.getByLabel("Your question").fill("");
+    await ask(page, "[fake-fail:error] Try again please");
+    await expect(
+      page.getByRole("alert").filter({ hasText: "isn't available right now" }),
+    ).toBeVisible();
+
+    const question = `What does chlorophyll ${tag} do?`;
+    await page.getByLabel("Your question").fill("");
+    await ask(page, question);
+    await expect(page.getByText(`Fake answer to: ${question} [1]`)).toBeVisible();
+  });
+
+  test("stops answering when an admin turns the AI Tutor off, and resumes when it is back on (T-204)", async ({
+    page,
+    browser,
+  }) => {
+    test.setTimeout(240_000);
+    const adminContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+    const adminPage = await adminContext.newPage();
+    const done = await loginAsRole(adminPage, "admin");
+    try {
+      // The learner has the tutor open and ready.
+      await signIn(page);
+      await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+      await expect(page.getByLabel("Your question")).toBeVisible();
+
+      // The admin turns it off for everyone.
+      await adminPage.goto("/admin/ai");
+      await adminPage.getByRole("button", { name: "Turn off the AI Tutor" }).click();
+      await expect(adminPage.getByText("AI Tutor turned off.")).toBeVisible();
+      await expect(adminPage.getByRole("button", { name: "Turn on the AI Tutor" })).toBeVisible();
+
+      // The very next question is refused with a clear message.
+      await ask(page, `Is anyone there? ${tag}`);
+      await expect(
+        page.getByRole("alert").filter({ hasText: "turned off for everyone" }),
+      ).toBeVisible();
+
+      // Reloading shows the "turned off" state instead of the chat, in the tutor and the player.
+      await page.goto("/learner/ai-tutor");
+      await expect(page.getByText("The AI Tutor is turned off right now").first()).toBeVisible();
+      await expect(page.getByLabel("Your question")).toHaveCount(0);
+      await page.goto(`/learner/courses/${course.slug}/learn/${course.lessonIds[0]}`);
+      await expect(page.getByRole("heading", { name: "Photosynthesis" }).first()).toBeVisible();
+      await expect(page.getByText("The AI Tutor is turned off right now")).toBeVisible();
+      await expect(page.getByText("Ask the AI Tutor")).toHaveCount(0);
+
+      // Turned back on, it answers again.
+      await adminPage.getByRole("button", { name: "Turn on the AI Tutor" }).click();
+      await expect(adminPage.getByText("AI Tutor turned on.")).toBeVisible();
+      await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+      const question = `Back again ${tag}`;
+      await ask(page, question);
+      await expect(page.getByText(`Fake answer to: ${question}`)).toBeVisible();
+
+      // Both changes are in the audit log.
+      const { data: audit } = await svc
+        .from("audit_logs")
+        .select("metadata")
+        .eq("action", "ai.settings_updated")
+        .eq("actor_id", done.userId)
+        .order("created_at", { ascending: false })
+        .limit(2);
+      expect(
+        audit?.map((a) => (a.metadata as { after: { tutorEnabled: boolean } }).after.tutorEnabled),
+      ).toEqual([true, false]);
+    } finally {
+      await restoreSettings();
+      await done();
+      await adminContext.close();
+    }
+  });
+
+  test("enforces the daily question limit an admin sets", async ({ page }) => {
+    try {
+      await svc.from("ai_settings").update({ daily_question_cap: 1 }).eq("id", true);
+      await signIn(page);
+      await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+      // This learner already asked more than one question today.
+      await ask(page, `One more ${tag}`);
+      await expect(
+        page.getByRole("alert").filter({ hasText: "today's limit of 1 AI Tutor question" }),
+      ).toBeVisible();
+
+      await svc.from("ai_settings").update({ daily_question_cap: 150 }).eq("id", true);
+      await ask(page, `One more ${tag}`);
+      await expect(page.getByText(`Fake answer to: One more ${tag}`)).toBeVisible();
+    } finally {
+      await restoreSettings();
+    }
+  });
+
+  test("gives hints only, for every learner, when an admin turns that on", async ({ page }) => {
+    try {
+      await svc.from("ai_settings").update({ hint_only_always: true }).eq("id", true);
+      await signIn(page);
+      await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+      await expect(page.getByRole("status").filter({ hasText: "Hint-only mode" })).toBeVisible();
+      await page.goto(`/learner/courses/${course.slug}/learn/${course.lessonIds[0]}`);
+      await page.getByText("Ask the AI Tutor").click();
+      await expect(page.getByRole("status").filter({ hasText: "Hint-only mode" })).toBeVisible();
+    } finally {
+      await restoreSettings();
+    }
   });
 });
