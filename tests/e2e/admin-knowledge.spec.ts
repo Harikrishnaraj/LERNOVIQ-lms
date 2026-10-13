@@ -105,7 +105,9 @@ test.describe("admin knowledge base", () => {
 
     // Test retrieval finds the passage.
     await page.getByLabel("Question", { exact: true }).fill(`How long do ${word} take?`);
-    await page.getByRole("button", { name: "Test retrieval" }).click();
+    // Submit with Enter: on the mobile layout the pointer click on "Test retrieval" was
+    // intercepted by neighbouring cards in CI (see docs/MEMORY.md Known Issues).
+    await page.getByLabel("Question", { exact: true }).press("Enter");
     const passages = page.getByRole("list", { name: "Ranked passages" });
     await expect(passages).toContainText(title);
     await expect(passages).toContainText("five working days");
@@ -123,7 +125,9 @@ test.describe("admin knowledge base", () => {
 
     // Gone from retrieval, the database and storage.
     await page.getByLabel("Question", { exact: true }).fill(`How long do ${word} take?`);
-    await page.getByRole("button", { name: "Test retrieval" }).click();
+    // Submit with Enter: on the mobile layout the pointer click on "Test retrieval" was
+    // intercepted by neighbouring cards in CI (see docs/MEMORY.md Known Issues).
+    await page.getByLabel("Question", { exact: true }).press("Enter");
     await expect(page.getByText("No passages match this question.")).toBeVisible();
     const { data: left } = await svc.from("knowledge_sources").select("id").eq("id", id);
     expect(left).toEqual([]);

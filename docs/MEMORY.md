@@ -43,6 +43,8 @@ This file records the current project state. It is intentionally different from 
 
 **Auth setting:** "Confirm email" is ON for `modern-lms` (required for T-014's real email verification). `tests/integration/profiles-roles.test.ts` now creates pre-confirmed test users via the service-role admin API (`auth.admin.createUser({ email_confirm: true })`) instead of relying on `signUp()` returning an immediate session.
 
+**Known issue — mobile click on "Test retrieval" (/admin/knowledge, 2026-10-13):** in CI's mobile project (Pixel 7, 375 px) Playwright's click on the "Test retrieval" button was repeatedly intercepted by other elements (the upload card header, its organization select, the "Indexing" status tile), even after the auto-refresh was paused while a form has focus. Not reproduced locally (no Supabase in the sandbox). The E2E now submits the search with Enter. Check by hand on a real phone that the button can be tapped; if it cannot, look for a layout shift on that page at 375 px.
+
 **Known issue — Supabase free-tier email rate limit:** the built-in dev mailer allows only a handful of emails/hour. Manual signup testing during T-014 hit `over_email_send_rate_limit`; the app correctly showed a safe generic error rather than leaking the detail, but this means real end-to-end email delivery can't be exercised repeatedly without a custom SMTP provider configured in the Supabase dashboard (Auth → Settings → SMTP). Worth doing before broader manual/QA testing of the auth flow.
 
 ### What exists (Phase 0)
