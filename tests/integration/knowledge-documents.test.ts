@@ -420,8 +420,8 @@ describe.skipIf(!hasLiveProject)("knowledge documents (T-221/T-223/T-225, live S
       });
       expect(narrowed.ok && narrowed.data.map((p) => p.title).sort()).toEqual([
         `${tag} For all`,
+        `${tag} Lesson A`,
         `${tag} Y only`,
-        "Lesson",
       ]);
     });
   });
