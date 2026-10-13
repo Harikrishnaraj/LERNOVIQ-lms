@@ -250,6 +250,24 @@ Pending Course
 - [ ] AI failure produces recoverable UI.
 - [ ] Timeout produces safe fallback.
 
+Admin AI management (F-704, T-204) is tested alongside: settings validation and the audited
+action (`ai-settings.test.ts`, `ai-settings-form.test.tsx`), the tutor honouring the kill switch,
+model, answer length, hint-only and the daily cap (unit and integration `ai-tutor.test.ts`), the SQL usage report, access list and settings permissions
+(`integration/ai-management.test.ts`) and the `/admin/ai` screen (`e2e/admin-ai.spec.ts`).
+
+Traceability (which tests prove each bullet; integration and E2E run in CI only):
+
+| Bullet | Proved by |
+| --- | --- |
+| AI conversation starts | unit `ai-tutor.test.ts` "answers from the course, cites the lesson and records the turn"; unit `ai-policy-usage.test.ts` "starts a conversation and records..."; integration `ai-tutor.test.ts` "answers from the learner's course..." and "continues the learner's conversation..."; E2E `ai-tutor.spec.ts` "answers an approved learner..." |
+| Current course context is passed correctly | unit `ai-tutor.test.ts` (course and lesson reach the model, "ignores a lesson from another course", "answers only about courses the learner is enrolled in"); integration `ai-tutor.test.ts` (prompt has the course and lesson, never course B); E2E "is available beside the lesson in the course player" |
+| Retrieval only returns authorized content | integration `knowledge-retrieval.test.ts` (enrolled course, own organization and platform documents only, other versions and cancelled enrollments excluded); integration `ai-tutor.test.ts` "refuses a course the learner is not enrolled in"; unit `ai-tutor.test.ts` (retrieval runs with the learner's session and course) |
+| Unsupported question is handled safely | unit `ai-tutor.test.ts` "does not let the model guess when nothing in the course matched", "offers the course discussion when the model cites nothing"; integration `ai-tutor.test.ts` "answers an unsupported question without calling the model"; E2E "offers the course discussion..." |
+| Assessment policy is respected | unit `ai-policy-usage.test.ts` `getTutorMode` (fails closed); unit `ai-tutor.test.ts` "switches to hint-only rules..."; integration `ai-platform.test.ts` (own attempts only); integration `ai-tutor.test.ts` "gives hints only while a graded assessment..."; admin "always hint-only": unit, integration "uses the admin's model..." and E2E "gives hints only, for every learner..." |
+| AI usage is recorded | unit `ai-policy-usage.test.ts` `runChatTurn`; unit `ai-tutor.test.ts` (tokens, provider, cost, sources stored); integration `ai-platform.test.ts` (records, RLS, no client writes); integration `ai-management.test.ts` (usage report aggregates tokens, cost, unpriced, failures) |
+| AI failure produces recoverable UI | unit `ai-tutor.test.ts` provider `rate_limited`/`not_configured`/`error` and empty answer cases; unit `tutor-chat.test.tsx` "keeps the question and shows a recoverable error", "survives the action itself throwing"; E2E "shows a recoverable message when the model fails or times out, then works again" |
+| Timeout produces safe fallback | unit `ai-provider.test.ts` "a timeout becomes a recoverable result"; unit `ai-tutor.test.ts` provider `timeout`; integration `ai-tutor.test.ts` "records a provider timeout as a failed turn..."; E2E (same test as above, `[fake-fail:timeout]`) |
+
 ## 16. AI Instructor Tests
 
 _Descoped with instructor AI (ADR-044). Kept for when it returns._

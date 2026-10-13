@@ -169,6 +169,12 @@ learner's `my_learning`) → lesson context (title only if the lesson belongs to
 - Escalation links to `/learner/discussions?ask=<courseId>&q=<question>`, which opens the new
   discussion form pre-filled for the learner to review and post.
 
+**Admin settings (T-204, ADR-045):** the order above now starts with the platform settings read
+once per question (kill switch → `disabled`), and the daily question cap (`daily_limit`) sits after
+the rate limits. The admin's model (`ai_settings.tutor_model`, allow-listed) and `max_answer_tokens`
+go to the provider; `hint_only_always` forces hint-only for everyone. Unreadable settings fail closed.
+`/admin/ai` shows usage and cost from the `ai_usage_report` SQL function.
+
 ---
 
 ## 7. Knowledge base admin (T-223)

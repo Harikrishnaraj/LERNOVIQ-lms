@@ -8,7 +8,7 @@ import {
   serviceClient,
   uniqueTag,
 } from "../support/course-fixtures";
-import { answerTutorQuestion, type TutorQuestion } from "@/features/ai/tutor";
+import { answerTutorQuestion, type TutorDeps, type TutorQuestion } from "@/features/ai/tutor";
 import { HINT_ONLY_RULES, NO_SOURCES_ANSWER } from "@/features/ai/tutor-prompt";
 import { runKnowledgeIngest } from "@/features/knowledge/ingest";
 import { createFakeProvider } from "@/services/ai/fake";
@@ -78,7 +78,7 @@ describe.skipIf(!hasLiveProject)("AI Tutor (T-201, T-224, live Supabase)", () =>
     };
   };
 
-  const ask = (u: U, input: Partial<TutorQuestion>) =>
+  const ask = (u: U, input: Partial<TutorQuestion>, over: Partial<TutorDeps> = {}) =>
     answerTutorQuestion(
       {
         supabase: u.client,
@@ -86,9 +86,34 @@ describe.skipIf(!hasLiveProject)("AI Tutor (T-201, T-224, live Supabase)", () =>
         provider: () => recording(),
         userId: u.id,
         allow: async () => true,
+        ...over,
       },
       { question: `${word} chlorophyll`, courseId: courseA.courseId, ...input },
     );
+
+  /** The service client, except that the AI settings row is the given one (the real one is shared). */
+  const dbWithSettings = (row: Record<string, unknown>) =>
+    new Proxy(svc, {
+      get(target, prop, receiver) {
+        if (prop !== "from") return Reflect.get(target, prop, receiver);
+        return (table: string) =>
+          table === "ai_settings"
+            ? {
+                select: () => ({
+                  eq: () => ({ maybeSingle: async () => ({ data: row, error: null }) }),
+                }),
+              }
+            : target.from(table);
+      },
+    });
+  const settings = (over: Record<string, unknown> = {}) => ({
+    tutor_enabled: true,
+    tutor_model: null,
+    max_answer_tokens: 1500,
+    daily_question_cap: 150,
+    hint_only_always: false,
+    ...over,
+  });
 
   beforeAll(async () => {
     learner = await user("lrn");
@@ -256,5 +281,93 @@ describe.skipIf(!hasLiveProject)("AI Tutor (T-201, T-224, live Supabase)", () =>
     requests = [];
     expect(await ask(peer, {})).toMatchObject({ ok: true, mode: "full" });
     expect(requests[0].messages[0].content).not.toContain(HINT_ONLY_RULES);
+  });
+
+  it("records a provider timeout as a failed turn and tells the learner to try again", async () => {
+    const reply = await ask(
+      learner,
+      {},
+      { provider: () => createFakeProvider({ fail: "timeout" }) },
+    );
+    expect(reply).toMatchObject({ ok: false, code: "timeout", conversationId: expect.any(String) });
+    const { data } = await learner.client
+      .from("ai_messages")
+      .select("role, status")
+      .eq("conversation_id", reply.ok ? "" : reply.conversationId!)
+      .order("created_at");
+    expect(data).toEqual([
+      { role: "user", status: "ok" },
+      { role: "assistant", status: "timeout" },
+    ]);
+  });
+
+  describe("admin AI settings (T-204)", () => {
+    it("refuses everyone when the kill switch is off and records nothing", async () => {
+      requests = [];
+      const question = `${word} disabled probe`;
+      const reply = await ask(
+        learner,
+        { question },
+        { db: dbWithSettings(settings({ tutor_enabled: false })) },
+      );
+      expect(reply).toMatchObject({ ok: false, code: "disabled" });
+      expect(requests).toHaveLength(0);
+      const { data: stored } = await svc.from("ai_messages").select("id").eq("content", question);
+      expect(stored).toEqual([]);
+    });
+
+    it("stops a learner at the daily cap, counted from the questions actually stored", async () => {
+      requests = [];
+      const reply = await ask(
+        learner,
+        {},
+        { db: dbWithSettings(settings({ daily_question_cap: 1 })) },
+      );
+      expect(reply).toMatchObject({ ok: false, code: "daily_limit" });
+      expect(requests).toHaveLength(0);
+      // A peer who has asked less is under the same cap... until they reach it too.
+      const { data: asked } = await peer.client.rpc("ai_tutor_questions_since", {
+        p_since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      });
+      const under = await ask(
+        peer,
+        {},
+        { db: dbWithSettings(settings({ daily_question_cap: (asked as number) + 1 })) },
+      );
+      expect(under).toMatchObject({ ok: true });
+      expect(
+        await ask(
+          peer,
+          {},
+          { db: dbWithSettings(settings({ daily_question_cap: (asked as number) + 1 })) },
+        ),
+      ).toMatchObject({ ok: false, code: "daily_limit" });
+    });
+
+    it("uses the admin's model and answer length, and hint-only mode for everyone", async () => {
+      const models: (string | null)[] = [];
+      requests = [];
+      const reply = await ask(
+        peer,
+        {},
+        {
+          db: dbWithSettings(
+            settings({
+              tutor_model: "openai/gpt-oss-20b",
+              max_answer_tokens: 700,
+              hint_only_always: true,
+            }),
+          ),
+          provider: (model) => {
+            models.push(model);
+            return recording();
+          },
+        },
+      );
+      expect(reply).toMatchObject({ ok: true, mode: "hint_only" });
+      expect(models).toEqual(["openai/gpt-oss-20b"]);
+      expect(requests[0].maxOutputTokens).toBe(700);
+      expect(requests[0].messages[0].content).toContain(HINT_ONLY_RULES);
+    });
   });
 });
