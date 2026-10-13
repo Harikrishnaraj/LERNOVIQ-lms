@@ -7,8 +7,10 @@ export const HOST_FRAME_PATH = "__lms_frame.html";
  * the shim and loads the launch file in a child frame; commits from a shim injected into the child
  * (for drivers that do check their own window) are relayed up too, so both reach the player.
  */
-export function buildHostFrame(options: { shim: string; launchPath: string }): string {
-  const src = options.launchPath.split("/").map(encodeURIComponent).join("/");
+export function buildHostFrame(options: { shim: string; launchPath: string; contentBase?: string }): string {
+  // contentBase: absolute path prefix for the package files when this page is not served from
+  // inside the package's own URL space (content-server dispatch, ADR-038).
+  const src = (options.contentBase ?? "") + options.launchPath.split("/").map(encodeURIComponent).join("/");
   return `<!doctype html><html><head><meta charset="utf-8">${options.shim}
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#fff}iframe{border:0;width:100%;height:100%;display:block}</style>
 </head><body><iframe id="sco" src="${src}" allow="autoplay; fullscreen" title="Course content"></iframe>
