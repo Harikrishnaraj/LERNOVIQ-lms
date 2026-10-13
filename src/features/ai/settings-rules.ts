@@ -51,8 +51,7 @@ const intInRange = (value: unknown, { min, max }: { min: number; max: number }) 
   typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
 
 export type AiSettingsCheck =
-  | { ok: true; value: Partial<AiSettings> }
-  | { ok: false; error: string };
+  { ok: true; value: Partial<AiSettings> } | { ok: false; error: string };
 
 /**
  * Validates a change to the settings. Every field is optional (the kill switch saves on its own),

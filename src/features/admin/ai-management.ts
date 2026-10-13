@@ -68,7 +68,8 @@ export interface AiUsageReport {
 }
 
 type Json = Record<string, unknown>;
-const obj = (v: unknown): Json => (v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {});
+const obj = (v: unknown): Json =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Json) : {};
 const arr = (v: unknown): Json[] => (Array.isArray(v) ? v.map(obj) : []);
 const num = (v: unknown): number => {
   const n = typeof v === "string" ? Number(v) : v;

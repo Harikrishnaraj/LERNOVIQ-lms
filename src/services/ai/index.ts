@@ -49,9 +49,11 @@ export function defaultTutorModel(env: Record<string, string | undefined> = proc
 }
 
 /** Which provider getChatProvider() would return, for the admin screen (never the key itself). */
-export function describeChatProvider(
-  env: Record<string, string | undefined> = process.env,
-): { provider: "fake" | "groq"; configured: boolean; defaultModel: string } {
+export function describeChatProvider(env: Record<string, string | undefined> = process.env): {
+  provider: "fake" | "groq";
+  configured: boolean;
+  defaultModel: string;
+} {
   const fake = env.AI_PROVIDER === "fake" || Boolean(env.VITEST);
   return {
     provider: fake ? "fake" : "groq",

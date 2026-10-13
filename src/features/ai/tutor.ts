@@ -177,7 +177,7 @@ export async function answerTutorQuestion(
     return fail(
       "daily_limit",
       conversationId ?? undefined,
-      `You've reached today's limit of ${settings.dailyQuestionCap} AI Tutor questions. Try again tomorrow.`,
+      `You've reached today's limit of ${settings.dailyQuestionCap} AI Tutor ${settings.dailyQuestionCap === 1 ? "question" : "questions"}. Try again tomorrow.`,
     );
   }
 

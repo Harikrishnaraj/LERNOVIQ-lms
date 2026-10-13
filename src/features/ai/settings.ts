@@ -1,10 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { log } from "@/lib/log";
-import {
-  DEFAULT_AI_SETTINGS,
-  isTutorModel,
-  type AiSettings,
-} from "./settings-rules";
+import { DEFAULT_AI_SETTINGS, isTutorModel, type AiSettings } from "./settings-rules";
 
 // Reads the platform AI Tutor settings (T-204, ADR-045). Uncached on purpose: the tutor reads
 // them once per question, so a kill switch or a lower cap takes effect on the next question.
