@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { loginAsRole } from "./support/role-user";
 import { loadEnvLocal } from "./support/env";
+import { acquireLock } from "./support/global-lock";
 import { cleanup, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
 
 loadEnvLocal();
@@ -16,6 +17,18 @@ test.describe("admin AI management", () => {
   const learnerIds: string[] = [];
   let learner: { id: string; email: string };
   let original: Record<string, unknown>;
+
+  // ai_settings is one platform-wide row: take the shared lock so no other tutor or settings
+  // test runs while this one may have the tutor off or its limits changed (global-lock.ts).
+  let releaseSettingsLock: (() => void) | undefined;
+  test.beforeEach(async ({}, testInfo) => {
+    const started = Date.now();
+    const budget = testInfo.timeout;
+    testInfo.setTimeout(budget + 10 * 60_000);
+    releaseSettingsLock = await acquireLock("ai-settings");
+    testInfo.setTimeout(budget + (Date.now() - started));
+  });
+  test.afterEach(() => releaseSettingsLock?.());
 
   test.beforeAll(async () => {
     const { data } = await svc.from("ai_settings").select("*").eq("id", true).single();
@@ -61,7 +74,7 @@ test.describe("admin AI management", () => {
     reply({ provider: "groq", model, status: "timeout", latency_ms: 20000 });
     reply({ provider: null, model: null, cost_usd: null });
     reply({ provider: "groq", model, status: "error", error_code: "http_500" });
-    const { error } = await svc.from("ai_messages").insert(rows);
+    const { error } = await svc.from("ai_messages").insert(rows, { defaultToNull: false });
     if (error) throw error;
 
     await svc.from("ai_tutor_access").insert({ user_id: learner.id });

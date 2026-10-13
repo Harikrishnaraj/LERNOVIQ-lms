@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadEnvLocal } from "./support/env";
+import { acquireLock } from "./support/global-lock";
 import { loginAsRole } from "./support/role-user";
 import {
   cleanup,
@@ -33,6 +34,18 @@ const keywordOnly: EmbeddingProvider = {
 test.describe("learner AI Tutor", () => {
   // The tests share one learner whose access changes along the way, so they run in order.
   test.describe.configure({ mode: "serial" });
+
+  // ai_settings is one platform-wide row: take the shared lock so no other tutor or settings
+  // test runs while this one may have the tutor off or its limits changed (global-lock.ts).
+  let releaseSettingsLock: (() => void) | undefined;
+  test.beforeEach(async ({}, testInfo) => {
+    const started = Date.now();
+    const budget = testInfo.timeout;
+    testInfo.setTimeout(budget + 10 * 60_000);
+    releaseSettingsLock = await acquireLock("ai-settings");
+    testInfo.setTimeout(budget + (Date.now() - started));
+  });
+  test.afterEach(() => releaseSettingsLock?.());
   const svc = serviceClient();
   const tag = uniqueTag("tut");
   const userIds: string[] = [];
