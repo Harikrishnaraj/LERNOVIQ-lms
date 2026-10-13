@@ -140,14 +140,12 @@ describe.skipIf(!hasLiveProject)("knowledge base schema (T-220, live Supabase)",
       .insert({ name: `${tag} org`, slug: `${tag}-org` })
       .select("id")
       .single();
-    const both = await svc
-      .from("knowledge_sources")
-      .insert({
-        kind: "document",
-        course_version_id: versionId,
-        organization_id: org!.id,
-        title: "Both scopes",
-      });
+    const both = await svc.from("knowledge_sources").insert({
+      kind: "document",
+      course_version_id: versionId,
+      organization_id: org!.id,
+      title: "Both scopes",
+    });
     expect(both.error).not.toBeNull();
     const bareLesson = await svc
       .from("knowledge_sources")
@@ -166,14 +164,12 @@ describe.skipIf(!hasLiveProject)("knowledge base schema (T-220, live Supabase)",
   });
 
   it("allows only one source per lesson", async () => {
-    const dup = await svc
-      .from("knowledge_sources")
-      .insert({
-        kind: "lesson",
-        course_version_id: versionId,
-        lesson_id: lessonId,
-        title: "Closures again",
-      });
+    const dup = await svc.from("knowledge_sources").insert({
+      kind: "lesson",
+      course_version_id: versionId,
+      lesson_id: lessonId,
+      title: "Closures again",
+    });
     expect(dup.error).not.toBeNull();
   });
 
