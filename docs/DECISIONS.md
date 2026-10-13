@@ -378,3 +378,16 @@ Improve:
 - One AI vendor (Groq) receives lesson text and learner questions. SECURITY §15 and the privacy notice must name it.
 
 **Status:** Accepted (user decision). Supersedes ADR-039 items 1, 2 and 4.
+
+## ADR-041 — Embeddings Use OpenAI text-embedding-3-small
+
+**Decision:** The embedding provider is **OpenAI `text-embedding-3-small`** (1536 dimensions), called through `src/services/embeddings/` (ADR-015). Vectors are stored as `extensions.vector(1536)` in `knowledge_chunks` with an HNSW cosine index. The key is `OPENAI_API_KEY` (server-only); production reads it from the `PROD_OPENAI_API_KEY` repository secret. Tests and CI use the deterministic fake (`AI_PROVIDER=fake`, or under Vitest). Resolves the open embedding item in ADR-040.
+
+**Reason:** User decision (2026-10-13): "use OpenAI embeddings". Hosted, about $0.02 per million tokens, no extra container on the VPS.
+
+**Consequences:**
+- A second vendor (OpenAI) receives lesson text at indexing time and learner questions at search time. SECURITY §15 and the privacy notice must name it.
+- Changing the model later means a new vector size and re-embedding every chunk; each chunk records `embedding_model` so stale rows can be found.
+- The chat provider (Groq, ADR-040) and the embedding provider are independent adapters.
+
+**Status:** Accepted (user decision).

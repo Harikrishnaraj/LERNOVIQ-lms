@@ -141,6 +141,7 @@ jobs:
       PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
       PROD_GROQ_AI_API_KEY: ${{ secrets.PROD_GROQ_AI_API_KEY }}
       PROD_AI_TUTOR_MODEL: ${{ vars.PROD_AI_TUTOR_MODEL }}
+      PROD_OPENAI_API_KEY: ${{ secrets.PROD_OPENAI_API_KEY }}
       # Optional: your own domain names. Without them the app gets free sslip.io names for the IP.
       PROD_APP_HOST: ${{ vars.PROD_APP_HOST }}
       PROD_CONTENT_HOST: ${{ vars.PROD_CONTENT_HOST }}
@@ -248,6 +249,7 @@ jobs:
             echo "CRON_SECRET=$PROD_CRON_SECRET"
             echo "GROQ_AI_API_KEY=$PROD_GROQ_AI_API_KEY"
             echo "AI_TUTOR_MODEL=$PROD_AI_TUTOR_MODEL"
+            echo "OPENAI_API_KEY=$PROD_OPENAI_API_KEY"
           } > "$RUNNER_TEMP/server.env"
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'umask 077; cat > ~/lernoviq-lms/.env' < "$RUNNER_TEMP/server.env"
           rm -f "$RUNNER_TEMP/server.env"
