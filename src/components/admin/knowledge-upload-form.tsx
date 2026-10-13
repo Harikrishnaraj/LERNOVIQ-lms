@@ -30,6 +30,7 @@ interface Props {
 export function KnowledgeUploadForm({ organizations }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -38,10 +39,10 @@ export function KnowledgeUploadForm({ organizations }: Props) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const file = data.get("file");
+    const file = fileRef.current?.files?.[0];
     setError(null);
     setNotice(null);
-    if (!(file instanceof File) || file.name === "") {
+    if (!file || file.name === "") {
       setError("Choose a file to upload.");
       return;
     }
@@ -94,6 +95,7 @@ export function KnowledgeUploadForm({ organizations }: Props) {
             Document
           </label>
           <input
+            ref={fileRef}
             id="knowledge-file"
             name="file"
             type="file"

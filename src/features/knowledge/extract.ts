@@ -48,9 +48,17 @@ export async function extractDocumentText(
     paragraphs = format === "md" ? markdownToParagraphs(text) : textToParagraphs(text);
   }
 
-  const capped = capParagraphs(paragraphs, MAX_EXTRACTED_CHARS);
+  const capped = capParagraphs(paragraphs.map(cleanText).filter(Boolean), MAX_EXTRACTED_CHARS);
   if (capped.paragraphs.length === 0) throw new ExtractionError(NO_TEXT_MESSAGE, true);
   return capped;
+}
+
+/**
+ * Postgres text cannot hold NUL, and JSON cannot carry a lone surrogate: both appear in damaged or
+ * odd files and would make the whole job fail on insert, so they are dropped here.
+ */
+export function cleanText(text: string): string {
+  return text.replace(/\u0000/g, "").toWellFormed().replace(/\uFFFD/g, "").trim();
 }
 
 export function capParagraphs(paragraphs: string[], maxChars: number): ExtractedText {
