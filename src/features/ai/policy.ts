@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clientIp, rateLimit } from "@/services/rate-limit";
 import { log } from "@/lib/log";
+import { MAX_QUESTION_CHARS } from "./limits";
 
 // AI policy service (ARCHITECTURE §18, PRD §12, SECURITY §15/§18). Decides what the tutor may do
 // for this learner right now; the tutor feature (T-201) calls it before every question.
@@ -8,7 +9,7 @@ import { log } from "@/lib/log";
 /** "hint_only" while a graded assessment in the course is in progress: explain, never answer it. */
 export type TutorMode = "full" | "hint_only";
 
-export const MAX_QUESTION_CHARS = 2000;
+export { MAX_QUESTION_CHARS };
 
 export type QuestionCheck = { ok: true; question: string } | { ok: false; error: string };
 
