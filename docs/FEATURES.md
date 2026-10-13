@@ -145,9 +145,7 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | ----- | ------------------------------------ | -------------------- | ----------------------------------------------------------------- |
 | F-700 | AI platform (adapter, policy, usage) | ARCHITECTURE §18     | All AI calls go through adapter; usage/cost recorded              |
 | F-701 | Learner AI Tutor                     | LearnSphere AITutor, PRD §12 | TEST_PLAN §15 passes                                      |
-| F-702 | Instructor AI content drafting       | Instructor AIAssistant, PRD §12 | TEST_PLAN §16 passes; nothing auto-publishes (ADR-016) |
-| F-703 | Instructor AI insights               | PRD §12              | Review summaries and drop-off suggestions from real data          |
-| F-704 | Admin AI management                  | ScreenAI             | Policies, safety, usage, cost, job history                        |
+| F-704 | Admin AI management                  | ScreenAI             | Policies, safety, usage, cost (job history descoped, ADR-044)     |
 
 ## Knowledge base / RAG
 
@@ -177,4 +175,9 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 
 ## Descoped
 
-_None. Moving a feature here requires an ADR._
+Moving a feature here requires an ADR. Rows here are exempt from `npm run features:strict`.
+
+| ID    | Feature                        | Source                          | Done when (when restored)                                 | ADR     |
+| ----- | ------------------------------ | ------------------------------- | --------------------------------------------------------- | ------- |
+| F-702 | Instructor AI content drafting | Instructor AIAssistant, PRD §12 | TEST_PLAN §16 passes; nothing auto-publishes (ADR-016)    | ADR-044 |
+| F-703 | Instructor AI insights         | PRD §12                         | Review summaries and drop-off suggestions from real data  | ADR-044 |

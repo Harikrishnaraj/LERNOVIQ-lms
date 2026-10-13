@@ -26,6 +26,8 @@ const SECRET_VALUE = [
   /\bBearer\s+[\w.~+/-]+=*/gi,
   /\b(sk|rk|pk)_(live|test)_[\w]{8,}/g, // Stripe-style keys
   /\bsb_(secret|publishable)_[\w-]{8,}/g, // Supabase API keys
+  /\bgsk_[\w]{8,}/g, // Groq API keys (ADR-040)
+  /\bsk-(proj-)?[\w-]{16,}/g, // OpenAI API keys (ADR-041)
 ];
 
 const MAX_DEPTH = 6;

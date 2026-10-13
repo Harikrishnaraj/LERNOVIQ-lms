@@ -340,3 +340,107 @@ Improve:
 **Consequences:** New tables (content clients, licences, dispatches, registrations) with RLS that only admins with a new `content_server.manage` permission can use; the launch and content endpoints are public but gated by signatures, licence state and rate limits (SECURITY §27). Content served to a dispatch must be embeddable from the client's allowed LMS origins, so the content origin's `frame-ancestors` becomes per-licence for dispatch launches only; the app origin's CSP is unchanged. Pricing model (per active learner, per licence or flat fee) is still open; Phase 1 records registrations so any of them can be billed later. Tests need a stand-in LMS page that implements the SCORM 1.2 API.
 
 **Status:** Accepted (user decision). Features F-520–F-525, tasks T-170–T-177.
+
+## ADR-039 — AI Tutor and RAG Providers: Claude Haiku 5.5 and OpenAI Embeddings
+
+**Decision:** The four open decisions in `docs/RAG_PLAN.md` §1 are settled:
+
+1. **Answer model:** Claude Haiku 5.5 (`claude-haiku-5-5`) through the Anthropic API, behind the chat adapter in `src/services/ai/` (ADR-015). The model ID is configuration, not code, so a later move to Sonnet or Opus is a config change plus an eval run.
+2. **Embeddings:** OpenAI `text-embedding-3-small` through the embedding adapter in `src/services/embeddings/`. Vectors are stored as `vector(1536)` (the model's native size, under pgvector's 2,000-dimension HNSW limit).
+3. **First-version scope:** published lesson text only. Admin/org documents (needed by F-802) come next, then lesson attachments.
+4. **Keys:** none exist yet. Steps 1–4 of the plan are built and tested against deterministic fake providers; `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are needed before step 5 (tutor UI) and are added as GitHub secrets that the deploy job writes into the VPS `.env` (ADR-036).
+
+**Reason:** User decision (2026-10-12). Haiku 5.5 is the cheapest current Claude model ($0.10 / $0.50 per million input/output tokens for prompts up to 100K tokens, which covers every tutor request), which matters for a tutor every learner can call. OpenAI embeddings are hosted (no extra container on the VPS) and inexpensive.
+
+**Consequences:**
+- Changing the embedding provider or model later means a new migration for the vector size and re-embedding every chunk; `knowledge_chunks` records the embedding model name so a re-index can find stale rows.
+- Haiku 5.5's default effort is `medium`; the adapter sets it explicitly. It has no server-side refusal fallback, so a `refusal` stop reason is handled as a recoverable "couldn't answer" message (RAG_PLAN §6).
+- Hint-only mode, off-topic redirects and the relevance cutoff matter more with a smaller model; the retrieval eval (T-225) and a manual tutor smoke run decide whether Haiku is good enough or the config moves up a tier.
+- Two AI vendors receive data: lesson text and learner questions go to Anthropic (answers) and OpenAI (embeddings). SECURITY §16 and the privacy notice must name both.
+- CI never calls either provider (fakes only).
+
+**Status:** Accepted (user decision). Items 1, 2 and 4 superseded by ADR-040 (2026-10-12): answers come from Groq, embedding provider still open.
+
+## ADR-040 — AI Tutor Answers Come from Groq; Embedding Provider Still Open
+
+**Decision:** Supersedes ADR-039 items 1, 2 and 4. Item 3 (first version indexes published lesson text only) stands.
+
+1. **Answer model:** Groq (`api.groq.com`, OpenAI-compatible chat API), called through the official `groq-sdk` package behind the chat adapter in `src/services/ai/` (ADR-015). Claude is not used. The default model is `openai/gpt-oss-120b`; `AI_TUTOR_MODEL` overrides it without a code change.
+2. **Embeddings:** not decided. The embedding adapter (`src/services/embeddings/`) ships with its interface and a deterministic fake only. The real provider (OpenAI, Ollama, Hugging Face TEI or Transformers.js) is chosen before T-220, because it fixes the vector size.
+3. **Key:** `GROQ_AI_API_KEY` (server-only). Production reads it from the `PROD_GROQ_AI_API_KEY` repository secret, which the deploy job writes into the VPS `.env`. `AI_PROVIDER=fake` forces the fake provider (tests and CI never call Groq).
+
+**Reason:** User decision (2026-10-12): the user created a Groq key and chose "Groq only" over keeping Claude or running both.
+
+**Consequences:**
+- Groq has no built-in document citations. The tutor numbers each retrieved chunk in the prompt (`[S1]`, `[S2]`, …), and the app parses those markers back to lesson links; a marker that matches no chunk is dropped, never shown.
+- Groq serves open-weight models, which are weaker than frontier models at staying grounded and at hint-only behaviour. The retrieval relevance cutoff, the grounding prompt and the T-225 eval carry more of that load; the model ID is config, so moving to a larger Groq model is a config change.
+- Model prices live in `src/services/ai/pricing.ts` with the date they were checked. A model missing from the table records a null cost rather than a guessed one.
+- One AI vendor (Groq) receives lesson text and learner questions. SECURITY §15 and the privacy notice must name it.
+
+**Status:** Accepted (user decision). Supersedes ADR-039 items 1, 2 and 4.
+
+## ADR-041 — Embeddings Use OpenAI text-embedding-3-small
+
+**Decision:** The embedding provider is **OpenAI `text-embedding-3-small`** (1536 dimensions), called through `src/services/embeddings/` (ADR-015). Vectors are stored as `extensions.vector(1536)` in `knowledge_chunks` with an HNSW cosine index. The key is `OPENAI_API_KEY` (server-only); production reads it from the `PROD_OPENAI_API_KEY` repository secret. Tests and CI use the deterministic fake (`AI_PROVIDER=fake`, or under Vitest). Resolves the open embedding item in ADR-040.
+
+**Reason:** User decision (2026-10-13): "use OpenAI embeddings". Hosted, about $0.02 per million tokens, no extra container on the VPS.
+
+**Consequences:**
+- A second vendor (OpenAI) receives lesson text at indexing time and learner questions at search time. SECURITY §15 and the privacy notice must name it.
+- Changing the model later means a new vector size and re-embedding every chunk; each chunk records `embedding_model` so stale rows can be found.
+- The chat provider (Groq, ADR-040) and the embedding provider are independent adapters.
+
+**Status:** Accepted (user decision).
+
+## ADR-042 — Lesson Search Starts with Postgres Full-Text; Embeddings Become Optional
+
+**Decision:** Supersedes ADR-041 for the first version. The AI Tutor finds lesson passages with **Postgres full-text search** (the `tsvector` + GIN index on `knowledge_chunks`), ranked with `ts_rank_cd` and filtered by the caller's permissions before ranking (ADR-017). No embedding provider is needed to ship the tutor. `knowledge_chunks.embedding` and `embedding_model` are **nullable**: when an embedding provider is added later, the indexer fills them and retrieval blends vector and keyword results (reciprocal rank fusion) with no schema change. The embeddings adapter (`src/services/embeddings/`, OpenAI and fake) stays in the repo, unused until then; its deploy wiring is optional.
+
+**Reason:** User decision (2026-10-13): an OpenAI key could not be obtained, so the user chose "keyword search first" over a self-hosted model, an in-app model or another hosted provider. Groq does not offer embeddings.
+
+**Consequences:**
+- A question worded very differently from the lesson ("why does my loop never stop?" vs "termination conditions") can miss the right passage. Mitigations: the indexer prefixes each chunk with its course, section and lesson titles, retrieval uses `websearch_to_tsquery` with an OR fallback, and the T-225 retrieval eval (about 30 question → lesson pairs) measures the gap and decides when embeddings are worth adding.
+- The vector column and HNSW index stay (nullable) so adding embeddings later is a backfill, not a migration. If the chosen model is not 1536-dimensional, one migration changes the column size.
+- Only one AI vendor (Groq, ADR-040) receives learner data; ADR-041's second-vendor note applies only if embeddings are added.
+- Tasks are unchanged: T-221 indexes lessons (chunking and full-text, embedding step skipped while no provider is configured), T-222 retrieves by keyword.
+
+**Status:** Accepted (user decision). Supersedes ADR-041 for v1.
+
+## ADR-043 — The Learner AI Tutor Requires Per-User Admin Approval
+
+**Decision:** The learner AI Tutor is **off for every user by default**. An admin (new permission `ai.manage_access`: admin, super_admin) turns it on or off for an individual user on the admin user detail page. There is no request flow: users without access see that the tutor is not enabled for their account and to ask an administrator. A row in `ai_tutor_access` means "enabled"; turning it off deletes the row. Every change is audited (`ai.tutor_access_granted` / `ai.tutor_access_revoked`). The tutor checks `has_ai_tutor_access()` on the server before every question, so hiding the UI is never the only guard. Instructor AI tools (T-202, T-203) are **not** gated by this approval.
+
+**Reason:** User decision (2026-10-13): "AI feature should be implemented only when the admin approves for the user", then "Admin grants directly" and "Learner AI Tutor only" over a request-and-approve flow or gating all AI features.
+
+**Consequences:** AI cost is bounded by who admins enable, on top of the per-user rate limits (ADR-040). Retrieval (T-222) is not gated by this table: it only serves the tutor (which is gated) and admin test retrieval. Bulk enabling (by organization or course) is not built; add it as a follow-up if admins need it.
+
+**Status:** Accepted (user decision).
+
+---
+
+## ADR-044 — Instructor AI Is Descoped for Now
+
+**Decision:** Instructor AI is **not built in this release**: content drafting (outlines, objectives, summaries, quiz questions, assignment ideas; F-702, T-202) and insights (review summaries, drop-off patterns, improvement suggestions; F-703, T-203) move to "Descoped" in `FEATURES.md`. The instructor "AI Assistant" navigation item (`/instructor/ai`) is removed. TEST_PLAN §16 (AI Instructor Tests) is descoped with them, so T-205 covers TEST_PLAN §15 only. Admin AI management (F-704, T-204) loses "generation job history": only instructor tools create `ai_generation_jobs`, so that view would always be empty. AI in this release is the learner AI Tutor (F-701) and the admin screens for it.
+
+**Reason:** User decision (2026-10-13): "We don't need AI for instructors for now."
+
+**Consequences:** No code is removed: the `ai_generation_jobs` table, the `instructor` value of `ai_conversations.feature` and ADR-016 (generated content is never auto-published) stay, so instructor AI can return later without a migration. Bringing it back needs a new ADR that moves F-702/F-703 out of "Descoped", restores T-202/T-203, TEST_PLAN §16, the `/instructor/ai` navigation item and generation job history in T-204.
+
+**Status:** Accepted (user decision).
+
+---
+
+## ADR-045 — Admin AI Settings Live in the Database and Apply to the Next Question
+
+**Decision:** One row in `ai_settings` (`id boolean primary key check (id)`, so exactly one row) holds the platform's AI Tutor settings: `tutor_enabled` (kill switch, default on), `tutor_model` (null = server default `AI_TUTOR_MODEL`, else `openai/gpt-oss-120b`; otherwise one of `openai/gpt-oss-120b`, `openai/gpt-oss-20b`), `max_answer_tokens` (300 to 3000, default 1500), `daily_question_cap` (1 to 150 per learner per rolling 24 hours, default 150) and `hint_only_always` (default off). Defaults equal the behaviour before the table existed. The bounds and the model allow-list are `CHECK` constraints and are repeated in `src/features/ai/settings-rules.ts` (shared by the form and the server action). Any signed-in user can read the row (the learner screens show "the AI Tutor is turned off"); only the new permission `ai.manage_settings` (admin, super_admin) can update it, with column-level grants (no insert, delete or `id` change). Changes go through the server action `updateAiSettings` (auth, permission, validation, `ai.settings_updated` audit with the changed fields and the values before and after, `revalidatePath("/admin/ai")`). The permission is separate from `ai.manage_access` (per-user switch, ADR-043) and `ai.read_all` (usage and cost) so each screen section can be granted on its own.
+
+**How the tutor applies them:** `answerTutorQuestion` reads the row once per question, uncached, with the service client, and fails closed when it cannot be read (`unavailable`). Order: settings (kill switch → `disabled`) → per-user access (ADR-043) → input → burst limit → daily cap (`ai_tutor_questions_since`, bound to `auth.uid()`; `daily_limit`) → enrollment → mode (`hint_only` if the setting is on, else the graded-assessment check) → retrieval → provider for the chosen model (`getChatProvider(env, { model })`; the fake provider ignores it) with `max_answer_tokens` as the output limit. The existing `ai-tutor` and `ai-tutor-daily` rate limits stay as abuse backstops; 150 is the cap's ceiling so the cap can never exceed them.
+
+**Usage and cost** on `/admin/ai` come from `ai_usage_report(p_days)` (7, 30 or 90), a `security definer` SQL function that checks `ai.read_all` and aggregates in the database, so message rows never reach Node. Cost sums priced answers only; answers from a model without a known price are counted as "unpriced" and shown as "Unknown price" (never guessed). Fixed "not in your course" answers (provider null) are counted apart from model answers. `ai_tutor_access_list` (`ai.manage_access`) returns the users with the tutor, their emails and who turned it on.
+
+**Reason:** User decision (2026-10-13) for T-204: admins need a kill switch, a model choice and cost controls without a deploy, and visibility into usage and cost.
+
+**Consequences:** Changing a setting needs no deploy and applies to the next question, including one already open in a learner's browser. The model list is closed: adding a model means a migration (the `CHECK`), `TUTOR_MODELS` and a price in `pricing.ts`. Generation job history and instructor AI stay descoped (ADR-044). Integration and E2E tests must not flip the kill switch, hint-only mode or the cap on the shared database except in the serial tutor spec, which restores the defaults.
+
+**Status:** Accepted.
+

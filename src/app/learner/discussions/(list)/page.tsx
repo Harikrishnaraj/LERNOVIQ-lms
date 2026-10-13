@@ -5,7 +5,12 @@ import { CheckCircle2, MessageSquare, Pin, ThumbsUp } from "lucide-react";
 import { NewThreadForm } from "@/components/discussions/new-thread-form";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
-import { filterThreads, listDiscussions, type ThreadFilter } from "@/features/discussions/discussions";
+import {
+  TITLE_MAX,
+  filterThreads,
+  listDiscussions,
+  type ThreadFilter,
+} from "@/features/discussions/discussions";
 import { getMyLearning } from "@/features/my-learning/queries";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils/cn";
@@ -38,6 +43,17 @@ export default async function LearnerDiscussionsPage({
 
   const [threads, learning] = await Promise.all([listDiscussions(supabase), getMyLearning(supabase)]);
   const shown = filterThreads(threads, filter, course);
+  // ?ask=<courseId>&q=<question>: the AI Tutor's escalation opens the form pre-filled (T-201).
+  const askCourse = learning.find((l) => l.courseId === one(raw.ask));
+  const askQuestion = one(raw.q).trim().slice(0, 1000);
+  const draft =
+    askCourse && askQuestion
+      ? {
+          courseId: askCourse.courseId,
+          title: askQuestion.replace(/\s+/g, " ").slice(0, TITLE_MAX),
+          body: askQuestion,
+        }
+      : null;
   const courseOptions = [...new Map(threads.map((t) => [t.courseSlug, t.courseTitle])).entries()];
   const href = (over: { filter?: ThreadFilter; course?: string }) => {
     const f = over.filter ?? filter;
@@ -52,7 +68,10 @@ export default async function LearnerDiscussionsPage({
   return (
     <>
       <PageHeader title="Discussions" description="Ask questions and help others in your courses." />
-      <NewThreadForm courses={learning.map((l) => ({ id: l.courseId, title: l.title }))} />
+      <NewThreadForm
+        courses={learning.map((l) => ({ id: l.courseId, title: l.title }))}
+        draft={draft}
+      />
 
       <nav aria-label="Filter discussions" className="mb-4 flex flex-wrap items-center gap-1 border-b border-border">
         {FILTERS.map((f) => (

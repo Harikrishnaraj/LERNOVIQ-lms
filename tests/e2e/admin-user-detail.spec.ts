@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { loginAsRole } from "./support/role-user";
 import { loadEnvLocal } from "./support/env";
-import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
+import {
+  cleanup,
+  createCourse,
+  createUserWithRole,
+  serviceClient,
+  uniqueTag,
+} from "../support/course-fixtures";
 
 loadEnvLocal();
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -18,7 +24,9 @@ test.describe("admin user detail", () => {
   let course: Awaited<ReturnType<typeof createCourse>>;
 
   test.beforeAll(async () => {
-    target = await createUserWithRole(svc, `${tag}-target`, "learner", { fullName: `${tag} Target Learner` });
+    target = await createUserWithRole(svc, `${tag}-target`, "learner", {
+      fullName: `${tag} Target Learner`,
+    });
     learnerIds.push(target.id);
 
     const instructor = await createUserWithRole(svc, `${tag}-ins`, "instructor");
@@ -68,7 +76,9 @@ test.describe("admin user detail", () => {
       await page.getByRole("link", { name: `${tag} Target Learner` }).click();
       await page.waitForURL(/\/admin\/users\/[0-9a-f-]{36}$/);
 
-      await expect(page.getByRole("heading", { level: 1, name: `${tag} Target Learner` })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: `${tag} Target Learner` }),
+      ).toBeVisible();
 
       // Account panel.
       await expect(page.getByText("Learner", { exact: true })).toBeVisible();
@@ -79,7 +89,22 @@ test.describe("admin user detail", () => {
       await expect(page.getByText("1/1 · 100%")).toBeVisible();
 
       // Login history: at least one recorded sign-in.
-      await expect(page.getByRole("list", { name: "Login history" }).getByRole("listitem").first()).toBeVisible();
+      await expect(
+        page.getByRole("list", { name: "Login history" }).getByRole("listitem").first(),
+      ).toBeVisible();
+
+      // AI Tutor access (T-206, ADR-043): off by default, the admin turns it on and off.
+      const aiCard = page.getByRole("region", { name: "AI Tutor access" });
+      await expect(aiCard.getByText("Off", { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: `Turn on AI Tutor for ${target.email}` }).click();
+      await expect(aiCard.getByText("On", { exact: true })).toBeVisible();
+      const { data: granted } = await svc
+        .from("ai_tutor_access")
+        .select("user_id")
+        .eq("user_id", target.id);
+      expect(granted).toHaveLength(1);
+      await page.getByRole("button", { name: `Turn off AI Tutor for ${target.email}` }).click();
+      await expect(aiCard.getByText("Off", { exact: true })).toBeVisible();
 
       // Actions: suspend the user from the detail page.
       await page.waitForLoadState("networkidle");

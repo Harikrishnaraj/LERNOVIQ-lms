@@ -13,6 +13,9 @@ import { progressPercent } from "@/features/my-learning/queries";
 import { adjacentLessons, isLessonLocked } from "@/features/player/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAssetLinks, resolveVideoSrc } from "@/features/player/media";
+import { TutorChat } from "@/components/ai-tutor/tutor-chat";
+import { getTutorMode, hasTutorAccess } from "@/features/ai/policy";
+import { getAiSettings } from "@/features/ai/settings";
 
 export const metadata: Metadata = { title: "Lesson" };
 
@@ -52,13 +55,29 @@ export default async function LessonPage({
 
   const { data: quiz } =
     lesson.type === "quiz" && course.enrolled
-      ? await supabase.from("assessments").select("id, title").eq("lesson_id", lessonId).maybeSingle()
+      ? await supabase
+          .from("assessments")
+          .select("id, title")
+          .eq("lesson_id", lessonId)
+          .maybeSingle()
       : { data: null };
 
   // Entitlement was proven by reading the lesson under this learner RLS above; only now sign URLs.
   const videoSrc = lesson.type === "video" ? await resolveVideoSrc(lesson.videoUrl) : null;
   const assets = await getAssetLinks(supabase, lessonId);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
+
+  // AI Tutor panel (T-201): enrolled learners whose tutor an admin has turned on (ADR-043). While
+  // the platform kill switch is off (ADR-045) the panel says so instead of offering a chat.
+  const aiSettings = course.enrolled ? await getAiSettings(supabase) : null;
+  const tutorAllowed = aiSettings !== null && (await hasTutorAccess(supabase));
+  const tutorOff = tutorAllowed && !aiSettings.tutorEnabled;
+  const tutorMode =
+    tutorAllowed && aiSettings.tutorEnabled
+      ? aiSettings.hintOnlyAlways
+        ? "hint_only"
+        : await getTutorMode(supabase, course.courseId)
+      : null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -99,8 +118,12 @@ export default async function LessonPage({
             lesson={lesson}
             videoSrc={videoSrc}
             savedPosition={lessonProgress.positionSeconds}
-            onSavePosition={course.enrolled ? saveVideoPosition.bind(null, slug, lessonId) : undefined}
-            onScormCommit={course.enrolled ? submitScormCommit.bind(null, slug, lessonId) : undefined}
+            onSavePosition={
+              course.enrolled ? saveVideoPosition.bind(null, slug, lessonId) : undefined
+            }
+            onScormCommit={
+              course.enrolled ? submitScormCommit.bind(null, slug, lessonId) : undefined
+            }
             assets={assets}
           />
 
@@ -122,9 +145,15 @@ export default async function LessonPage({
             />
           )}
 
-          <nav aria-label="Lesson navigation" className="flex items-center justify-between gap-3 border-t border-border pt-4">
+          <nav
+            aria-label="Lesson navigation"
+            className="flex items-center justify-between gap-3 border-t border-border pt-4"
+          >
             {previous && !isLessonLocked(previous, course.enrolled) ? (
-              <Link href={lessonHref(previous.id)} className={buttonClasses({ variant: "secondary" })}>
+              <Link
+                href={lessonHref(previous.id)}
+                className={buttonClasses({ variant: "secondary" })}
+              >
                 <ArrowLeft className="size-4" aria-hidden="true" />
                 Previous
               </Link>
@@ -143,7 +172,10 @@ export default async function LessonPage({
         </main>
 
         <aside aria-label="Course curriculum" className="w-full shrink-0 lg:w-80">
-          <details open className="rounded-card border border-border bg-surface lg:[&>summary]:hidden" >
+          <details
+            open
+            className="rounded-card border border-border bg-surface lg:[&>summary]:hidden"
+          >
             <summary className="cursor-pointer px-4 py-3 text-sm font-semibold lg:hidden">
               Course content
             </summary>
@@ -157,6 +189,34 @@ export default async function LessonPage({
               />
             </div>
           </details>
+          {tutorOff && (
+            <section
+              aria-label="AI Tutor"
+              className="mt-4 rounded-card border border-border bg-surface px-4 py-3"
+            >
+              <h2 className="text-sm font-semibold">AI Tutor</h2>
+              <p role="status" className="mt-1 text-sm text-text-secondary">
+                The AI Tutor is turned off right now. Your administrator has turned it off for
+                everyone and will turn it back on.
+              </p>
+            </section>
+          )}
+          {tutorMode && (
+            <details className="mt-4 rounded-card border border-border bg-surface">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">
+                Ask the AI Tutor
+              </summary>
+              <div className="p-3 pt-0">
+                <TutorChat
+                  courseId={course.courseId}
+                  courseTitle={course.title}
+                  lessonId={lessonId}
+                  mode={tutorMode}
+                  compact
+                />
+              </div>
+            </details>
+          )}
         </aside>
       </div>
     </div>

@@ -140,6 +140,17 @@ Store uploads outside the application source tree.
 
 For potentially dangerous document formats, use safe processing/sandboxing before indexing or rendering.
 
+Knowledge base documents (T-221, F-800): only users with `knowledge.manage` (admin, super_admin) can
+upload. The extension, the browser-reported type and the 10 MB limit are checked before a signed upload
+ticket is issued for a server-chosen path in the **private** `knowledge-documents` bucket (no
+`storage.objects` policies; the bucket also enforces the size and the four MIME types). After the upload
+the server reads the first 1 KB and checks the magic bytes (PDF `%PDF-`, DOCX `PK\x03\x04`, TXT/Markdown valid
+UTF-8 with no NUL) and removes a file that does not match. Files are never rendered or executed: the
+worker (service role) extracts text only, with `unpdf` (pdf.js build with no eval path) for PDFs and `jszip`
+reading `word/document.xml` (inflated size capped at 40 MB against ZIP bombs) for DOCX; extracted text is
+capped at 300,000 characters and stripped of NUL characters. Retrieved document text stays untrusted input
+for the model (§15). Upload and re-index are rate-limited (`knowledge-upload`, `knowledge-reindex`).
+
 The supplied guide explicitly calls for validating file type, size and filename.
 
 ## 10. Video Security
@@ -237,6 +248,22 @@ Define retention for:
 - embeddings,
 - generated content.
 
+Current rules (T-200): tutor conversations (prompts, responses, usage) are kept until 12 months
+after their last message and finished generation jobs for 12 months, then purged weekly
+(`purge_old_ai_records`); deleting an account removes them at once. The answer provider is Groq
+(ADR-040), so learner questions and retrieved lesson text are sent to Groq; the privacy notice
+must say so. Lesson search is Postgres full-text (ADR-042), so only Groq receives learner questions and lesson text. If an embedding provider is added later, the privacy notice must name it; embeddings live in `knowledge_chunks` and are deleted with their source.
+
+### Admin controls (T-204, ADR-045)
+
+- The AI Tutor has a platform kill switch, an allow-listed model, an answer-length bound, a per-learner
+  daily question cap and an "always hint-only" mode in `ai_settings`. Only `ai.manage_settings`
+  (admin, super_admin) can change them (RLS and column grants), every change is audited as
+  `ai.settings_updated` with the values before and after, and the tutor re-reads them for every
+  question and fails closed when they cannot be read.
+- Usage, cost and the access list are SQL functions that check `ai.read_all` / `ai.manage_access`
+  themselves; they expose user names and emails only to those holders.
+
 ### Graded assessments
 
 If policy disables direct answers during graded assessments:
@@ -293,6 +320,10 @@ Rate-limit:
 - expensive analytics queries.
 
 Use stronger limits for unauthenticated endpoints.
+
+AI Tutor (ADR-045): besides the `ai-tutor` burst and `ai-tutor-daily` buckets, an admin-set daily
+question cap per learner (1 to 150, counted from stored questions over a rolling 24 hours) applies;
+150 is its ceiling, so the bucket stays the backstop.
 
 ## 19. Abuse Prevention
 

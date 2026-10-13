@@ -35,6 +35,8 @@ export const RESOURCE_LIBRARY_BUCKET = "resource-library";
 export const SCORM_BUCKET = "scorm-packages";
 export const SCORM_STAGING_BUCKET = "scorm-uploads";
 export const REPORT_EXPORT_BUCKET = "report-exports";
+/** Private: AI Tutor knowledge base uploads, read back only by the indexing worker (T-221). */
+export const KNOWLEDGE_DOCUMENT_BUCKET = "knowledge-documents";
 
 export const supabaseStorage: StorageAdapter = {
   async uploadPublic(bucket, path, bytes, contentType) {

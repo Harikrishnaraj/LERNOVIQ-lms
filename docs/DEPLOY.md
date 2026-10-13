@@ -4,7 +4,7 @@ Production runs on one Ubuntu VPS as three Docker containers (`deploy/docker-com
 
 - **app**: the Next.js standalone server (image built from `Dockerfile`).
 - **caddy**: HTTPS and reverse proxy. Certificates are issued and renewed automatically.
-- **cron**: calls the scheduled-reports job once an hour.
+- **cron**: calls the scheduled-reports job once an hour and the knowledge indexing job (`/api/cron/knowledge-ingest`, lessons and uploaded documents) every minute.
 
 GitHub Actions does the deploying. After the Check job and every E2E shard pass, the `deploy` job:
 
@@ -66,6 +66,7 @@ In GitHub, open the repo → Settings → Secrets and variables → Actions → 
 | `PROD_SUPABASE_SERVICE_ROLE_KEY` | The same page, the `service_role` key (full DB access: secret only) |
 | `PROD_RESEND_API_KEY` | Optional. Resend key for announcement emails. |
 | `PROD_CRON_SECRET` | Optional. Any long random string; enables scheduled reports. |
+| `PROD_GROQ_AI_API_KEY` | Optional until the AI tutor ships. Groq API key (console.groq.com → API Keys); tutor answers (ADR-040). |
 | `VPS_KNOWN_HOSTS` | Optional. Output of `ssh-keyscan -H <ip>`; pins the server's host key. |
 
 Optional repository **variables** (the Variables tab):
@@ -73,6 +74,7 @@ Optional repository **variables** (the Variables tab):
 - `PROD_APP_HOST` and `PROD_CONTENT_HOST`: your own hostnames.
 - `PROD_RESEND_FROM_EMAIL`: the sender address for emails.
 - `VPS_SSH_PORT`: the SSH port, if it isn't 22.
+- `PROD_AI_TUTOR_MODEL`: a Groq model ID to use in place of the default `openai/gpt-oss-120b`.
 
 ### 4. Allow the new address in Supabase Auth
 
