@@ -252,6 +252,8 @@ Pending Course
 
 ## 16. AI Instructor Tests
 
+_Descoped with instructor AI (ADR-044). Kept for when it returns._
+
 - [ ] Outline generation works.
 - [ ] Quiz generation works.
 - [ ] Generated content can be edited.

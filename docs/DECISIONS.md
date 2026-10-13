@@ -415,3 +415,15 @@ Improve:
 **Consequences:** AI cost is bounded by who admins enable, on top of the per-user rate limits (ADR-040). Retrieval (T-222) is not gated by this table: it only serves the tutor (which is gated) and admin test retrieval. Bulk enabling (by organization or course) is not built; add it as a follow-up if admins need it.
 
 **Status:** Accepted (user decision).
+
+---
+
+## ADR-044 — Instructor AI Is Descoped for Now
+
+**Decision:** Instructor AI is **not built in this release**: content drafting (outlines, objectives, summaries, quiz questions, assignment ideas; F-702, T-202) and insights (review summaries, drop-off patterns, improvement suggestions; F-703, T-203) move to "Descoped" in `FEATURES.md`. The instructor "AI Assistant" navigation item (`/instructor/ai`) is removed. TEST_PLAN §16 (AI Instructor Tests) is descoped with them, so T-205 covers TEST_PLAN §15 only. Admin AI management (F-704, T-204) loses "generation job history": only instructor tools create `ai_generation_jobs`, so that view would always be empty. AI in this release is the learner AI Tutor (F-701) and the admin screens for it.
+
+**Reason:** User decision (2026-10-13): "We don't need AI for instructors for now."
+
+**Consequences:** No code is removed: the `ai_generation_jobs` table, the `instructor` value of `ai_conversations.feature` and ADR-016 (generated content is never auto-published) stay, so instructor AI can return later without a migration. Bringing it back needs a new ADR that moves F-702/F-703 out of "Descoped", restores T-202/T-203, TEST_PLAN §16, the `/instructor/ai` navigation item and generation job history in T-204.
+
+**Status:** Accepted (user decision).

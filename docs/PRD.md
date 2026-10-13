@@ -286,6 +286,8 @@ AI is an assistant, not the source of truth.
 
 ### Instructor AI
 
+_Deferred: not part of this release (ADR-044)._
+
 - Generate outlines.
 - Generate learning objectives.
 - Draft summaries/transcripts.

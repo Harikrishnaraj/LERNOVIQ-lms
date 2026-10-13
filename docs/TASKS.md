@@ -171,11 +171,14 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 - [x] **T-200** AI provider adapter + policy service + usage/cost recording (`ai_conversations`, `ai_messages`, `ai_generation_jobs`). — F-700
 - [x] **T-201** Learner AI Tutor: contextual to current course/lesson, shows sources, refuses unsupported, hint-only during graded assessments, escalate to discussion. — F-701
-- [ ] **T-202** Instructor AI: outline, objectives, summaries, quiz questions, assignment ideas — editable drafts, never auto-published. — F-702
-- [ ] **T-203** Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. — F-703
-- [ ] **T-204** Admin AI management: model/policy config, safety controls, usage & cost, generation job history. — F-704
-- [ ] **T-205** Tests: TEST_PLAN §15, §16. — F-700…F-704
+- [ ] **T-204** Admin AI management: model/policy config, safety controls, usage & cost (generation job history descoped, ADR-044). — F-704
+- [ ] **T-205** Tests: TEST_PLAN §15 (§16 descoped, ADR-044). — F-700, F-701, F-704
 - [x] **T-206** Per-user AI Tutor access: off by default, an admin turns it on or off for each user on the admin user screen (audited); the tutor refuses users without it (ADR-043). — F-701, F-704
+
+Descoped (ADR-044, restore together with F-702/F-703):
+
+- ~~T-202~~ Instructor AI: outline, objectives, summaries, quiz questions, assignment ideas — editable drafts, never auto-published. (F-702)
+- ~~T-203~~ Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. (F-703)
 
 ## Phase 11 — Knowledge base / RAG
 

@@ -296,14 +296,6 @@ const instructor: PortalNav = {
           task: "T-101",
         },
         {
-          label: "AI Assistant",
-          href: "/instructor/ai",
-          icon: Sparkles,
-          description: "Draft outlines, objectives and quiz questions for review.",
-          task: "T-202",
-          accent: "ai",
-        },
-        {
           label: "Settings",
           href: "/instructor/settings",
           icon: Settings,
