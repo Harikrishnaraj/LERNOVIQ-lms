@@ -154,7 +154,11 @@ export default async function AdminKnowledgePage({
       />
       <KnowledgeAutoRefresh active={waiting > 0} />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Indexing status">
+      <div
+        role="group"
+        aria-label="Indexing status"
+        className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4"
+      >
         {(["ready", "pending", "processing", "failed"] as const).map((s) => (
           <Link
             key={s}

@@ -4,7 +4,7 @@ Production runs on one Ubuntu VPS as three Docker containers (`deploy/docker-com
 
 - **app**: the Next.js standalone server (image built from `Dockerfile`).
 - **caddy**: HTTPS and reverse proxy. Certificates are issued and renewed automatically.
-- **cron**: calls the scheduled-reports job once an hour.
+- **cron**: calls the scheduled-reports job once an hour and the knowledge indexing job (`/api/cron/knowledge-ingest`, lessons and uploaded documents) every minute.
 
 GitHub Actions does the deploying. After the Check job and every E2E shard pass, the `deploy` job:
 

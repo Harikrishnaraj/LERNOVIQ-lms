@@ -58,7 +58,11 @@ export async function extractDocumentText(
  * odd files and would make the whole job fail on insert, so they are dropped here.
  */
 export function cleanText(text: string): string {
-  return text.replace(/\u0000/g, "").toWellFormed().replace(/\uFFFD/g, "").trim();
+  return text
+    .replace(/\u0000/g, "")
+    .toWellFormed()
+    .replace(/\uFFFD/g, "")
+    .trim();
 }
 
 export function capParagraphs(paragraphs: string[], maxChars: number): ExtractedText {
