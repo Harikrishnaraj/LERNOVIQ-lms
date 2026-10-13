@@ -241,7 +241,23 @@ test.describe("learner AI Tutor", () => {
       // Turned back on, it answers again.
       await adminPage.getByRole("button", { name: "Turn on the AI Tutor" }).click();
       await expect(adminPage.getByText("AI Tutor turned on.")).toBeVisible();
-      await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+      // Confirm the switch really is on before asking: the admin page shows it after its refresh,
+      // and the stored row says so. Then load the tutor until the chat is back.
+      await expect(adminPage.getByRole("button", { name: "Turn off the AI Tutor" })).toBeVisible();
+      await expect
+        .poll(async () => {
+          const { data } = await svc
+            .from("ai_settings")
+            .select("tutor_enabled")
+            .eq("id", true)
+            .single();
+          return data?.tutor_enabled;
+        })
+        .toBe(true);
+      await expect(async () => {
+        await page.goto(`/learner/ai-tutor?course=${course.slug}`);
+        await expect(page.getByLabel("Your question")).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 30_000 });
       const question = `Back again ${tag}`;
       await ask(page, question);
       await expect(page.getByText(`Fake answer to: ${question}`)).toBeVisible();

@@ -100,7 +100,7 @@ test.describe("admin AI management", () => {
       await expect(page.getByRole("heading", { level: 1, name: "AI Management" })).toBeVisible();
 
       // Totals for the period (30 days by default); other tests may add more, so only lower bounds.
-      await expect(page.getByText("Questions asked")).toBeVisible();
+      await expect(page.getByText("Questions asked", { exact: true })).toBeVisible();
       await expect(page.getByText("Not in the course").first()).toBeVisible();
 
       // By model: the model this test wrote, with its exact numbers and an honest cost.
