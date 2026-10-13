@@ -187,7 +187,7 @@ role.
 | 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Fakes only; real keys later |
 | 2 | T-220: schema, pgvector (nullable), RLS | Done: ADR-042 |
 | 3 | T-221: lesson ingestion, cron worker (minute sweep instead of a publish trigger) | Built; document upload + status view land with T-223 |
-| 4 | T-222: retrieval function and isolation tests | Step 3 |
+| 4 | T-222: retrieval function and isolation tests | Built (keyword ranking, ADR-042) |
 | 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, Groq key, `api.groq.com` reachable |
 | 6 | T-223: admin knowledge base and document uploads | Step 4 |
 | 7 | T-225: remaining TEST_PLAN §17 items and the eval | All |
