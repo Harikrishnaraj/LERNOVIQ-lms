@@ -16,23 +16,32 @@ export interface FakeProviderOptions {
 
 const approxTokens = (text: string) => Math.ceil(text.length / 4);
 
+/**
+ * A question starting with `[fake-fail:<reason>]` makes the fake fail with that reason, so E2E
+ * tests (which cannot inject a provider into the running server) can reach the failure and
+ * timeout paths. Only this offline provider honours it; the real adapter never looks for it.
+ */
+const FAILURE_PREFIX = /^\[fake-fail:(timeout|rate_limited|not_configured|error)\]/;
+
 export function createFakeProvider(options: FakeProviderOptions = {}): ChatProvider {
   const model = options.model ?? "fake-tutor-1";
   return {
     name: "fake",
     model,
     async complete(request: ChatRequest): Promise<ChatResult> {
-      if (options.fail)
+      const lastUser =
+        [...request.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+      const fail =
+        options.fail ?? (FAILURE_PREFIX.exec(lastUser)?.[1] as ChatFailureReason | undefined);
+      if (fail)
         return {
           ok: false,
           provider: "fake",
           model,
           latencyMs: 0,
-          reason: options.fail,
-          code: `fake_${options.fail}`,
+          reason: fail,
+          code: `fake_${fail}`,
         };
-      const lastUser =
-        [...request.messages].reverse().find((m) => m.role === "user")?.content ?? "";
       const hasPassage = request.messages.some((m) => m.content.includes('<passage id="S1"'));
       const text = options.reply ?? `Fake answer to: ${lastUser}${hasPassage ? " [S1]" : ""}`;
       return {

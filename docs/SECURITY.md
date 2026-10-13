@@ -243,6 +243,16 @@ after their last message and finished generation jobs for 12 months, then purged
 (ADR-040), so learner questions and retrieved lesson text are sent to Groq; the privacy notice
 must say so. Lesson search is Postgres full-text (ADR-042), so only Groq receives learner questions and lesson text. If an embedding provider is added later, the privacy notice must name it; embeddings live in `knowledge_chunks` and are deleted with their source.
 
+### Admin controls (T-204, ADR-045)
+
+- The AI Tutor has a platform kill switch, an allow-listed model, an answer-length bound, a per-learner
+  daily question cap and an "always hint-only" mode in `ai_settings`. Only `ai.manage_settings`
+  (admin, super_admin) can change them (RLS and column grants), every change is audited as
+  `ai.settings_updated` with the values before and after, and the tutor re-reads them for every
+  question and fails closed when they cannot be read.
+- Usage, cost and the access list are SQL functions that check `ai.read_all` / `ai.manage_access`
+  themselves; they expose user names and emails only to those holders.
+
 ### Graded assessments
 
 If policy disables direct answers during graded assessments:
@@ -299,6 +309,10 @@ Rate-limit:
 - expensive analytics queries.
 
 Use stronger limits for unauthenticated endpoints.
+
+AI Tutor (ADR-045): besides the `ai-tutor` burst and `ai-tutor-daily` buckets, an admin-set daily
+question cap per learner (1 to 150, counted from stored questions over a rolling 24 hours) applies;
+150 is its ceiling, so the bucket stays the backstop.
 
 ## 19. Abuse Prevention
 

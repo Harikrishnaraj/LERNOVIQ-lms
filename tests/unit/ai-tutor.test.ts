@@ -187,6 +187,8 @@ interface LearnerState {
   conversations: Row[];
   messages: Row[];
   lessons: Row[];
+  /** Questions the learner already asked in the last 24 hours (ai_tutor_questions_since). */
+  asked: number;
 }
 
 function learnerSession(state: LearnerState) {
@@ -200,6 +202,8 @@ function learnerSession(state: LearnerState) {
         return { data: state.access, error: null };
       case "has_active_graded_attempt":
         return { data: state.graded, error: null };
+      case "ai_tutor_questions_since":
+        return { data: state.asked, error: null };
       case "my_learning":
         return { data: state.learning, error: null };
       case "match_knowledge_chunks":
@@ -216,9 +220,23 @@ function learnerSession(state: LearnerState) {
   return { rpc, from: (t: string) => query(tables[t] ?? []) };
 }
 
+/** ai_settings as migrated: every default, nothing changed by an admin. */
+const SETTINGS_ROW: Row = {
+  id: true,
+  tutor_enabled: true,
+  tutor_model: null,
+  max_answer_tokens: 1500,
+  daily_question_cap: 150,
+  hint_only_always: false,
+};
+
 /** Service-role stand-in: records what runChatTurn writes. */
-function serviceDb(conversations: Row[] = []) {
-  const tables: Record<string, Row[]> = { ai_conversations: conversations, ai_messages: [] };
+function serviceDb(conversations: Row[] = [], settings: Row | null = SETTINGS_ROW) {
+  const tables: Record<string, Row[]> = {
+    ai_conversations: conversations,
+    ai_messages: [],
+    ai_settings: settings ? [settings] : [],
+  };
   let next = 1;
   return {
     tables,
@@ -272,11 +290,12 @@ describe("answerTutorQuestion", () => {
   let allow: ReturnType<typeof vi.fn<() => Promise<boolean>>>;
   let requests: ChatRequest[];
   let provider: ChatProvider;
+  let providerFor: ReturnType<typeof vi.fn<(model: string | null) => ChatProvider>>;
 
   const deps = (over: Partial<TutorDeps> = {}): TutorDeps => ({
     supabase: supabase as unknown as SupabaseClient,
     db: db as unknown as SupabaseClient,
-    provider,
+    provider: providerFor,
     userId: "user-1",
     allow,
     ...over,
@@ -291,6 +310,7 @@ describe("answerTutorQuestion", () => {
       conversations: [],
       messages: [],
       lessons: [{ id: LESSON_A, title: "Closures" }],
+      asked: 0,
     };
     supabase = learnerSession(state);
     db = serviceDb();
@@ -304,6 +324,8 @@ describe("answerTutorQuestion", () => {
         return fake.complete(req);
       },
     };
+    // Tests that swap `provider` later are picked up because the factory reads the variable.
+    providerFor = vi.fn(() => provider);
   });
 
   const ask = (over: Record<string, unknown> = {}) =>
@@ -460,6 +482,120 @@ describe("answerTutorQuestion", () => {
     expect(requests).toHaveLength(0);
   });
 
+  describe("admin settings (T-204, ADR-045)", () => {
+    const withSettings = (over: Row) => {
+      db = serviceDb([], { ...SETTINGS_ROW, ...over });
+    };
+
+    it("refuses everyone when the kill switch is off, before any other work", async () => {
+      withSettings({ tutor_enabled: false });
+      const reply = await ask();
+      expect(reply).toMatchObject({ ok: false, code: "disabled" });
+      expect(reply.ok === false && reply.error).toMatch(/turned off/i);
+      // Not even the per-user access check, the rate limiter or retrieval ran.
+      expect(supabase.rpc).not.toHaveBeenCalled();
+      expect(allow).not.toHaveBeenCalled();
+      expect(providerFor).not.toHaveBeenCalled();
+      expect(requests).toHaveLength(0);
+      expect(db.tables.ai_messages).toHaveLength(0);
+    });
+
+    it("answers again as soon as the switch is back on (settings are read per question)", async () => {
+      withSettings({ tutor_enabled: false });
+      expect(await ask()).toMatchObject({ ok: false, code: "disabled" });
+      db.tables.ai_settings[0].tutor_enabled = true;
+      expect(await ask()).toMatchObject({ ok: true });
+    });
+
+    it("fails closed when the settings cannot be read", async () => {
+      db = {
+        tables: {},
+        from: () => ({
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: null, error: { message: "boom" } }) }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof serviceDb>;
+      expect(await ask()).toMatchObject({ ok: false, code: "unavailable" });
+      expect(requests).toHaveLength(0);
+    });
+
+    it("uses the defaults when the settings row is missing", async () => {
+      db = serviceDb([], null);
+      expect(await ask()).toMatchObject({ ok: true });
+      expect(providerFor).toHaveBeenCalledWith(null);
+      expect(requests[0].maxOutputTokens).toBe(1500);
+    });
+
+    it("asks the provider for the admin's model, or the server default when none is chosen", async () => {
+      await ask();
+      expect(providerFor).toHaveBeenLastCalledWith(null);
+      withSettings({ tutor_model: "openai/gpt-oss-20b" });
+      state.searches = [[chunkRow(1, LESSON_A, "Closures")]];
+      await ask();
+      expect(providerFor).toHaveBeenLastCalledWith("openai/gpt-oss-20b");
+    });
+
+    it("ignores a model that is not on the allow-list", async () => {
+      withSettings({ tutor_model: "some/other-model" });
+      await ask();
+      expect(providerFor).toHaveBeenLastCalledWith(null);
+    });
+
+    it("limits the answer to the admin's maximum length", async () => {
+      withSettings({ max_answer_tokens: 800 });
+      await ask();
+      expect(requests[0].maxOutputTokens).toBe(800);
+    });
+
+    it("gives hints only for every learner when the admin turns that on", async () => {
+      withSettings({ hint_only_always: true });
+      state.graded = false;
+      const reply = await ask();
+      expect(reply).toMatchObject({ ok: true, mode: "hint_only" });
+      expect(requests[0].messages[0].content).toContain(HINT_ONLY_RULES);
+    });
+
+    it("stops a learner at the daily cap without searching or calling the model", async () => {
+      withSettings({ daily_question_cap: 3 });
+      state.asked = 3;
+      const reply = await ask();
+      expect(reply).toMatchObject({ ok: false, code: "daily_limit" });
+      expect(reply.ok === false && reply.error).toContain("limit of 3");
+      expect(supabase.rpc).toHaveBeenCalledWith("ai_tutor_questions_since", {
+        p_since: expect.any(String),
+      });
+      expect(supabase.rpc).not.toHaveBeenCalledWith("match_knowledge_chunks", expect.anything());
+      expect(requests).toHaveLength(0);
+    });
+
+    it("lets the learner ask until the cap is reached", async () => {
+      withSettings({ daily_question_cap: 3 });
+      state.asked = 2;
+      expect(await ask()).toMatchObject({ ok: true });
+    });
+
+    it("counts questions over a rolling 24 hours", async () => {
+      const before = Date.now();
+      await ask();
+      const call = supabase.rpc.mock.calls.find(([name]) => name === "ai_tutor_questions_since");
+      const since = Date.parse((call?.[1] as { p_since: string }).p_since);
+      expect(Date.now() - since).toBeGreaterThanOrEqual(24 * 60 * 60 * 1000 - 1000);
+      expect(before - since).toBeGreaterThanOrEqual(24 * 60 * 60 * 1000 - 1000);
+    });
+
+    it("reports a failed daily count as unavailable rather than skipping the cap", async () => {
+      const rpc = supabase.rpc.getMockImplementation()!;
+      supabase.rpc.mockImplementation(async (name, args) =>
+        name === "ai_tutor_questions_since"
+          ? { data: null, error: { message: "boom" } }
+          : rpc(name, args),
+      );
+      expect(await ask()).toMatchObject({ ok: false, code: "unavailable" });
+      expect(requests).toHaveLength(0);
+    });
+  });
+
   describe("continuing a conversation", () => {
     beforeEach(() => {
       state.conversations.push({
@@ -551,7 +687,26 @@ vi.mock("@/lib/supabase/server", () => ({
     rpc: async () => ({ data: false, error: null }),
   }),
 }));
-vi.mock("@/services/supabase/admin", () => ({ createAdminClient: () => ({}) }));
+vi.mock("@/services/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: {
+              tutor_enabled: true,
+              tutor_model: null,
+              max_answer_tokens: 1500,
+              daily_question_cap: 150,
+              hint_only_always: false,
+            },
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  }),
+}));
 
 describe("askTutor", () => {
   it("asks a signed-out visitor to log in", async () => {

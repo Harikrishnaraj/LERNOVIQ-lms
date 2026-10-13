@@ -7,7 +7,13 @@ import {
   InternalServerError,
   RateLimitError,
 } from "groq-sdk";
-import { DEFAULT_TUTOR_MODEL, costUsd, getChatProvider } from "@/services/ai";
+import {
+  DEFAULT_TUTOR_MODEL,
+  costUsd,
+  defaultTutorModel,
+  describeChatProvider,
+  getChatProvider,
+} from "@/services/ai";
 import { classifyGroqError, createGroqProvider } from "@/services/ai/groq";
 import { createFakeProvider } from "@/services/ai/fake";
 import { isSecretKey, redact } from "@/lib/log/redact";
@@ -39,6 +45,40 @@ describe("getChatProvider", () => {
       AI_TUTOR_MODEL: " openai/gpt-oss-20b ",
     });
     expect(provider).toMatchObject({ name: "groq", model: "openai/gpt-oss-20b" });
+  });
+
+  it("lets the admin's model (ai_settings.tutor_model) override AI_TUTOR_MODEL", () => {
+    const env = { GROQ_AI_API_KEY: "gsk_test", AI_TUTOR_MODEL: "openai/gpt-oss-120b" };
+    expect(getChatProvider(env, { model: "openai/gpt-oss-20b" }).model).toBe("openai/gpt-oss-20b");
+    // No admin choice (null, empty): the environment, then the built-in default.
+    expect(getChatProvider(env, { model: null }).model).toBe("openai/gpt-oss-120b");
+    expect(getChatProvider({ GROQ_AI_API_KEY: "gsk_test" }, { model: " " }).model).toBe(
+      DEFAULT_TUTOR_MODEL,
+    );
+  });
+
+  it("keeps the fake provider under tests whatever model an admin chose", () => {
+    expect(getChatProvider({ AI_PROVIDER: "fake" }, { model: "openai/gpt-oss-20b" }).name).toBe(
+      "fake",
+    );
+  });
+});
+
+describe("describeChatProvider", () => {
+  it("tells the admin screen which provider is live, never exposing the key", () => {
+    expect(describeChatProvider({})).toEqual({
+      provider: "groq",
+      configured: false,
+      defaultModel: DEFAULT_TUTOR_MODEL,
+    });
+    expect(
+      describeChatProvider({ GROQ_AI_API_KEY: "gsk_secret", AI_TUTOR_MODEL: "openai/gpt-oss-20b" }),
+    ).toEqual({ provider: "groq", configured: true, defaultModel: "openai/gpt-oss-20b" });
+    expect(describeChatProvider({ AI_PROVIDER: "fake" })).toMatchObject({
+      provider: "fake",
+      configured: true,
+    });
+    expect(defaultTutorModel({ AI_TUTOR_MODEL: "  " })).toBe(DEFAULT_TUTOR_MODEL);
   });
 });
 

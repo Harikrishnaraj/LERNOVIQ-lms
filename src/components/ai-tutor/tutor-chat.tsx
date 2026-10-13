@@ -114,8 +114,9 @@ export function TutorChat({
           role="status"
           className="rounded-t-card bg-warning-light px-4 py-2 text-sm text-warning-text"
         >
-          Hint-only mode: you have a graded assessment in progress in this course, so the tutor
-          explains ideas and gives hints but not answers.
+          Hint-only mode: the tutor explains ideas and gives hints but not answers. It is on while
+          you have a graded assessment in progress in this course, or when your administrator turns
+          it on for everyone.
         </p>
       )}
 

@@ -427,3 +427,20 @@ Improve:
 **Consequences:** No code is removed: the `ai_generation_jobs` table, the `instructor` value of `ai_conversations.feature` and ADR-016 (generated content is never auto-published) stay, so instructor AI can return later without a migration. Bringing it back needs a new ADR that moves F-702/F-703 out of "Descoped", restores T-202/T-203, TEST_PLAN §16, the `/instructor/ai` navigation item and generation job history in T-204.
 
 **Status:** Accepted (user decision).
+
+---
+
+## ADR-045 — Admin AI Settings Live in the Database and Apply to the Next Question
+
+**Decision:** One row in `ai_settings` (`id boolean primary key check (id)`, so exactly one row) holds the platform's AI Tutor settings: `tutor_enabled` (kill switch, default on), `tutor_model` (null = server default `AI_TUTOR_MODEL`, else `openai/gpt-oss-120b`; otherwise one of `openai/gpt-oss-120b`, `openai/gpt-oss-20b`), `max_answer_tokens` (300 to 3000, default 1500), `daily_question_cap` (1 to 150 per learner per rolling 24 hours, default 150) and `hint_only_always` (default off). Defaults equal the behaviour before the table existed. The bounds and the model allow-list are `CHECK` constraints and are repeated in `src/features/ai/settings-rules.ts` (shared by the form and the server action). Any signed-in user can read the row (the learner screens show "the AI Tutor is turned off"); only the new permission `ai.manage_settings` (admin, super_admin) can update it, with column-level grants (no insert, delete or `id` change). Changes go through the server action `updateAiSettings` (auth, permission, validation, `ai.settings_updated` audit with the changed fields and the values before and after, `revalidatePath("/admin/ai")`). The permission is separate from `ai.manage_access` (per-user switch, ADR-043) and `ai.read_all` (usage and cost) so each screen section can be granted on its own.
+
+**How the tutor applies them:** `answerTutorQuestion` reads the row once per question, uncached, with the service client, and fails closed when it cannot be read (`unavailable`). Order: settings (kill switch → `disabled`) → per-user access (ADR-043) → input → burst limit → daily cap (`ai_tutor_questions_since`, bound to `auth.uid()`; `daily_limit`) → enrollment → mode (`hint_only` if the setting is on, else the graded-assessment check) → retrieval → provider for the chosen model (`getChatProvider(env, { model })`; the fake provider ignores it) with `max_answer_tokens` as the output limit. The existing `ai-tutor` and `ai-tutor-daily` rate limits stay as abuse backstops; 150 is the cap's ceiling so the cap can never exceed them.
+
+**Usage and cost** on `/admin/ai` come from `ai_usage_report(p_days)` (7, 30 or 90), a `security definer` SQL function that checks `ai.read_all` and aggregates in the database, so message rows never reach Node. Cost sums priced answers only; answers from a model without a known price are counted as "unpriced" and shown as "Unknown price" (never guessed). Fixed "not in your course" answers (provider null) are counted apart from model answers. `ai_tutor_access_list` (`ai.manage_access`) returns the users with the tutor, their emails and who turned it on.
+
+**Reason:** User decision (2026-10-13) for T-204: admins need a kill switch, a model choice and cost controls without a deploy, and visibility into usage and cost.
+
+**Consequences:** Changing a setting needs no deploy and applies to the next question, including one already open in a learner's browser. The model list is closed: adding a model means a migration (the `CHECK`), `TUTOR_MODELS` and a price in `pricing.ts`. Generation job history and instructor AI stay descoped (ADR-044). Integration and E2E tests must not flip the kill switch, hint-only mode or the cap on the shared database except in the serial tutor spec, which restores the defaults.
+
+**Status:** Accepted.
+
