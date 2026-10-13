@@ -61,6 +61,8 @@ export const AUDIT_ACTIONS = [
   "communication.template_updated",
   "communication.template_deleted",
   "communication.announcement_sent",
+  "ai.tutor_access_granted",
+  "ai.tutor_access_revoked",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

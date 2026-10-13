@@ -175,6 +175,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-203** Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. — F-703
 - [ ] **T-204** Admin AI management: model/policy config, safety controls, usage & cost, generation job history. — F-704
 - [ ] **T-205** Tests: TEST_PLAN §15, §16. — F-700…F-704
+- [~] **T-206** Per-user AI Tutor access: off by default, an admin turns it on or off for each user on the admin user screen (audited); the tutor refuses users without it (ADR-043). — F-701, F-704
 
 ## Phase 11 — Knowledge base / RAG
 

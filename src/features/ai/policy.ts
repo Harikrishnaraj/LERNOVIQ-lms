@@ -38,6 +38,19 @@ export async function getTutorMode(supabase: SupabaseClient, courseId: string): 
   return data === true ? "hint_only" : "full";
 }
 
+/**
+ * Has an admin turned the AI Tutor on for the signed-in user (ADR-043)? Uses the user's own
+ * session (the SQL function reads auth.uid()). Fails closed: no answer means no tutor.
+ */
+export async function hasTutorAccess(supabase: SupabaseClient): Promise<boolean> {
+  const { data, error } = await supabase.rpc("has_ai_tutor_access");
+  if (error) {
+    log.error("ai.policy.access_check_failed", { message: error.message });
+    return false;
+  }
+  return data === true;
+}
+
 /** Burst limit and daily cap per learner (and the per-IP bucket the limiter adds). */
 export async function checkTutorAllowance(userId: string): Promise<boolean> {
   const ip = await clientIp();

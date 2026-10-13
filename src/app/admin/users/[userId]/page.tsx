@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LogIn } from "lucide-react";
-import { getLoginHistory, getAdminUserDetail, describeUserAgent, LOGIN_HISTORY_LIMIT } from "@/features/admin/user-detail";
+import {
+  getLoginHistory,
+  getAdminUserDetail,
+  describeUserAgent,
+  LOGIN_HISTORY_LIMIT,
+} from "@/features/admin/user-detail";
 import { getUserProgress, deriveSkills, formatHours } from "@/features/progress/progress";
 import { PermissionDeniedState, EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
@@ -10,15 +15,25 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { UserRowActions } from "@/components/admin/user-row-actions";
+import { AiTutorAccessToggle } from "@/components/admin/ai-tutor-access-toggle";
+import { getAiTutorAccess } from "@/features/admin/ai-access";
 import { ROLE_LABEL } from "@/features/admin/user-rules";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "User detail" };
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
+const dateFormat = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
 
-export default async function AdminUserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
+export default async function AdminUserDetailPage({
+  params,
+}: {
+  params: Promise<{ userId: string }>;
+}) {
   const { userId } = await params;
   const supabase = await createClient();
   const {
@@ -30,7 +45,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     return (
       <>
         <PageHeader title="User detail" />
-        <PermissionDeniedState title="You cannot view this user" description="Ask an administrator if you need access." />
+        <PermissionDeniedState
+          title="You cannot view this user"
+          description="Ask an administrator if you need access."
+        />
       </>
     );
   }
@@ -38,12 +56,15 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const target = await getAdminUserDetail(supabase, userId);
   if (!target) notFound();
 
-  const [progress, loginHistory, canManage, { data: myRoles }] = await Promise.all([
-    getUserProgress(supabase, userId),
-    getLoginHistory(supabase, userId),
-    can(supabase, user.id, "user.manage"),
-    supabase.from("user_roles").select("role_id").eq("user_id", user.id),
-  ]);
+  const [progress, loginHistory, canManage, { data: myRoles }, aiAccess, canManageAi] =
+    await Promise.all([
+      getUserProgress(supabase, userId),
+      getLoginHistory(supabase, userId),
+      can(supabase, user.id, "user.manage"),
+      supabase.from("user_roles").select("role_id").eq("user_id", user.id),
+      getAiTutorAccess(supabase, userId),
+      can(supabase, user.id, "ai.manage_access"),
+    ]);
   const actorIsSuper = (myRoles ?? []).some((r) => r.role_id === "super_admin");
   const skills = deriveSkills(progress.courses);
   const completed = progress.courses.filter((c) => c.status === "completed").length;
@@ -61,7 +82,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <CardHeader title="Progress" description="From real lesson completions." />
             <CardContent>
               {progress.courses.length === 0 ? (
-                <p className="text-sm text-text-secondary">This user has not started any course yet.</p>
+                <p className="text-sm text-text-secondary">
+                  This user has not started any course yet.
+                </p>
               ) : (
                 <>
                   <div className="mb-4 grid grid-cols-3 gap-3 text-center">
@@ -102,7 +125,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <CardHeader title="Skills" description="By category, from completed courses." />
             <CardContent>
               {skills.length === 0 ? (
-                <p className="text-sm text-text-secondary">No skills yet — none of this user&apos;s courses have a category.</p>
+                <p className="text-sm text-text-secondary">
+                  No skills yet — none of this user&apos;s courses have a category.
+                </p>
               ) : (
                 <ul className="space-y-3">
                   {skills.map((s) => (
@@ -110,10 +135,13 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                       <span className="min-w-0">
                         <span className="block font-medium">{s.name}</span>
                         <span className="block text-xs text-text-secondary">
-                          {s.completedCourses} {s.completedCourses === 1 ? "course" : "courses"} · {formatHours(s.minutes)}
+                          {s.completedCourses} {s.completedCourses === 1 ? "course" : "courses"} ·{" "}
+                          {formatHours(s.minutes)}
                         </span>
                       </span>
-                      <span className="shrink-0 rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary-dark">{s.level}</span>
+                      <span className="shrink-0 rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary-dark">
+                        {s.level}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -128,14 +156,22 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             />
             <CardContent>
               {loginHistory.length === 0 ? (
-                <EmptyState icon={LogIn} title="No recorded sign-ins" description="Sign-ins are recorded going forward from when this was added." />
+                <EmptyState
+                  icon={LogIn}
+                  title="No recorded sign-ins"
+                  description="Sign-ins are recorded going forward from when this was added."
+                />
               ) : (
                 <ul aria-label="Login history" className="divide-y divide-border-subtle">
                   {loginHistory.map((event) => (
-                    <li key={event.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <li
+                      key={event.id}
+                      className="flex items-center justify-between gap-3 py-2 text-sm"
+                    >
                       <span>{describeUserAgent(event.userAgent)}</span>
                       <span className="text-text-secondary">
-                        {dateFormat.format(new Date(event.createdAt))} UTC{event.ipAddress ? ` · ${event.ipAddress}` : ""}
+                        {dateFormat.format(new Date(event.createdAt))} UTC
+                        {event.ipAddress ? ` · ${event.ipAddress}` : ""}
                       </span>
                     </li>
                   ))}
@@ -157,7 +193,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 <span className="text-text-secondary">Roles</span>
                 <span>
                   {target.roles.length > 0
-                    ? target.roles.map((r) => ROLE_LABEL[r as keyof typeof ROLE_LABEL] ?? r).join(", ")
+                    ? target.roles
+                        .map((r) => ROLE_LABEL[r as keyof typeof ROLE_LABEL] ?? r)
+                        .join(", ")
                     : "None"}
                 </span>
               </div>
@@ -167,8 +205,36 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-text-secondary">Last sign-in</span>
-                <span>{target.lastSignInAt ? dateFormat.format(new Date(target.lastSignInAt)) : "Never"}</span>
+                <span>
+                  {target.lastSignInAt ? dateFormat.format(new Date(target.lastSignInAt)) : "Never"}
+                </span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="AI Tutor"
+              description="Off by default. Only users an admin turns it on for can use the AI Tutor."
+            />
+            <CardContent className="space-y-3 text-sm" role="region" aria-label="AI Tutor access">
+              <div className="flex items-center justify-between">
+                <span className="text-text-secondary">Access</span>
+                <span className="font-medium">{aiAccess.enabled ? "On" : "Off"}</span>
+              </div>
+              {aiAccess.enabled && aiAccess.grantedAt && (
+                <p className="text-xs text-text-secondary">
+                  Turned on {dateFormat.format(new Date(aiAccess.grantedAt))} UTC
+                  {aiAccess.grantedByName ? ` by ${aiAccess.grantedByName}` : ""}
+                </p>
+              )}
+              {canManageAi && (
+                <AiTutorAccessToggle
+                  userId={target.userId}
+                  enabled={aiAccess.enabled}
+                  name={target.email ?? target.fullName ?? "user"}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -176,7 +242,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             <Card>
               <CardHeader title="Actions" />
               <CardContent>
-                <UserRowActions user={target} isSelf={target.userId === user.id} actorIsSuper={actorIsSuper} />
+                <UserRowActions
+                  user={target}
+                  isSelf={target.userId === user.id}
+                  actorIsSuper={actorIsSuper}
+                />
               </CardContent>
             </Card>
           )}

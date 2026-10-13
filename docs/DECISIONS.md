@@ -405,3 +405,13 @@ Improve:
 - Tasks are unchanged: T-221 indexes lessons (chunking and full-text, embedding step skipped while no provider is configured), T-222 retrieves by keyword.
 
 **Status:** Accepted (user decision). Supersedes ADR-041 for v1.
+
+## ADR-043 — The Learner AI Tutor Requires Per-User Admin Approval
+
+**Decision:** The learner AI Tutor is **off for every user by default**. An admin (new permission `ai.manage_access`: admin, super_admin) turns it on or off for an individual user on the admin user detail page. There is no request flow: users without access see that the tutor is not enabled for their account and to ask an administrator. A row in `ai_tutor_access` means "enabled"; turning it off deletes the row. Every change is audited (`ai.tutor_access_granted` / `ai.tutor_access_revoked`). The tutor checks `has_ai_tutor_access()` on the server before every question, so hiding the UI is never the only guard. Instructor AI tools (T-202, T-203) are **not** gated by this approval.
+
+**Reason:** User decision (2026-10-13): "AI feature should be implemented only when the admin approves for the user", then "Admin grants directly" and "Learner AI Tutor only" over a request-and-approve flow or gating all AI features.
+
+**Consequences:** AI cost is bounded by who admins enable, on top of the per-user rate limits (ADR-040). Retrieval (T-222) is not gated by this table: it only serves the tutor (which is gated) and admin test retrieval. Bulk enabling (by organization or course) is not built; add it as a follow-up if admins need it.
+
+**Status:** Accepted (user decision).

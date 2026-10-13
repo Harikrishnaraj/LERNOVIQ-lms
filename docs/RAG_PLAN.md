@@ -134,6 +134,8 @@ role.
   back to its chunk, then to a lesson link (TEST_PLAN §15 "shows sources"); unknown markers are dropped.
 - **Prompt order:** a fixed system prompt (grounding rules, refusal and escalation behaviour) comes
   first and the per-question chunks after it, so any provider-side prefix caching can reuse it.
+- **Access (ADR-043):** the tutor is off until an admin turns it on for the user; `hasTutorAccess()` is checked
+  on the server before every question.
 - **Policy service**
   - If the learner has an in-progress graded assessment in that course, the tutor switches to
     **hint-only** mode (PRD §12).
