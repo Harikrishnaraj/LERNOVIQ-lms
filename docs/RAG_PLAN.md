@@ -142,7 +142,7 @@ role.
   - Off-topic questions get a polite redirect.
   - Low confidence offers "Post this in the course discussion" (escalation, PRD §12).
 - **Safety and cost**
-  - New rate-limit buckets: `ai-tutor` and `ai-ingest` (SECURITY §18).
+  - New rate-limit buckets: `ai-tutor`, `knowledge-upload` and `knowledge-reindex` (SECURITY §18).
   - Every call is recorded in `ai_conversations` / `ai_messages` with tokens and cost (F-700).
   - Timeouts, provider errors and refusals produce a recoverable UI message, never a crash.
 - **UI**

@@ -60,7 +60,6 @@ export type DocumentCheck =
 /** A file name with no path parts or control characters, capped in length. */
 export function safeDocumentName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "";
-  // eslint-disable-next-line no-control-regex
   const cleaned = base
     .replace(/[\u0000-\u001f\u007f]/g, "")
     .replace(/\s+/g, " ")

@@ -85,7 +85,7 @@ export async function requestKnowledgeUpload(
 ): Promise<KnowledgeUploadTicket> {
   const auth = await authorize();
   if (!auth.ok) return auth;
-  if (!(await rateLimit("ai-ingest", await clientIp(), auth.actor.id))) {
+  if (!(await rateLimit("knowledge-upload", await clientIp(), auth.actor.id))) {
     return { ok: false, error: RATE_LIMITED_MESSAGE };
   }
   const check = checkInput(input);
@@ -188,7 +188,7 @@ export async function reindexKnowledgeSource(sourceId: unknown): Promise<Knowled
   const auth = await authorize();
   if (!auth.ok) return auth;
   if (!isUuid(sourceId)) return { ok: false, error: "Source not found." };
-  if (!(await rateLimit("ai-ingest", await clientIp(), auth.actor.id))) {
+  if (!(await rateLimit("knowledge-reindex", await clientIp(), auth.actor.id))) {
     return { ok: false, error: RATE_LIMITED_MESSAGE };
   }
 
@@ -231,14 +231,11 @@ export async function deleteKnowledgeDocument(sourceId: unknown): Promise<Knowle
     .select("title, storage_path, organization_id");
   if (error) return { ok: false, error: "We could not delete that document. Please try again." };
   const deleted = (data ?? [])[0] as
-    | { title: string; storage_path: string | null; organization_id: string | null }
-    | undefined;
+    { title: string; storage_path: string | null; organization_id: string | null } | undefined;
   if (!deleted) return { ok: false, error: "Document not found." };
 
   if (deleted.storage_path) {
-    await supabaseStorage
-      .remove(KNOWLEDGE_DOCUMENT_BUCKET, [deleted.storage_path])
-      .catch(() => {});
+    await supabaseStorage.remove(KNOWLEDGE_DOCUMENT_BUCKET, [deleted.storage_path]).catch(() => {});
   }
   await recordAudit({
     actorId: auth.actor.id,
