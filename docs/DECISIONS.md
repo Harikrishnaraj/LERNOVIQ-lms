@@ -391,3 +391,17 @@ Improve:
 - The chat provider (Groq, ADR-040) and the embedding provider are independent adapters.
 
 **Status:** Accepted (user decision).
+
+## ADR-042 — Lesson Search Starts with Postgres Full-Text; Embeddings Become Optional
+
+**Decision:** Supersedes ADR-041 for the first version. The AI Tutor finds lesson passages with **Postgres full-text search** (the `tsvector` + GIN index on `knowledge_chunks`), ranked with `ts_rank_cd` and filtered by the caller's permissions before ranking (ADR-017). No embedding provider is needed to ship the tutor. `knowledge_chunks.embedding` and `embedding_model` are **nullable**: when an embedding provider is added later, the indexer fills them and retrieval blends vector and keyword results (reciprocal rank fusion) with no schema change. The embeddings adapter (`src/services/embeddings/`, OpenAI and fake) stays in the repo, unused until then; its deploy wiring is optional.
+
+**Reason:** User decision (2026-10-13): an OpenAI key could not be obtained, so the user chose "keyword search first" over a self-hosted model, an in-app model or another hosted provider. Groq does not offer embeddings.
+
+**Consequences:**
+- A question worded very differently from the lesson ("why does my loop never stop?" vs "termination conditions") can miss the right passage. Mitigations: the indexer prefixes each chunk with its course, section and lesson titles, retrieval uses `websearch_to_tsquery` with an OR fallback, and the T-225 retrieval eval (about 30 question → lesson pairs) measures the gap and decides when embeddings are worth adding.
+- The vector column and HNSW index stay (nullable) so adding embeddings later is a backfill, not a migration. If the chosen model is not 1536-dimensional, one migration changes the column size.
+- Only one AI vendor (Groq, ADR-040) receives learner data; ADR-041's second-vendor note applies only if embeddings are added.
+- Tasks are unchanged: T-221 indexes lessons (chunking and full-text, embedding step skipped while no provider is configured), T-222 retrieves by keyword.
+
+**Status:** Accepted (user decision). Supersedes ADR-041 for v1.

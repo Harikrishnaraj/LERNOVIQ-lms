@@ -1,6 +1,6 @@
 # LERNOVIQ — RAG Implementation Plan
 
-**Status:** Decisions in §1 settled (ADR-039, revised by ADR-040, 2026-10-12). Steps 1 (T-200) and 2 (T-220) built; embeddings are OpenAI (ADR-041).
+**Status:** Decisions in §1 settled (ADR-039, revised by ADR-040, 2026-10-12). Steps 1 (T-200) and 2 (T-220) built; search is Postgres full-text, embeddings optional (ADR-042).
 **Covers:** T-220–T-225 (F-800, F-801, F-802) and the parts of T-200 (F-700) and T-201 (F-701) that
 RAG cannot work without.
 **Based on:** `main` at `f3c8333` (2026-10-05). Organizations, SSO, security headers, logging,
@@ -15,9 +15,9 @@ ADR-017 (permission-aware retrieval), SECURITY §16, PRD §12, TEST_PLAN §15 an
 | # | Decision | Chosen |
 | --- | --- | --- |
 | 1 | **Answer model** | **Groq** (`groq-sdk`), default `openai/gpt-oss-120b`, behind the chat adapter. Model ID is config (`AI_TUTOR_MODEL`). |
-| 2 | **Embedding model** | **OpenAI `text-embedding-3-small`** (ADR-041), stored as `vector(1536)`. |
+| 2 | **Search method** | **Postgres full-text first** (ADR-042). Embeddings are optional and nullable; OpenAI was dropped because no key could be obtained (ADR-041 superseded for v1). |
 | 3 | **What the first version searches** | **(a) published lesson text only.** Then admin/org documents (F-802), then lesson attachments. |
-| 4 | **Keys** | `GROQ_AI_API_KEY` (secret `PROD_GROQ_AI_API_KEY`) and `OPENAI_API_KEY` (secret `PROD_OPENAI_API_KEY`) for the VPS. Tests and CI use the fake providers. |
+| 4 | **Keys** | `GROQ_AI_API_KEY` (secret `PROD_GROQ_AI_API_KEY`) only. `OPENAI_API_KEY` is optional and unused until embeddings are added. Tests and CI use the fake providers. |
 
 Per CLAUDE.md "Blocked?", no provider is stubbed and ticked: missing keys are recorded in
 `MEMORY.md` under Known Issues.
@@ -185,7 +185,7 @@ role.
 | Step | Task | Needs |
 | --- | --- | --- |
 | 1 | Minimal T-200: chat and embedding adapters, `ai_*` usage tables, rate limits | Fakes only; real keys later |
-| 2 | T-220: schema, pgvector, RLS | Done: ADR-041, `vector(1536)` |
+| 2 | T-220: schema, pgvector (nullable), RLS | Done: ADR-042 |
 | 3 | T-221: lesson ingestion, cron worker, publish trigger | Steps 1–2 |
 | 4 | T-222: retrieval function and isolation tests | Step 3 |
 | 5 | T-224 + T-201: tutor UI, citations, policy | Steps 1 and 4, Groq key, `api.groq.com` reachable |

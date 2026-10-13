@@ -119,6 +119,40 @@ describe.skipIf(!hasLiveProject)("knowledge base schema (T-220, live Supabase)",
     ]);
   });
 
+  it("stores a chunk without an embedding (keyword-only search, ADR-042) and finds it by full text", async () => {
+    const { error } = await svc.from("knowledge_chunks").insert({
+      source_id: sourceId,
+      course_version_id: versionId,
+      lesson_id: lessonId,
+      position: 5,
+      content: "Recursion needs a base case so the function terminates.",
+      token_count: 10,
+      content_hash: "h5",
+    });
+    expect(error).toBeNull();
+    const { data } = await svc
+      .from("knowledge_chunks")
+      .select("position")
+      .eq("source_id", sourceId)
+      .textSearch("fts", "terminates", { config: "english", type: "websearch" });
+    expect(data).toEqual([{ position: 5 }]);
+    await svc.from("knowledge_chunks").delete().eq("source_id", sourceId).eq("position", 5);
+  });
+
+  it("requires an embedding and its model name together", async () => {
+    const { error } = await svc.from("knowledge_chunks").insert({
+      source_id: sourceId,
+      course_version_id: versionId,
+      lesson_id: lessonId,
+      position: 6,
+      content: "Half-embedded chunk.",
+      token_count: 3,
+      content_hash: "h6",
+      embedding_model: "fake-embed-1",
+    });
+    expect(error).not.toBeNull();
+  });
+
   it("rejects a vector of the wrong size", async () => {
     const { error } = await svc.from("knowledge_chunks").insert({
       source_id: sourceId,

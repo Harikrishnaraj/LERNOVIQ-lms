@@ -241,7 +241,7 @@ Current rules (T-200): tutor conversations (prompts, responses, usage) are kept 
 after their last message and finished generation jobs for 12 months, then purged weekly
 (`purge_old_ai_records`); deleting an account removes them at once. The answer provider is Groq
 (ADR-040), so learner questions and retrieved lesson text are sent to Groq; the privacy notice
-must say so. Embeddings are made by OpenAI (ADR-041): lesson text is sent to OpenAI when a course is indexed and learner questions when they search, so the privacy notice names both vendors. Embeddings live in `knowledge_chunks` and are deleted with their source.
+must say so. Lesson search is Postgres full-text (ADR-042), so only Groq receives learner questions and lesson text. If an embedding provider is added later, the privacy notice must name it; embeddings live in `knowledge_chunks` and are deleted with their source.
 
 ### Graded assessments
 

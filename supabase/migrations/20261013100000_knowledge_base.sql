@@ -1,4 +1,4 @@
--- T-220 (F-800, ADR-017, ADR-041): knowledge base schema for AI Tutor retrieval (RAG).
+-- T-220 (F-800, ADR-017, ADR-042): knowledge base schema for AI Tutor retrieval (RAG).
 --
 -- knowledge_sources: one row per thing that gets indexed (a published lesson, later an uploaded
 --   document). Its scope is a course version, an organization, or platform-wide.
@@ -52,12 +52,15 @@ create table public.knowledge_chunks (
   content text not null check (char_length(content) between 1 and 8000),
   token_count int not null check (token_count > 0),
   content_hash text not null check (char_length(content_hash) <= 128),
-  embedding extensions.vector(1536) not null,
-  embedding_model text not null check (char_length(embedding_model) <= 100),
+  -- Optional (ADR-042): v1 searches the full-text column below; an embedding provider, when added,
+  -- backfills these two together.
+  embedding extensions.vector(1536),
+  embedding_model text check (embedding_model is null or char_length(embedding_model) <= 100),
   fts tsvector generated always as (to_tsvector('english', content)) stored,
   created_at timestamptz not null default now(),
   unique (source_id, position),
-  check (num_nonnulls(course_version_id, organization_id) <= 1)
+  check (num_nonnulls(course_version_id, organization_id) <= 1),
+  check ((embedding is null) = (embedding_model is null))
 );
 create index knowledge_chunks_source_idx on public.knowledge_chunks (source_id);
 create index knowledge_chunks_version_idx on public.knowledge_chunks (course_version_id);
