@@ -38,20 +38,26 @@ export async function userAgent(): Promise<string | null> {
 // the per-subject (email) one.
 const IP_LIMIT_MULTIPLIER = 30;
 
+// The auth endpoints guard credentials and outbound email, so they fail closed (GAP-124): a broken
+// limiter must not silently re-open brute force or email flooding. Every other action fails open
+// so an outage in the limiter doesn't take the rest of the app down with it.
+const FAIL_CLOSED: ReadonlySet<RateLimitedAction> = new Set(["login", "password-reset", "verify-email"]);
+
 // Returns true when the request may proceed. The caller's IP and the optional
 // subject (e.g. the target email) are checked independently: either one over
-// its limit blocks. Fails open on infrastructure errors so an outage in the
-// limiter doesn't lock every user out; the error is logged.
+// its limit blocks. Infrastructure errors are logged and decided by FAIL_CLOSED.
 export async function rateLimit(
   action: RateLimitedAction,
   ip: string,
   subject?: string,
 ): Promise<boolean> {
+  const failOpen = !FAIL_CLOSED.has(action);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     log.error("rate_limit.not_configured", { detail: "service role key missing; limiting disabled" });
-    return true;
+    // Local development often runs without the service key; a production server never should.
+    return failOpen || process.env.NODE_ENV !== "production";
   }
   const db = createClient(url, key, { auth: { persistSession: false } });
   const { limit, windowSeconds } = LIMITS[action];
@@ -66,8 +72,8 @@ export async function rateLimit(
       p_window_seconds: windowSeconds,
     });
     if (error) {
-      log.error("rate_limit.check_failed", { message: error.message });
-      return true;
+      log.error("rate_limit.check_failed", { action, message: error.message });
+      return failOpen;
     }
     if (data === false) return false;
   }

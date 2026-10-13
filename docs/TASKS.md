@@ -144,6 +144,17 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-165** Organization SSO (SAML/OIDC via Supabase). — F-504
 - [x] **T-166** E2E: org isolation (TEST_PLAN §4, §13). — F-500…F-504
 
+## Phase 8b — Content server (SCORM dispatch, ADR-041)
+
+- [x] **T-170** Schema: `content_clients`, `content_licences` (courses, seat limit, expiry, allowed origins, revoked), `content_dispatches` (signed ID per licence × course), `content_registrations` (keyed hash of LMS learner ID, first/last launch, launch count); `content_server.manage` permission; RLS + isolation tests. — F-520
+- [ ] **T-171** Admin Content Server screens: client list/detail, create/edit licence, pick SCORM courses, seats/expiry/allowed domains, revoke; audit events; loading/empty/error/permission-denied states. — F-520
+- [ ] **T-172** Dispatch package builder: SCORM 1.2 `imsmanifest.xml` + launcher page carrying only the dispatch ID and signature; download from the licence screen; manifest validated by the existing SCORM parser. — F-521
+- [ ] **T-173** Launch endpoint: verify signature, licence state, expiry, seat count (new learner over limit is refused, existing learners keep access), embedding origin; issue short-lived content token; rate-limited; clear error page for each refusal. — F-522
+- [ ] **T-174** Content serving for dispatch: serve the licensed package through the existing content origin with the dispatch token, per-licence `frame-ancestors`, token expiry and refresh during long sessions. — F-522
+- [ ] **T-175** Tracking relay: launcher finds the client LMS's SCORM 1.2 API, relays Initialize/Get/Set/Commit/Finish between the course and that API; resume from the LMS's stored data; no tracking written to LERNOVIQ beyond the registration. — F-523
+- [ ] **T-176** Usage reporting: registrations and launches per client, course and month on the client detail screen + CSV export. — F-524
+- [ ] **T-177** Tests (TEST_PLAN §25): unit (signature, licence rules, manifest), integration (RLS, seat counting), E2E with a stand-in SCORM 1.2 LMS page: import, launch, complete, resume, and each refusal case. — F-520…F-525
+
 ## Phase 9 — Commerce
 
 - [ ] **T-180** Payment adapter interface + provider implementation (ADR-015). — F-600

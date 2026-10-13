@@ -8,7 +8,7 @@ Your responsibility is to continue development of the existing application witho
 
 The repository is:
 
-`Harikrishnaraj/modern-lms`
+`Harikrishnaraj/LERNOVIQ-lms`
 
 You must treat the existing codebase, database migrations, architecture documents, decisions, feature list, task list, tests, and current implementation as the source of truth.
 

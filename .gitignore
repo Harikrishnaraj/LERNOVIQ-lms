@@ -48,3 +48,7 @@ next-env.d.ts
 /tests/e2e/.auth/
 /dist/
 /.playwright-mcp/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/

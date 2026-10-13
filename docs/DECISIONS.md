@@ -365,3 +365,29 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 - The browser favicon is still Next.js's default until approved favicon artwork exists.
 
 **Status:** Accepted.
+
+## ADR-040 — Product and Repository Renamed to LERNOVIQ
+
+*Numbered ADR-037 on a parallel branch; renumbered when the branches merged (2026-10-12). It overlaps ADR-039, which governs branding and the logo; this entry settles the infrastructure names: VPS folder, compose project, deploy key and backup artifacts use `lernoviq-lms`, superseding the `lernoviq` names in ADR-039's consequences.*
+
+**Decision:** The product is called **LERNOVIQ** (all caps) everywhere users see it: page titles, portal and auth headers, the landing page, certificate verification text, the apply-to-teach copy, and the course page's structured data. The GitHub repository is `Harikrishnaraj/LERNOVIQ-lms` and the npm package is `lernoviq-lms`. The internal SCORM `postMessage` tag is `lernoviq-scorm`; the shim is injected when content is served, so stored packages need no change.
+
+**Reason:** User decision (2026-10-07): the repository and local folder were renamed from `modern-lms` to `LERNOVIQ-lms`, and the user chose to rebrand the app as "LERNOVIQ".
+
+**Consequences:** The hosted Supabase project keeps its name (`modern-lms`, `ctrizucnfaqescligsuu`), and so does `supabase/config.toml`'s `project_id`, which mirrors it. Historical entries in `MEMORY.md`, earlier ADRs and `docs/audits/` keep the old name. A follow-up (2026-10-07) also renamed the VPS deploy directory to `~/lernoviq-lms`, the compose project to `lernoviq-lms`, the deploy key file names and the backup artifact names. Nothing needed moving on the server: the deploy job had never run, because its secrets were not set yet.
+
+**Status:** Accepted (user decision).
+
+## ADR-041 — Content Server: Dispatching SCORM Courses to Other LMSs (Phase 1)
+
+*Numbered ADR-038 on a parallel branch; renumbered when the branches merged (2026-10-12).*
+
+**Decision:** LERNOVIQ can act as a content server for customers who run their own LMS, the model KESDEE's K-LMS calls the "Content Server Approach" (the industry term is SCORM dispatch). An admin creates a **content client** (customer) with a **licence**: the courses it may use, a seat limit, an expiry date, the LMS domains allowed to embed the content, and a revoke switch. For each licensed course the admin downloads a **dispatch package**: a small SCORM 1.2 zip that holds only a manifest and a launcher page, never the course files. The customer uploads it into their LMS. At launch the launcher calls LERNOVIQ with the dispatch's signed ID; LERNOVIQ checks the licence, seats and embedding domain, issues a short-lived content token, and serves the real course from the existing SCORM content origin (ADR-029). The course's SCORM calls are relayed through the launcher to the customer LMS's own SCORM API, so tracking, completion and reporting live in the customer's LMS. LERNOVIQ keeps only what licensing needs: one registration per (dispatch, LMS learner ID), with the learner ID stored as a keyed hash, plus launch counts and timestamps for usage reports.
+
+**Phase 1 scope:** courses that are already SCORM packages in LERNOVIQ; SCORM 1.2 dispatch packages (matching K-LMS); licences, seats, expiry, domain allowlist, revoke; usage report and audit events. **Later phases (not in scope here):** dispatching LERNOVIQ's own native courses (needs a standalone player), SCORM 2004 / cmi5 dispatch, automatic billing (depends on the payment decision, now ADR-038), a customer-facing usage portal.
+
+**Reason:** User decision (2026-10-12), after comparing LERNOVIQ with K-LMS: the content-server model lets customers who already own an LMS buy KESDEE content without leaving their system. Most of the machinery exists: SCORM storage, validation, the isolated content origin, signed content tokens (`services/scorm/token.ts`) and the postMessage relay between frames.
+
+**Consequences:** New tables (content clients, licences, dispatches, registrations) with RLS that only admins with a new `content_server.manage` permission can use; the launch and content endpoints are public but gated by signatures, licence state and rate limits (SECURITY §27). Content served to a dispatch must be embeddable from the client's allowed LMS origins, so the content origin's `frame-ancestors` becomes per-licence for dispatch launches only; the app origin's CSP is unchanged. Pricing model (per active learner, per licence or flat fee) is still open; Phase 1 records registrations so any of them can be billed later. Tests need a stand-in LMS page that implements the SCORM 1.2 API.
+
+**Status:** Accepted (user decision). Features F-520–F-525, tasks T-170–T-177.

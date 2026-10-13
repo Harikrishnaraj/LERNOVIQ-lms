@@ -24,6 +24,7 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
   const learnerIds: string[] = [];
 
   let admin: { id: string; client: SupabaseClient };
+  let support: { id: string; client: SupabaseClient };
   let instructor: { id: string; client: SupabaseClient };
   let learner: { id: string; client: SupabaseClient };
   let courseA: Awaited<ReturnType<typeof createCourse>>;
@@ -39,6 +40,7 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
 
   beforeAll(async () => {
     admin = await user("admin", "admin", `${tag} Admin`);
+    support = await user("sup", "support_agent", `${tag} Support`);
     instructor = await user("ins", "instructor", `${tag} Instructor`);
     learner = await user("lrn", "learner", `${tag} Learner`);
 
@@ -69,5 +71,10 @@ describe.skipIf(!hasLiveProject)("admin instructor detail (T-132, live Supabase)
   it("returns null for a user who is not an instructor, and rejects a non-admin caller", async () => {
     expect(await getAdminInstructorDetail(admin.client, learner.id)).toBeNull();
     await expect(getAdminInstructorDetail(learner.client, instructor.id)).rejects.toThrow();
+  });
+
+  // Payout details were removed (ADR-037), so GAP-123 reduces to: support agents still read the detail.
+  it("lets support agents read the instructor detail", async () => {
+    expect(await getAdminInstructorDetail(support.client, instructor.id)).toMatchObject({ userId: instructor.id });
   });
 });

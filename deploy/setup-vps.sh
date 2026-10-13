@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-time VPS preparation for Ubuntu 22.04/24.04 (ADR-036, docs/DEPLOY.md). Run as root:
-#   curl -fsSL https://raw.githubusercontent.com/<owner>/modern-lms/<branch>/deploy/setup-vps.sh | bash -s -- "<public key>"
+#   curl -fsSL https://raw.githubusercontent.com/<owner>/LERNOVIQ-lms/<branch>/deploy/setup-vps.sh | bash -s -- "<public key>"
 # or copy the file over and run: sudo bash setup-vps.sh "<public key>"
 # Installs Docker, opens SSH/HTTP/HTTPS in the firewall, and creates a `deploy` user (member of the
 # docker group) that GitHub Actions logs in as with the given SSH public key.
@@ -34,6 +34,6 @@ touch /home/deploy/.ssh/authorized_keys
 grep -qxF "$PUBKEY" /home/deploy/.ssh/authorized_keys || echo "$PUBKEY" >> /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
-install -d -m 700 -o deploy -g deploy /home/deploy/lernoviq
+install -d -m 700 -o deploy -g deploy /home/deploy/lernoviq-lms
 
 echo "VPS ready. Add the matching private key to GitHub as VPS_SSH_KEY, VPS_USER=deploy."
