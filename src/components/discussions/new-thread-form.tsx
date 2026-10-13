@@ -7,12 +7,25 @@ import { Button } from "@/components/ui/button";
 import { BODY_MAX, TITLE_MAX } from "@/features/discussions/discussions";
 import { startDiscussion } from "@/features/discussions/actions";
 
-export function NewThreadForm({ courses }: { courses: { id: string; title: string }[] }) {
+/** A question to start the form with (the AI Tutor's "Post this in the course discussion"). */
+export interface ThreadDraft {
+  courseId: string;
+  title: string;
+  body: string;
+}
+
+export function NewThreadForm({
+  courses,
+  draft,
+}: {
+  courses: { id: string; title: string }[];
+  draft?: ThreadDraft | null;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [open, setOpen] = useState(Boolean(draft));
+  const [courseId, setCourseId] = useState(draft?.courseId ?? courses[0]?.id ?? "");
+  const [title, setTitle] = useState(draft?.title ?? "");
+  const [body, setBody] = useState(draft?.body ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; body?: string }>({});

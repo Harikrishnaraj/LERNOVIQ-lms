@@ -71,6 +71,9 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      # The AI Tutor answers with the deterministic offline provider: CI never calls Groq (ADR-040).
+      AI_PROVIDER: fake
     strategy:
       fail-fast: false
       matrix:

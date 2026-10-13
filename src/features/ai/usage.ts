@@ -26,10 +26,29 @@ export interface ChatTurnInput {
   context: ChatMessage[];
   question: string;
   maxOutputTokens?: number;
+  /**
+   * Answer with this text instead of calling the provider (the tutor does this when nothing in the
+   * course matched, rather than letting the model guess). Stored with no provider, model or cost.
+   */
+  fixedAnswer?: string;
+  /** Turns the provider's text into the stored answer and the sources it cites (T-224). */
+  shapeAnswer?: (text: string) => StoredAnswer;
+}
+
+export interface StoredAnswer {
+  text: string;
+  sources: unknown[];
 }
 
 export type ChatTurnOutput =
-  | { ok: true; conversationId: string; result: ChatResult }
+  | {
+      ok: true;
+      conversationId: string;
+      /** The provider's result, or null for a fixed answer. */
+      result: ChatResult | null;
+      /** What was stored as the answer; empty text when the provider failed. */
+      answer: StoredAnswer;
+    }
   | { ok: false; error: "conversation_not_found" | "storage_failed" };
 
 /**
@@ -71,14 +90,20 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnOutput>
     .insert({ conversation_id: conversationId, role: "user", content: input.question });
   if (userInsertError) return storageFailed("user_message", userInsertError.message);
 
-  const result = await provider.complete({
-    messages: [...input.context, { role: "user", content: input.question }],
-    maxOutputTokens: input.maxOutputTokens,
-  });
+  let result: ChatResult | null = null;
+  let row: AssistantMessageRow;
+  if (input.fixedAnswer !== undefined) {
+    row = fixedAnswerRow(conversationId, input.fixedAnswer);
+  } else {
+    result = await provider.complete({
+      messages: [...input.context, { role: "user", content: input.question }],
+      maxOutputTokens: input.maxOutputTokens,
+    });
+    row = assistantRow(conversationId, result, input.shapeAnswer);
+  }
+  const answer: StoredAnswer = { text: row.content, sources: row.sources };
 
-  const { error: answerInsertError } = await db
-    .from("ai_messages")
-    .insert(assistantRow(conversationId, result));
+  const { error: answerInsertError } = await db.from("ai_messages").insert(row);
   if (answerInsertError) return storageFailed("assistant_message", answerInsertError.message);
 
   // updated_at orders the learner's history and drives the 12-month retention purge.
@@ -87,7 +112,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnOutput>
     .update({ updated_at: new Date().toISOString() })
     .eq("id", conversationId);
 
-  if (!result.ok) {
+  if (result && !result.ok) {
     log.warn("ai.call_failed", {
       provider: result.provider,
       model: result.model,
@@ -95,7 +120,7 @@ export async function runChatTurn(input: ChatTurnInput): Promise<ChatTurnOutput>
       code: result.code,
     });
   }
-  return { ok: true, conversationId, result };
+  return { ok: true, conversationId, result, answer };
 }
 
 export interface AssistantMessageRow {
@@ -104,17 +129,24 @@ export interface AssistantMessageRow {
   content: string;
   status: "ok" | ChatFailureReason;
   error_code: string | null;
-  provider: string;
-  model: string;
+  provider: string | null;
+  model: string | null;
   latency_ms: number;
   input_tokens: number | null;
   cached_input_tokens: number | null;
   output_tokens: number | null;
   cost_usd: number | null;
+  sources: unknown[];
 }
 
+const MAX_CONTENT = 20000;
+
 /** The ai_messages row for the provider's answer (or failure). Exported for tests. */
-export function assistantRow(conversationId: string, result: ChatResult): AssistantMessageRow {
+export function assistantRow(
+  conversationId: string,
+  result: ChatResult,
+  shapeAnswer?: (text: string) => StoredAnswer,
+): AssistantMessageRow {
   const common = {
     conversation_id: conversationId,
     role: "assistant" as const,
@@ -132,17 +164,39 @@ export function assistantRow(conversationId: string, result: ChatResult): Assist
       cached_input_tokens: null,
       output_tokens: null,
       cost_usd: null,
+      sources: [],
     };
   }
+  const shaped = shapeAnswer ? shapeAnswer(result.text) : { text: result.text, sources: [] };
   return {
     ...common,
-    content: result.text.slice(0, 20000),
+    content: shaped.text.slice(0, MAX_CONTENT),
+    sources: shaped.sources,
     status: "ok",
     error_code: null,
     input_tokens: result.usage.inputTokens,
     cached_input_tokens: result.usage.cachedInputTokens,
     output_tokens: result.usage.outputTokens,
     cost_usd: costUsd(result.model, result.usage),
+  };
+}
+
+/** A fixed answer: no provider was called, so there is no model, usage or cost to record. */
+export function fixedAnswerRow(conversationId: string, text: string): AssistantMessageRow {
+  return {
+    conversation_id: conversationId,
+    role: "assistant",
+    content: text.slice(0, MAX_CONTENT),
+    status: "ok",
+    error_code: null,
+    provider: null,
+    model: null,
+    latency_ms: 0,
+    input_tokens: null,
+    cached_input_tokens: null,
+    output_tokens: null,
+    cost_usd: null,
+    sources: [],
   };
 }
 

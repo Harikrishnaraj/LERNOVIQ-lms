@@ -170,12 +170,12 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 ## Phase 10 — AI
 
 - [x] **T-200** AI provider adapter + policy service + usage/cost recording (`ai_conversations`, `ai_messages`, `ai_generation_jobs`). — F-700
-- [ ] **T-201** Learner AI Tutor: contextual to current course/lesson, shows sources, refuses unsupported, hint-only during graded assessments, escalate to discussion. — F-701
+- [~] **T-201** Learner AI Tutor: contextual to current course/lesson, shows sources, refuses unsupported, hint-only during graded assessments, escalate to discussion. — F-701
 - [ ] **T-202** Instructor AI: outline, objectives, summaries, quiz questions, assignment ideas — editable drafts, never auto-published. — F-702
 - [ ] **T-203** Instructor AI insights: review summaries, drop-off patterns, improvement suggestions. — F-703
 - [ ] **T-204** Admin AI management: model/policy config, safety controls, usage & cost, generation job history. — F-704
 - [ ] **T-205** Tests: TEST_PLAN §15, §16. — F-700…F-704
-- [~] **T-206** Per-user AI Tutor access: off by default, an admin turns it on or off for each user on the admin user screen (audited); the tutor refuses users without it (ADR-043). — F-701, F-704
+- [x] **T-206** Per-user AI Tutor access: off by default, an admin turns it on or off for each user on the admin user screen (audited); the tutor refuses users without it (ADR-043). — F-701, F-704
 
 ## Phase 11 — Knowledge base / RAG
 
@@ -183,7 +183,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [~] **T-221** Upload + background pipeline: validate → extract → chunk → embed; status + failed documents view. — F-800
 - [x] **T-222** Permission-aware retrieval service (search constrained to allowed IDs before ranking). — F-801
 - [ ] **T-223** Admin Knowledge Base: sources, test retrieval, re-index, delete removes from retrieval. — F-802
-- [ ] **T-224** Wire AI Tutor to retrieval. — F-701, F-801
+- [~] **T-224** Wire AI Tutor to retrieval. — F-701, F-801
 - [ ] **T-225** Tests: TEST_PLAN §17. — F-800…F-802
 
 ## Phase 12 — Production hardening & launch

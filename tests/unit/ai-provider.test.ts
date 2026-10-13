@@ -175,6 +175,16 @@ describe("fake provider", () => {
     });
   });
 
+  it("cites the first passage when the prompt has one, like a grounded tutor answer", async () => {
+    const result = await createFakeProvider().complete({
+      messages: [
+        { role: "system", content: '<passage id="S1" title="Closures">text</passage>' },
+        { role: "user", content: "Why?" },
+      ],
+    });
+    expect(result).toMatchObject({ ok: true, text: "Fake answer to: Why? [S1]" });
+  });
+
   it("can simulate each failure reason", async () => {
     expect(await createFakeProvider({ fail: "timeout" }).complete(request)).toMatchObject({
       ok: false,

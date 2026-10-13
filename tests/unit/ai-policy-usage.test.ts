@@ -191,6 +191,49 @@ describe("runChatTurn", () => {
   });
 });
 
+describe("runChatTurn answers", () => {
+  const base = {
+    userId: "user-1",
+    feature: "tutor" as const,
+    context: [],
+    question: "Who won the World Cup?",
+  };
+
+  it("stores a fixed answer without calling the provider, with no model or cost", async () => {
+    const db = memoryDb();
+    const complete = vi.fn();
+    const out = await runChatTurn({
+      ...base,
+      db: db as unknown as SupabaseClient,
+      provider: { name: "fake", model: "m", complete },
+      fixedAnswer: "Not in your course.",
+    });
+    expect(complete).not.toHaveBeenCalled();
+    expect(out).toMatchObject({ ok: true, result: null, answer: { text: "Not in your course." } });
+    expect(db.tables.ai_messages[1]).toMatchObject({
+      role: "assistant",
+      content: "Not in your course.",
+      status: "ok",
+      provider: null,
+      model: null,
+      cost_usd: null,
+      sources: [],
+    });
+  });
+
+  it("stores the shaped answer and the sources it cites", async () => {
+    const db = memoryDb();
+    const out = await runChatTurn({
+      ...base,
+      db: db as unknown as SupabaseClient,
+      provider: createFakeProvider({ reply: "Raw [S1]" }),
+      shapeAnswer: (text) => ({ text: text.replace("[S1]", "[1]"), sources: [{ n: 1 }] }),
+    });
+    expect(out).toMatchObject({ ok: true, answer: { text: "Raw [1]", sources: [{ n: 1 }] } });
+    expect(db.tables.ai_messages[1]).toMatchObject({ content: "Raw [1]", sources: [{ n: 1 }] });
+  });
+});
+
 describe("assistantRow", () => {
   it("stores a null cost for a model without a known price", () => {
     const row = assistantRow("c-1", {

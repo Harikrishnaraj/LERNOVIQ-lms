@@ -150,6 +150,25 @@ role.
   - A side panel in the course player receives the current lesson as context (DESIGN §14).
 - **ADR-016:** the tutor only answers; it never writes course content.
 
+**As built (2026-10-13):** `src/features/ai/tutor.ts` `answerTutorQuestion()` runs, in order:
+access (ADR-043) → `validateQuestion` → rate limits → enrollment (the course must be in the
+learner's `my_learning`) → lesson context (title only if the lesson belongs to the course) →
+`getTutorMode` → `searchKnowledge` (learner session, `p_course_id`, 6 passages) → Groq →
+`parseCitations`. Details:
+
+- When the question alone finds nothing, it is searched once more together with the previous
+  question of the conversation or the current lesson's title, so follow-ups still find passages.
+- When nothing matches and the conversation has no earlier answer, the model is **not called**:
+  a fixed "couldn't find this in your course materials" answer is stored (no provider, model or
+  cost) and the discussion link is offered.
+- Citations are numbered per lesson in order of first use (`[S2] … [S1, S3]` → `[1] … [2]`); the
+  stored `ai_messages.sources` is `[{ n, title, lessonId }]`; links are built at render time.
+- The prompt is one system message (fixed rules, then course, lesson, hint-only rules and the
+  `<passage id="S#">` blocks), the last 6 successful turns, then the question. Passage and title
+  text cannot close or forge a passage block.
+- Escalation links to `/learner/discussions?ask=<courseId>&q=<question>`, which opens the new
+  discussion form pre-filled for the learner to review and post.
+
 ---
 
 ## 7. Knowledge base admin (T-223)

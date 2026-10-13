@@ -13,6 +13,8 @@ import { progressPercent } from "@/features/my-learning/queries";
 import { adjacentLessons, isLessonLocked } from "@/features/player/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAssetLinks, resolveVideoSrc } from "@/features/player/media";
+import { TutorChat } from "@/components/ai-tutor/tutor-chat";
+import { getTutorMode, hasTutorAccess } from "@/features/ai/policy";
 
 export const metadata: Metadata = { title: "Lesson" };
 
@@ -59,6 +61,12 @@ export default async function LessonPage({
   const videoSrc = lesson.type === "video" ? await resolveVideoSrc(lesson.videoUrl) : null;
   const assets = await getAssetLinks(supabase, lessonId);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
+
+  // AI Tutor panel (T-201): enrolled learners whose tutor an admin has turned on (ADR-043).
+  const tutorMode =
+    course.enrolled && (await hasTutorAccess(supabase))
+      ? await getTutorMode(supabase, course.courseId)
+      : null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -157,6 +165,22 @@ export default async function LessonPage({
               />
             </div>
           </details>
+          {tutorMode && (
+            <details className="mt-4 rounded-card border border-border bg-surface">
+              <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">
+                Ask the AI Tutor
+              </summary>
+              <div className="p-3 pt-0">
+                <TutorChat
+                  courseId={course.courseId}
+                  courseTitle={course.title}
+                  lessonId={lessonId}
+                  mode={tutorMode}
+                  compact
+                />
+              </div>
+            </details>
+          )}
         </aside>
       </div>
     </div>
