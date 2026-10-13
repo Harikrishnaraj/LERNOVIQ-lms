@@ -62,6 +62,17 @@ export const AUDIT_ACTIONS = [
   "communication.template_updated",
   "communication.template_deleted",
   "communication.announcement_sent",
+  "content_client.created",
+  "content_client.updated",
+  "content_client.deleted",
+  "content_licence.created",
+  "content_licence.updated",
+  "content_licence.revoked",
+  "content_licence.reinstated",
+  "content_licence.course_added",
+  "content_licence.course_removed",
+  "content_dispatch.downloaded",
+  "content_usage.exported",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

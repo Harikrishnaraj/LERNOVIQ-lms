@@ -195,7 +195,8 @@ test.describe("instructor analytics", () => {
     await expect(page.getByRole("columnheader", { name: "Lesson" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Drop-off Rate" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Avg Position / Watch" })).toBeVisible();
-    await expect(page.getByText("1m").first()).toBeVisible(); // 60s watch position = 1m
+    // 60s watch position = 1m. Match the exact cell: a substring match can hit the random tag.
+    await expect(page.getByRole("cell", { name: "1m", exact: true })).toBeVisible();
   });
 
   test("assessments tab shows pass rates, attempts, and question difficulty (T-108)", async ({

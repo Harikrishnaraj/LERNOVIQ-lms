@@ -397,9 +397,10 @@ Before production:
 ADR-041. Dispatch launches come from other companies' LMSs, so:
 - Every dispatch ID is signed (HMAC, server-side secret); unsigned or altered IDs are refused.
 - Launch checks, in order: signature, licence not revoked, not expired, course still in the licence, embedding origin in the licence's allowlist, seat limit (only a new learner can exceed it).
-- Content tokens are short-lived and bound to one dispatch and registration; they are refreshed by the launcher, never stored in the client LMS.
+- Content tokens are bound to one registration and lesson and expire after 12 hours; the licence is re-checked on every content request, so revoking or expiry applies at once. Tokens are never stored in the client LMS.
 - The content origin's `frame-ancestors` allows only that licence's origins for dispatch responses. The app origin is never framed.
 - No learner PII is stored: the LMS learner ID is kept only as a keyed hash; no names or emails.
 - Launch and content endpoints are rate-limited per dispatch and per IP.
 - Creating, changing and revoking licences and downloading dispatch packages are audit events.
-- Revoking a licence stops new launches and token refreshes immediately.
+- Revoking a licence stops new launches and content loads immediately.
+- Dispatch needs a separate content origin (a different host from the app); without one, packages cannot be downloaded and the launch/content routes answer 404.
