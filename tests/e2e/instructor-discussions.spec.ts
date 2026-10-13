@@ -132,7 +132,10 @@ test.describe("instructor discussions", () => {
     // Resolve reports on the classmate's post
     const reportedPost = repliesList.getByRole("listitem").filter({ hasText: "Try resetting your terminal" });
     await reportedPost.getByRole("button", { name: "Resolve reports" }).click();
-    await expect(reportedPost.getByText("Reports resolved")).toBeVisible();
+    // "Reports resolved" shows only until router.refresh() re-renders the page, which then drops
+    // the reported-content notice entirely; assert that stable end state, not the transient label.
+    await expect(reportedPost.getByText("Reported content:")).toHaveCount(0);
+    await expect(reportedPost.getByRole("button", { name: "Resolve reports" })).toHaveCount(0);
 
     // Return to discussions queue - it should now be in the Answered tab
     await page.goto("/instructor/discussions?filter=answered");
