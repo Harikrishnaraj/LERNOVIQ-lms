@@ -7,12 +7,7 @@ import { createAdminClient } from "@/services/supabase/admin";
  */
 export interface StorageAdapter {
   /** Stores the bytes and returns a public URL (public buckets only). */
-  uploadPublic(
-    bucket: string,
-    path: string,
-    bytes: Uint8Array,
-    contentType: string,
-  ): Promise<string>;
+  uploadPublic(bucket: string, path: string, bytes: Uint8Array, contentType: string): Promise<string>;
   remove(bucket: string, paths: string[]): Promise<void>;
   /** One-time token for the browser to upload straight to storage (bypasses the Next server). */
   createSignedUpload(bucket: string, path: string): Promise<{ path: string; token: string }>;
@@ -62,17 +57,13 @@ export const supabaseStorage: StorageAdapter = {
   },
 
   async createSignedUpload(bucket, path) {
-    const { data, error } = await createAdminClient()
-      .storage.from(bucket)
-      .createSignedUploadUrl(path);
+    const { data, error } = await createAdminClient().storage.from(bucket).createSignedUploadUrl(path);
     if (error || !data) throw new Error(`signed upload failed: ${error?.message}`);
     return { path: data.path, token: data.token };
   },
 
   async createSignedUrl(bucket, path, expiresInSeconds) {
-    const { data, error } = await createAdminClient()
-      .storage.from(bucket)
-      .createSignedUrl(path, expiresInSeconds);
+    const { data, error } = await createAdminClient().storage.from(bucket).createSignedUrl(path, expiresInSeconds);
     if (error || !data) throw new Error(`signed url failed: ${error?.message}`);
     return data.signedUrl;
   },
@@ -104,10 +95,7 @@ export const supabaseStorage: StorageAdapter = {
   async download(bucket, path) {
     const { data, error } = await createAdminClient().storage.from(bucket).download(path);
     if (error || !data) throw new Error(`storage download failed: ${error?.message}`);
-    return {
-      bytes: new Uint8Array(await data.arrayBuffer()),
-      contentType: data.type || "application/octet-stream",
-    };
+    return { bytes: new Uint8Array(await data.arrayBuffer()), contentType: data.type || "application/octet-stream" };
   },
 
   async readHeader(bucket, path, byteCount) {
