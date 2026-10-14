@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>FAQs | Lernoviq Learning Solutions &amp; LMS</title>
+<meta name="description" content="Answers to common questions about Lernoviq’s learning services, Lernoviq LMS, industries, delivery and getting started.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="lv-store.js"></script>
+<style>
+html{scroll-behavior:smooth}
+body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3,p{margin:0}
+a{color:#0066FF}a:hover{color:#0052CC}
+:focus-visible{outline:3px solid #0066FF;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</helmet>
+<div data-screen-label="08 FAQs" style="min-height:100vh;background:#FFFFFF">
+<dc-import name="SiteHeader" active="faqs" hint-size="100%,124px"></dc-import>
+
+<section aria-labelledby="hero-h" style="background:#F5F8FC;border-bottom:1px solid #E2E8F0">
+  <div style="max-width:960px;margin:0 auto;padding:72px 24px 64px;display:flex;flex-direction:column;gap:20px">
+    <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">FAQs</p>
+    <h1 id="hero-h" style="font-size:clamp(34px,4.6vw,52px);font-weight:800;line-height:1.08;letter-spacing:-0.025em;text-wrap:balance">Questions, answered clearly.</h1>
+    <p style="font-size:18px;line-height:1.65;color:#334155;max-width:680px;text-wrap:pretty">Short answers about our services, Lernoviq LMS and how engagements work. If something is not covered here, ask us directly.</p>
+  </div>
+</section>
+
+<section aria-label="Frequently asked questions" style="max-width:960px;margin:0 auto;padding:56px 24px 96px">
+  <div role="tablist" aria-label="FAQ categories" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:32px">
+    <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+      <button role="tab" aria-selected="{{ c.sel }}" onClick="{{ c.onClick }}" style="min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;border:1.5px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.label }}</button>
+    </sc-for>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:40px">
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h2 style="font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">{{ g.label }}</h2>
+        <sc-for list="{{ g.items }}" as="f" hint-placeholder-count="3">
+          <div style="border-radius:12px;background:#FFFFFF;border:1px solid {{ f.border }}">
+            <h3 style="margin:0;font-size:inherit">
+              <button id="{{ f.bid }}" onClick="{{ f.onClick }}" aria-expanded="{{ f.exp }}" aria-controls="{{ f.pid }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:64px;padding:18px 22px;border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:17px;font-weight:700;line-height:1.4;color:#0A1F54;text-align:left">{{ f.q }}<span aria-hidden="true" style="width:28px;height:28px;border-radius:999px;background:{{ f.signBg }};color:{{ f.signFg }};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">{{ f.sign }}</span></button>
+            </h3>
+            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+              <div id="{{ f.pid }}" role="region" aria-labelledby="{{ f.bid }}" style="padding:0 22px 22px;font-size:16px;line-height:1.7;color:#334155;max-width:760px">{{ f.a }}</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+</section>
+
+<section aria-labelledby="cta-h" style="max-width:1240px;margin:0 auto;padding:0 24px 96px">
+  <div style="border-radius:20px;background:linear-gradient(120deg,#0A1F54 0%,#0B3A9E 70%,#0066FF 100%);padding:64px clamp(24px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap">
+    <h2 id="cta-h" style="font-size:clamp(26px,3vw,38px);font-weight:800;line-height:1.15;letter-spacing:-0.02em;color:#FFFFFF;max-width:640px;text-wrap:balance">Still have a question? We’re happy to help.</h2>
+    <a href="Contact.dc.html" style="padding:16px 28px;border-radius:10px;background:#FFFFFF;color:#0A1F54;font-size:16px;font-weight:700;text-decoration:none" style-hover="background:#EBF3FF;color:#0A1F54">Start a Conversation</a>
+  </div>
+</section>
+
+<dc-import name="SiteFooter" hint-size="100%,340px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { cat: 'all', open: { 'general-0': true } };
+  renderVals() {
+    const D = [
+      { k: 'general', label: 'General', items: [
+        ['Does Lernoviq offer both learning content and an LMS?', 'Yes. Our model brings together learning consulting and digital content services with a developing LMS offering. Product features and implementation options are discussed against your requirements.'],
+        ['What is Lernoviq?', 'Lernoviq is an emerging learning technology and digital education solutions brand established in 2026, founded on more than 26 years of professional leadership experience across enterprise technology, learning programs, instructional design, digital content and complex project execution.']
+      ] },
+      { k: 'lms', label: 'Lernoviq LMS', items: [
+        ['Is Lernoviq LMS ready for a demo?', 'Please contact us for the current product status, available walkthrough and feature confirmation. We will share only capabilities that can be demonstrated.'],
+        ['What will Lernoviq LMS cover?', 'Our product direction focuses on the learning functions organizations commonly need: managing content, structuring learning experiences, supporting knowledge assessment, providing visibility into learning activity and connecting learning operations. Specific capabilities, integrations, subscription tiers and availability are confirmed during product discovery and demonstration.']
+      ] },
+      { k: 'services', label: 'Services', items: [
+        ['Can you create courses tailored to our industry?', 'Our approach starts with your business needs, target learners and subject matter experts to design a custom learning solution suited to your requirements.'],
+        ['Can you work with our internal SMEs?', 'Yes. SME collaboration is central to our process for content accuracy, appropriate learning depth and validation.'],
+        ['Can Lernoviq help with assessments and certifications?', 'We provide assessment and certification solution design as part of the proposed learning services portfolio. Platform-specific automation depends on confirmed LMS capabilities and agreed scope.']
+      ] },
+      { k: 'delivery', label: 'Industries & delivery', items: [
+        ['Do you support global organizations?', 'We aim to serve clients worldwide, coordinating project delivery across regions and planning localization as required by each engagement.'],
+        ['Which sectors do you work with?', 'We support corporate and enterprise L&D, banking, financial services and insurance, and government and public institutions — with custom approaches for each sector’s workforce, compliance, skills and learning requirements.'],
+        ['How does an engagement progress?', 'Through six stages: Discover, Define, Design, Develop, Validate, and Deliver & Support. Scope, deliverables, governance and review criteria are agreed early in the engagement.']
+      ] },
+      { k: 'start', label: 'Getting started', items: [
+        ['How do we start?', 'Tell us what you want to achieve through the contact form. We’ll help explore a solution that fits your learners, systems and business objectives.'],
+        ['What should we prepare for a first conversation?', 'It helps to share your business goals, target learners, existing content, technology context, timelines and constraints. These are the inputs to our Discover stage.']
+      ] }
+    ];
+    const { cat, open } = this.state;
+    const cats = [{ k: 'all', label: 'All questions' }, ...D.map(d => ({ k: d.k, label: d.label }))];
+    return {
+      cats: cats.map(c => { const on = c.k === cat; return { label: c.label, sel: on ? 'true' : 'false', border: on ? '#0A1F54' : '#CBD5E1', bg: on ? '#0A1F54' : '#FFFFFF', fg: on ? '#FFFFFF' : '#0A1F54', onClick: () => this.setState({ cat: c.k }) }; }),
+      groups: D.filter(d => cat === 'all' || d.k === cat).map(d => ({ label: d.label, items: d.items.map(([q, a], i) => {
+        const id = d.k + '-' + i, o = !!open[id];
+        return { q, a, open: o, exp: o ? 'true' : 'false', bid: 'q-' + id, pid: 'a-' + id, sign: o ? '−' : '+', signBg: o ? '#0066FF' : '#EBF3FF', signFg: o ? '#FFFFFF' : '#0052CC', border: o ? '#0066FF' : '#E2E8F0',
+          onClick: () => this.setState(s => ({ open: { ...s.open, [id]: !s.open[id] } })) };
+      }) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

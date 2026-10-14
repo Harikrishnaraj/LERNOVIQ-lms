@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>E-Learning Development &amp; Learning Consulting | Lernoviq</title>
+<meta name="description" content="Learning consulting, custom e-learning, LMS technology, assessments, localization and managed learning services from Lernoviq.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="lv-store.js"></script>
+<style>
+html{scroll-behavior:smooth}
+body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3,p{margin:0}
+a{color:#0066FF}a:hover{color:#0052CC}
+:focus-visible{outline:3px solid #0066FF;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</helmet>
+<div data-screen-label="03 Solutions" style="min-height:100vh;background:#FFFFFF">
+<dc-import name="SiteHeader" active="solutions" hint-size="100%,124px"></dc-import>
+
+<section aria-labelledby="hero-h" style="background:#F5F8FC;border-bottom:1px solid #E2E8F0">
+  <div style="max-width:1240px;margin:0 auto;padding:80px 24px 56px;display:flex;flex-direction:column;gap:22px">
+    <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Solutions &amp; Services</p>
+    <h1 id="hero-h" style="font-size:clamp(34px,4.6vw,56px);font-weight:800;line-height:1.08;letter-spacing:-0.025em;max-width:860px;text-wrap:balance">Solutions That Fit Your Learning Goals.</h1>
+    <p style="font-size:18px;line-height:1.65;color:#334155;max-width:720px;text-wrap:pretty">Whether you are building a new curriculum, modernizing training content, rolling out digital learning or exploring a learning platform, we work from your requirements to develop the right approach.</p>
+    <nav aria-label="Service areas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+      <sc-for list="{{ services }}" as="s" hint-placeholder-count="6">
+        <a href="#{{ s.id }}" style="padding:10px 16px;border-radius:999px;border:1px solid #CBD5E1;background:#FFFFFF;font-size:14px;font-weight:700;color:#0A1F54;text-decoration:none" style-hover="border-color:#0066FF;color:#0052CC">{{ s.short }}</a>
+      </sc-for>
+    </nav>
+  </div>
+</section>
+
+<div style="max-width:1240px;margin:0 auto;padding:40px 24px 24px;display:flex;flex-direction:column">
+  <sc-for list="{{ services }}" as="s" hint-placeholder-count="6">
+    <section id="{{ s.id }}" aria-labelledby="{{ s.hid }}" style="scroll-margin-top:24px;padding:56px 0;border-bottom:1px solid #E2E8F0;display:flex;flex-wrap:wrap;flex-direction:{{ s.dir }};gap:40px 72px;align-items:center">
+      <div style="flex:1 1 420px;min-width:0">
+        <sc-if value="{{ s.hasImg }}" hint-placeholder-val="{{ true }}">
+          <img src="{{ s.img }}" alt="{{ s.alt }}" style="width:100%;aspect-ratio:4/3;object-fit:cover;object-position:{{ s.pos }};border-radius:16px;display:block;border:1px solid #E2E8F0">
+        </sc-if>
+        <sc-if value="{{ s.isConcept }}" hint-placeholder-val="{{ false }}">
+          <figure style="margin:0;padding:24px;border-radius:16px;background:#EBF3FF;display:flex;flex-direction:column;gap:12px">
+            <img src="{{ s.img }}" alt="{{ s.alt }}" style="width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left;border-radius:10px;display:block;box-shadow:0 20px 40px -24px rgba(10,31,84,.45)">
+            <figcaption style="font-size:13px;color:#334155">Interface concept. Final visual <code>service-assessment-certification</code> is TO_GENERATE.</figcaption>
+          </figure>
+        </sc-if>
+      </div>
+      <div style="flex:1 1 420px;min-width:0;display:flex;flex-direction:column;gap:18px">
+        <span style="font-size:13px;font-weight:800;letter-spacing:.08em;color:#0052CC">{{ s.n }}</span>
+        <h2 id="{{ s.hid }}" style="font-size:clamp(24px,2.8vw,34px);font-weight:800;line-height:1.15;letter-spacing:-0.015em;text-wrap:balance">{{ s.title }}</h2>
+        <p style="font-size:17px;line-height:1.7;color:#334155;text-wrap:pretty">{{ s.body }}</p>
+        <div style="display:flex;flex-direction:column;gap:12px;padding-top:8px">
+          <span style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0A1F54">Typical scope</span>
+          <ul style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px 20px">
+            <sc-for list="{{ s.scope }}" as="x" hint-placeholder-count="5">
+              <li style="display:flex;gap:10px;align-items:baseline;font-size:15px;line-height:1.5;color:#1E293B"><span style="width:6px;height:6px;background:#0066FF;flex-shrink:0;transform:translateY(-2px)"></span>{{ x }}</li>
+            </sc-for>
+          </ul>
+        </div>
+        <a href="{{ s.ctaHref }}" style="align-self:flex-start;margin-top:8px;padding:13px 20px;border-radius:10px;border:1.5px solid #CBD5E1;color:#0A1F54;font-size:15px;font-weight:700;text-decoration:none" style-hover="border-color:#0066FF;color:#0052CC">{{ s.cta }}</a>
+      </div>
+    </section>
+  </sc-for>
+</div>
+
+<section aria-labelledby="tog-h" style="background:#F5F8FC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;margin-top:72px">
+  <div style="max-width:1240px;margin:0 auto;padding:96px 24px">
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:680px;margin-bottom:44px">
+      <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">How services work together</p>
+      <h2 id="tog-h" style="font-size:clamp(28px,3.4vw,40px);font-weight:800;line-height:1.12;letter-spacing:-0.02em;text-wrap:balance">From Learning Strategy to Learner Success.</h2>
+      <p style="font-size:17px;line-height:1.7;color:#334155">Engage one service or connect several. Each stage hands off cleanly to the next.</p>
+    </div>
+    <ol style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
+      <sc-for list="{{ journey }}" as="j" hint-placeholder-count="5">
+        <li style="display:flex;flex-direction:column;gap:12px;padding:24px;border-radius:12px;background:#FFFFFF;border:1px solid #E2E8F0">
+          <span style="display:flex;align-items:center;justify-content:space-between;gap:8px"><img src="{{ j.img }}" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px"><span style="width:28px;height:28px;border-radius:999px;background:{{ j.c }};color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">{{ j.n }}</span></span>
+          <span style="font-size:17px;font-weight:700;line-height:1.3">{{ j.t }}</span>
+          <span style="font-size:14px;line-height:1.5;color:#475569">{{ j.s }}</span>
+        </li>
+      </sc-for>
+    </ol>
+  </div>
+</section>
+
+<section aria-labelledby="cta-h" style="max-width:1240px;margin:0 auto;padding:96px 24px">
+  <div style="border-radius:20px;background:linear-gradient(120deg,#0A1F54 0%,#0B3A9E 70%,#0066FF 100%);padding:64px clamp(24px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap">
+    <h2 id="cta-h" style="font-size:clamp(26px,3vw,38px);font-weight:800;line-height:1.15;letter-spacing:-0.02em;color:#FFFFFF;max-width:680px;text-wrap:balance">Tell Us What You Need — We’ll Recommend a Learning Approach.</h2>
+    <a href="Contact.dc.html" style="padding:16px 28px;border-radius:10px;background:#FFFFFF;color:#0A1F54;font-size:16px;font-weight:700;text-decoration:none" style-hover="background:#EBF3FF;color:#0A1F54">Request a Consultation</a>
+  </div>
+</section>
+
+<dc-import name="SiteFooter" hint-size="100%,340px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const S = [
+      { id: 'consulting', short: 'Learning Consulting', title: 'Learning Consulting & Curriculum Architecture', body: 'Plan learning before producing it. We work with stakeholders and subject matter experts to identify business needs, learner profiles, skill expectations and the appropriate depth of learning.', scope: ['Training needs analysis', 'Competency and skill mapping', 'Role-based learning paths', 'Curriculum architecture', 'Course outlines and storyboards', 'Subject matter expert coordination'], img: 'assets/images/solutions/service-learning-consulting.webp', alt: 'Learning consultants and subject matter experts reviewing a curriculum roadmap at a table', cta: 'Discuss a Curriculum Project' },
+      { id: 'elearning', short: 'Custom E-Learning', title: 'Custom E-Learning & Instructional Design', body: 'Create effective learning experiences grounded in instructional design principles and adult learning considerations. We develop content around clear objectives, meaningful examples and checkpoints that help learners apply knowledge.', scope: ['Custom e-learning modules', 'Interactive and scenario-based learning', 'Content conversion and modernization', 'Instructional storyboards', 'Knowledge checks', 'SCORM-oriented course production where agreed'], img: 'assets/images/solutions/service-elearning-development.webp', alt: 'Instructional designers building course storyboards and video content on large monitors', cta: 'Plan an E-Learning Project' },
+      { id: 'lms', short: 'LMS & Technology', title: 'Lernoviq LMS & Learning Technology', body: 'Bring learning delivery and management into a cohesive technology environment. Our product approach emphasizes configurable experiences, effective content delivery and practical learning operations.', scope: ['LMS discovery and solution fit', 'Implementation planning', 'Content onboarding', 'Product configuration and integrations subject to scope', 'Platform support options'], img: 'assets/images/solutions/service-lms-technology.webp', alt: 'A laptop showing a learning platform dashboard on a desk', cta: 'Explore Lernoviq LMS', ctaHref: 'LMS.dc.html', pos: 'center' },
+      { id: 'assessments', short: 'Assessments', title: 'Assessments & Certification Solutions', body: 'Build confidence in what learners know. We help define assessment approaches suited to content complexity, learner proficiency and the validation needs of each training program.', scope: ['Quizzes and knowledge checkpoints', 'Question-bank planning', 'Assessment design', 'Evaluation workflows', 'Certificate design and certification processes'], img: 'assets/images/lms/lms-assessment-interface.webp', alt: 'Concept of a multiple-choice assessment screen with a question navigator', concept: true, cta: 'Discuss Assessment Needs' },
+      { id: 'localization', short: 'Localization & Video', title: 'Learning Localization & Video Solutions', body: 'Make digital learning relevant to diverse workforces. We support the adaptation of learning experiences for different language and cultural contexts, as well as video-rich training formats.', scope: ['Localization planning', 'Translation and language adaptation', 'Subtitling and voice-over coordination', 'Video learning', 'Multimedia adaptation and review'], img: 'assets/images/solutions/service-localization-video.webp', alt: 'A producer editing a training video with subtitle and audio tracks', cta: 'Discuss Localization' },
+      { id: 'managed', short: 'Managed Learning', title: 'Managed Learning Services & Delivery', body: 'Move large learning initiatives forward with disciplined coordination across clients, vendors, SMEs, developers and review teams. We support implementation from requirements through release and post-delivery activities.', scope: ['Project planning', 'RFP response and solutioning support', 'Stakeholder governance', 'Content QA', 'Milestone management', 'Testing and acceptance coordination', 'Post-delivery support arrangements'], img: 'assets/images/solutions/service-managed-learning.webp', alt: 'A learning operations team reviewing a project timeline on a laptop', cta: 'Discuss a Delivery Program' }
+    ];
+    return {
+      services: S.map((s, i) => ({ ...s, n: '0' + (i + 1), hid: s.id + '-h', dir: i % 2 ? 'row-reverse' : 'row', hasImg: !s.concept, isConcept: !!s.concept, pos: s.pos || 'center', ctaHref: s.ctaHref || 'Contact.dc.html' })),
+      journey: [
+        { n: '1', t: 'Learning Needs', s: 'Consulting & needs analysis', c: '#0066FF' },
+        { n: '2', t: 'Curriculum Planning', s: 'Curriculum architecture', c: '#0891B2' },
+        { n: '3', t: 'Digital Content Development', s: 'E-learning, assessments, localization', c: '#0066FF' },
+        { n: '4', t: 'Learning Platform Delivery', s: 'Lernoviq LMS & technology', c: '#008A3E' },
+        { n: '5', t: 'Ongoing Support', s: 'Managed learning services', c: '#0A1F54' }
+      ].map((j, i) => ({ ...j, img: 'assets/icons/journey-' + ['learning-needs','curriculum-planning','content-development','platform-delivery','ongoing-support'][i] + '.webp' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Lernoviq LMS | Adaptable Learning Technology</title>
+<meta name="description" content="Lernoviq LMS is being developed to support a connected digital learning experience, pairing learning-domain expertise with an adaptable technology foundation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="lv-store.js"></script>
+<style>
+html{scroll-behavior:smooth}
+body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3,p{margin:0}
+a{color:#0066FF}a:hover{color:#0052CC}
+:focus-visible{outline:3px solid #0066FF;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</helmet>
+<div data-screen-label="04 LMS" style="min-height:100vh;background:#FFFFFF">
+<dc-import name="SiteHeader" active="lms" hint-size="100%,124px"></dc-import>
+
+<section aria-labelledby="hero-h" style="background:linear-gradient(160deg,#0A1F54 0%,#0B2A73 100%);color:#FFFFFF">
+  <div style="max-width:1240px;margin:0 auto;padding:80px 24px 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px">
+    <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid #3B5BB0;font-size:13px;font-weight:700;color:#D5DEF2"><span style="width:8px;height:8px;border-radius:99px;background:#00D951"></span>Walkthrough on request</span>
+    <h1 id="hero-h" style="font-size:clamp(34px,4.6vw,56px);font-weight:800;line-height:1.08;letter-spacing:-0.025em;max-width:900px;color:#FFFFFF;text-wrap:balance">Learning Technology Designed Around Your Organization.</h1>
+    <p style="font-size:18px;line-height:1.65;color:#D5DEF2;max-width:700px;text-wrap:pretty">Lernoviq LMS is being developed to support a connected digital learning experience, pairing learning-domain expertise with an adaptable technology foundation.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+      <a href="#preview" style="padding:15px 24px;border-radius:10px;background:#FFFFFF;color:#0A1F54;font-size:15px;font-weight:700;text-decoration:none" style-hover="background:#EBF3FF;color:#0A1F54">Explore Lernoviq LMS</a>
+      <a href="Contact.dc.html?topic=demo" style="padding:15px 24px;border-radius:10px;border:1.5px solid #5A74B5;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none" style-hover="border-color:#FFFFFF;color:#FFFFFF">Request a Product Walkthrough</a>
+    </div>
+    <div style="width:100%;max-width:1080px;margin-top:40px;border-radius:16px 16px 0 0;overflow:hidden;border:1px solid #2A4589;border-bottom:0;background:#FFFFFF">
+      <img src="assets/images/lms/lms-dashboard-overview.webp" alt="Concept of the Lernoviq LMS learner dashboard with progress, current course and course library" style="width:100%;display:block;aspect-ratio:16/8;object-fit:cover;object-position:top left">
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="phil-h" style="max-width:1240px;margin:0 auto;padding:96px 24px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:32px 72px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Product philosophy</p>
+      <h2 id="phil-h" style="font-size:clamp(28px,3.4vw,40px);font-weight:800;line-height:1.12;letter-spacing:-0.02em;text-wrap:balance">An adaptable learning platform designed around organizational learning needs.</h2>
+    </div>
+    <p style="font-size:17px;line-height:1.7;color:#334155;text-wrap:pretty">A good learning platform should enable the learning strategy — not dictate it. Our approach is to understand how an organization creates content, delivers training, engages learners and reviews results, then align platform implementation with those workflows.</p>
+  </div>
+</section>
+
+<section id="preview" aria-labelledby="prev-h" style="background:#F5F8FC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;scroll-margin-top:16px">
+  <div style="max-width:1240px;margin:0 auto;padding:96px 24px">
+    <div style="display:flex;flex-direction:column;gap:14px;max-width:720px;margin-bottom:32px">
+      <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Where Lernoviq LMS is headed</p>
+      <h2 id="prev-h" style="font-size:clamp(28px,3.4vw,40px);font-weight:800;line-height:1.12;letter-spacing:-0.02em">The learning functions organizations commonly need.</h2>
+      <p style="font-size:17px;line-height:1.7;color:#334155;text-wrap:pretty">Specific capabilities, integrations, subscription tiers and availability are confirmed during product discovery and demonstration.</p>
+    </div>
+    <div role="tablist" aria-label="Product areas" style="display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;margin-bottom:24px;width:fit-content;max-width:100%">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+        <button role="tab" aria-selected="{{ t.sel }}" onClick="{{ t.onClick }}" style="border:0;cursor:pointer;min-height:44px;padding:0 16px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:700;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+    <div role="tabpanel" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:32px 48px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:440px">
+        <span style="align-self:flex-start;padding:5px 10px;border-radius:6px;background:#FFF7E6;color:#8A4B00;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase">Product direction</span>
+        <h3 style="font-size:26px;font-weight:800;line-height:1.2">{{ cur.title }}</h3>
+        <p style="font-size:16px;line-height:1.7;color:#334155;text-wrap:pretty">{{ cur.body }}</p>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ cur.points }}" as="p" hint-placeholder-count="3">
+            <li style="display:flex;gap:10px;align-items:baseline;font-size:15px;line-height:1.5"><span style="width:6px;height:6px;background:#0066FF;flex-shrink:0;transform:translateY(-2px)"></span>{{ p }}</li>
+          </sc-for>
+        </ul>
+      </div>
+      <figure style="margin:0;display:flex;flex-direction:column;gap:10px;grid-column:span 1;min-width:0">
+        <div style="border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;background:#FFFFFF;box-shadow:0 24px 48px -32px rgba(10,31,84,.45)">
+          <img src="{{ cur.img }}" alt="{{ cur.alt }}" style="width:100%;display:block;aspect-ratio:16/10;object-fit:cover;object-position:top left">
+        </div>
+        <figcaption style="font-size:13px;color:#475569">Product design concept. Not a screenshot of a released feature.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="tech-h" style="max-width:1240px;margin:0 auto;padding:96px 24px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px 72px">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Platform &amp; implementation approach</p>
+      <h2 id="tech-h" style="font-size:clamp(26px,3vw,36px);font-weight:800;line-height:1.15;letter-spacing:-0.02em">Technology foundation</h2>
+      <p style="font-size:16px;line-height:1.7;color:#334155;text-wrap:pretty">The documented deployment design uses a Next.js application, container-based deployment with Docker, Caddy-managed HTTPS and a GitHub Actions release workflow. It provides for a separate content origin to support multi-frame SCORM packages, scheduled reporting jobs, and Supabase authentication configuration.</p>
+      <p style="font-size:14px;line-height:1.6;color:#475569;padding:14px 16px;border-radius:10px;background:#F5F8FC;border:1px solid #E2E8F0">These are architectural provisions documented in the deployment guide, not independently verified end-user features.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Who it is for</p>
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ audiences }}" as="a" hint-placeholder-count="4">
+          <li style="display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:12px;border:1px solid #E2E8F0;font-size:16px;font-weight:600;line-height:1.45"><span style="width:8px;height:8px;background:{{ a.c }};flex-shrink:0"></span>{{ a.t }}</li>
+        </sc-for>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="faq-h" style="background:#F5F8FC;border-top:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0">
+  <div style="max-width:900px;margin:0 auto;padding:88px 24px">
+    <h2 id="faq-h" style="font-size:clamp(26px,3vw,34px);font-weight:800;letter-spacing:-0.02em;margin-bottom:28px">Product status and common questions</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="3">
+        <div style="border-radius:12px;background:#FFFFFF;border:1px solid {{ f.border }}">
+          <h3 style="margin:0;font-size:inherit">
+            <button onClick="{{ f.onClick }}" aria-expanded="{{ f.exp }}" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:60px;padding:16px 20px;border:0;background:transparent;cursor:pointer;font-family:inherit;font-size:17px;font-weight:700;color:#0A1F54;text-align:left">{{ f.q }}<span aria-hidden="true" style="font-size:22px;font-weight:500;color:#0052CC;flex-shrink:0">{{ f.sign }}</span></button>
+          </h3>
+          <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+            <p style="padding:0 20px 20px;font-size:16px;line-height:1.7;color:#334155">{{ f.a }}</p>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="cta-h" style="max-width:1240px;margin:0 auto;padding:96px 24px">
+  <div style="border-radius:20px;background:linear-gradient(120deg,#0A1F54 0%,#0B3A9E 70%,#0066FF 100%);padding:64px clamp(24px,5vw,64px);display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:640px">
+      <h2 id="cta-h" style="font-size:clamp(26px,3vw,38px);font-weight:800;line-height:1.15;letter-spacing:-0.02em;color:#FFFFFF;text-wrap:balance">See what Lernoviq LMS can do today.</h2>
+      <p style="font-size:17px;line-height:1.6;color:#D5DEF2">We will share only capabilities that can be demonstrated.</p>
+    </div>
+    <a href="Contact.dc.html?topic=demo" style="padding:16px 28px;border-radius:10px;background:#FFFFFF;color:#0A1F54;font-size:16px;font-weight:700;text-decoration:none" style-hover="background:#EBF3FF;color:#0A1F54">Request a Product Walkthrough</a>
+  </div>
+</section>
+
+<dc-import name="SiteFooter" hint-size="100%,340px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 0, faq: 0 };
+  renderVals() {
+    const T = [
+      { label: 'Learner experience', title: 'Learning pathways and learner experience', body: 'Structuring learning experiences so learners can see where they are, what comes next and how far they have progressed.', points: ['Personal dashboard and continue-learning entry point', 'Course library and recommended courses', 'Visible progress during learning'], img: 'assets/images/lms/lms-learner-course-page.webp', alt: 'Concept of a learner course page with video lesson, module list and course progress' },
+      { label: 'Course management', title: 'Course and content management', body: 'Managing content in one place: organizing courses, tracking status and preparing material for delivery.', points: ['Course list with status and format', 'Categories and filtering', 'Content onboarding during implementation'], img: 'assets/images/lms/lms-course-management.webp', alt: 'Concept of an administrative course management table with status badges' },
+      { label: 'Assessments', title: 'Assessment and knowledge evaluation', body: 'Supporting knowledge assessment aligned with each program’s objectives and validation needs.', points: ['Question-by-question assessment flow', 'Progress and question navigation', 'Assessment design delivered as a service'], img: 'assets/images/lms/lms-assessment-interface.webp', alt: 'Concept of a multiple-choice assessment with a question navigator' },
+      { label: 'Activity visibility', title: 'Learning activity visibility', body: 'Providing visibility into learning activity so teams can review participation and progress.', points: ['Progress summaries for learners', 'Activity overview for administrators', 'Reporting scope agreed per engagement'], img: 'assets/images/lms/lms-dashboard-overview.webp', alt: 'Concept of a learner dashboard with progress summary and upcoming activities' }
+    ];
+    const F = [
+      { q: 'Is Lernoviq LMS ready for a demo?', a: 'Please contact us for the current product status, available walkthrough and feature confirmation. We will share only capabilities that can be demonstrated.' },
+      { q: 'Does Lernoviq offer both learning content and an LMS?', a: 'Yes. Our model brings together learning consulting and digital content services with a developing LMS offering. Product features and implementation options are discussed against your requirements.' },
+      { q: 'Can Lernoviq help with assessments and certifications?', a: 'We provide assessment and certification solution design as part of the proposed learning services portfolio. Platform-specific automation depends on confirmed LMS capabilities and agreed scope.' }
+    ];
+    return {
+      tabs: T.map((t, i) => ({ label: t.label, sel: i === this.state.tab ? 'true' : 'false', bg: i === this.state.tab ? '#0A1F54' : 'transparent', fg: i === this.state.tab ? '#FFFFFF' : '#334155', onClick: () => this.setState({ tab: i }) })),
+      cur: T[this.state.tab],
+      audiences: [
+        { t: 'Enterprises exploring an adaptable platform for employee learning.', c: '#0066FF' },
+        { t: 'BFSI organizations evaluating structured curricula and assessment needs.', c: '#0A1F54' },
+        { t: 'Government or institutional teams planning scalable digital training.', c: '#0891B2' },
+        { t: 'Training providers seeking a tailored learning delivery environment.', c: '#008A3E' }
+      ],
+      faqs: F.map((f, i) => { const open = i === this.state.faq; return { ...f, open, exp: open ? 'true' : 'false', sign: open ? '−' : '+', border: open ? '#0066FF' : '#E2E8F0', onClick: () => this.setState({ faq: open ? -1 : i }) }; })
+    };
+  }
+}
+</script>
+</body>
+</html>
