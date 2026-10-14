@@ -31,7 +31,7 @@ test("signed-out landing presents LERNOVIQ’s services and account entry points
   await expect(page.getByRole("link", { name: "Log in" }).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Explore Our Solutions" })).toHaveAttribute(
     "href",
-    "#solutions",
+    "/solutions",
   );
   const hasNoHorizontalOverflow = await page
     .locator("html")

@@ -35,19 +35,30 @@ const COLUMNS = [
   },
 ];
 
+// Prefetch is off for site chrome: ~20 links on every page made production builds fetch every
+// marketing page in the background, keeping pages busy (and E2E waits for idle never finishing).
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-surface font-display text-text">
       <div className="mx-auto grid max-w-[1240px] grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-10 px-6 pt-14 pb-8">
         <div className="flex flex-col gap-4">
           <BrandLogo width={140} />
-          <p className="max-w-[260px] text-sm leading-[1.6] text-neutral-text">One Partner. Complete Learning Solutions.</p>
+          <p className="max-w-[260px] text-sm leading-[1.6] text-neutral-text">
+            One Partner. Complete Learning Solutions.
+          </p>
         </div>
         {COLUMNS.map((col) => (
           <div key={col.heading} className="flex flex-col gap-2.5">
-            <span className="mb-1 text-xs font-extrabold tracking-[0.14em] uppercase">{col.heading}</span>
+            <span className="mb-1 text-xs font-extrabold tracking-[0.14em] uppercase">
+              {col.heading}
+            </span>
             {col.links.map((l) => (
-              <Link key={l.label} href={l.href} className="text-[15px] text-neutral-text hover:text-primary-dark">
+              <Link
+                prefetch={false}
+                key={l.label}
+                href={l.href}
+                className="text-[15px] text-neutral-text hover:text-primary-dark"
+              >
                 {l.label}
               </Link>
             ))}
@@ -59,7 +70,7 @@ export function SiteFooter() {
         <span className="flex flex-wrap gap-5">
           <span>www.lernoviq.com</span>
           <span>www.lernoviq.in</span>
-          <Link href="/privacy" className="hover:text-primary-dark">
+          <Link prefetch={false} href="/privacy" className="hover:text-primary-dark">
             Privacy
           </Link>
         </span>
