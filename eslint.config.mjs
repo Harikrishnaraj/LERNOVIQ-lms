@@ -10,7 +10,7 @@ const eslintConfig = [
   {
     // .claude/worktrees holds other agents' checkouts (including their own node_modules/.next and
     // scratch scripts) - never app code, so it must never be linted as part of this tree.
-    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "dist/**", "next-env.d.ts", ".claude/worktrees/**"],
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "dist/**", "next-env.d.ts", ".claude/worktrees/**", "Lernoviq landing page design/**", "website/**"],
   },
 ];
 

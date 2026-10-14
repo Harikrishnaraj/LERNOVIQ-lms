@@ -47,7 +47,11 @@ test.describe("public course catalog (F-101)", () => {
   test("is reachable signed out, and search + filters + pagination work", async ({ page }) => {
     await page.goto("/courses");
     await expect(page.getByRole("heading", { level: 1, name: "Courses" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
+    // The site header's Log in link (inside the Menu drawer on small screens, ADR-042).
+    const menu = page.getByText("Menu", { exact: true });
+    if (await menu.isVisible()) await menu.click();
+    await expect(page.getByRole("link", { name: "Log in" }).filter({ visible: true })).toBeVisible();
+    if (await page.getByText("Close", { exact: true }).isVisible()) await page.getByText("Close", { exact: true }).click();
 
     await page.getByLabel("Search courses").fill(tag);
     await page.getByRole("button", { name: "Apply" }).click();
@@ -62,7 +66,8 @@ test.describe("public course catalog (F-101)", () => {
     await expect(page.getByText("Page 2 of 2")).toBeVisible();
 
     // A filter narrows the results and resets to page 1.
-    await page.getByLabel("Level").selectOption("advanced");
+    // Level is a chip group (radio buttons) in the marketing design (T-262).
+    await page.getByRole("group", { name: "Level" }).getByText("Advanced", { exact: true }).click();
     await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByRole("status")).toHaveText("1 course found");
     const card = page.getByRole("link", { name: `${tag} course 0` });

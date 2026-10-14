@@ -404,3 +404,13 @@ ADR-041. Dispatch launches come from other companies' LMSs, so:
 - Creating, changing and revoking licences and downloading dispatch packages are audit events.
 - Revoking a licence stops new launches and content loads immediately.
 - Dispatch needs a separate content origin (a different host from the app); without one, packages cannot be downloaded and the launch/content routes answer 404.
+
+## 28. Public Contact Form
+
+ADR-042. The contact form is a public endpoint:
+- The Server Action re-validates every field (lengths, email format, allowed option values) and rejects anything else.
+- Rate-limited per IP and per email (`contact-enquiry`).
+- Enquiries are written with the service role only; anon and authenticated users have no insert/select. Only `enquiry.read` (admin, super_admin) can read them.
+- The notification email escapes all user input; no user input is used in headers other than reply-to after validation.
+- Nothing about the enquiry is echoed back except a generic confirmation.
+- The static site (ADR-043) posts to `POST /api/enquiries`, which calls the same handler, caps the body at 16 KB, requires JSON, and sends CORS headers only for `MARKETING_SITE_ORIGINS`; a browser request from any other origin gets 403.

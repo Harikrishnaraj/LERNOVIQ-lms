@@ -8,11 +8,35 @@ test("signed-in visit to / redirects to the user's portal", async ({ page }) => 
   await expect(page).toHaveURL(/\/learner$/);
 });
 
-test("signed-out landing links to signup and login", async ({ page }) => {
+test("signed-out landing presents LERNOVIQ’s services and account entry points", async ({
+  page,
+}) => {
   await page.context().clearCookies();
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Smarter Learning. Stronger Outcomes." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Six solution areas, one connected approach." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "An adaptable learning platform designed around organizational learning needs.",
+    }),
+  ).toBeVisible();
+  // On small screens the account links live in the Menu drawer, as in the design.
+  const menu = page.getByText("Menu", { exact: true });
+  if (await menu.isVisible()) await menu.click();
+  await expect(page.getByRole("link", { name: "Sign up" }).filter({ visible: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log in" }).filter({ visible: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Explore Our Solutions" })).toHaveAttribute(
+    "href",
+    "#solutions",
+  );
+  const hasNoHorizontalOverflow = await page
+    .locator("html")
+    .evaluate((element) => element.scrollWidth <= element.clientWidth);
+  expect(hasNoHorizontalOverflow).toBe(true);
 });
 
 for (const [portal, target, heading] of [

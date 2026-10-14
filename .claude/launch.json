@@ -9,6 +9,20 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "design-export",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4400",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "Lernoviq landing page design/export/website-v2"
+      ],
+      "port": 4400
     }
   ]
 }

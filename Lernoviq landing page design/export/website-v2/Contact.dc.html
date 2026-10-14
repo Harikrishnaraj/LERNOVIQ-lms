@@ -46,8 +46,8 @@ input,select,textarea{font-family:inherit}
             <button type="button" role="radio" aria-checked="{{ isDemoStr }}" onClick="{{ setDemo }}" style="border:0;cursor:pointer;min-height:44px;padding:0 16px;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;background:{{ demoBg }};color:#0A1F54">Request an LMS Demo</button>
           </div>
         </div>
-        <sc-if value="{{ hasErrors }}" hint-placeholder-val="{{ false }}">
-          <p role="alert" style="padding:12px 16px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:14px;font-weight:600">Please complete the highlighted fields.</p>
+        <sc-if value="{{ showAlert }}" hint-placeholder-val="{{ false }}">
+          <p role="alert" style="padding:12px 16px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:14px;font-weight:600">{{ alertText }}</p>
         </sc-if>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:18px 20px">
           <sc-for list="{{ fields }}" as="f" hint-placeholder-count="7">
@@ -78,7 +78,7 @@ input,select,textarea{font-family:inherit}
           <span>I agree that Lernoviq may use the information I provide to respond to this enquiry. <span style="color:{{ consentColor }};font-weight:600">{{ consentMsg }}</span></span>
         </label>
         <button type="submit" style="align-self:flex-start;min-height:52px;padding:0 28px;border-radius:10px;border:0;background:#0066FF;color:#FFFFFF;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer" style-hover="background:#0052CC">{{ submitLabel }}</button>
-        <p style="font-size:13px;line-height:1.6;color:#475569">We use your details only to respond to your enquiry. Privacy policy link: TO_CONFIRM before publishing.</p>
+        <p style="font-size:13px;line-height:1.6;color:#475569">We use your details only to respond to your enquiry. </p>
       </form>
     </sc-if>
     <sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
@@ -86,7 +86,6 @@ input,select,textarea{font-family:inherit}
         <span style="width:48px;height:48px;border-radius:999px;background:#008A3E;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800">✓</span>
         <h2 style="font-size:24px;font-weight:800">Thank you for contacting Lernoviq.</h2>
         <p style="font-size:17px;line-height:1.7;color:#334155">Your inquiry has been received. Our team will review your requirements and get back to you using the contact details provided.</p>
-        <p style="font-size:13px;color:#8A4B00;font-weight:600">Preview mode: no form endpoint is connected, so nothing was sent.</p>
         <button onClick="{{ reset }}" style="align-self:flex-start;min-height:44px;padding:0 18px;border-radius:10px;border:1.5px solid #CBD5E1;background:#FFFFFF;color:#0A1F54;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Send another enquiry</button>
       </div>
     </sc-if>
@@ -112,15 +111,36 @@ input,select,textarea{font-family:inherit}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { type: (typeof location !== 'undefined' && /topic=demo/.test(location.search)) ? 'demo' : 'consult', errors: {}, submitted: false };
-  submit = (e) => {
+  state = { type: (typeof location !== 'undefined' && /topic=demo/.test(location.search)) ? 'demo' : 'consult', errors: {}, submitted: false, serverError: '', sending: false };
+  submit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target), errors = {};
     ['name', 'email', 'org', 'country', 'industry', 'solution', 'details'].forEach(k => { if (!String(fd.get(k) || '').trim()) errors[k] = 'Required'; });
     const em = String(fd.get('email') || '');
     if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) errors.email = 'Enter a valid work email';
     if (!fd.get('consent')) errors.consent = 'Required';
-    this.setState({ errors, submitted: Object.keys(errors).length === 0 });
+    if (Object.keys(errors).length) { this.setState({ errors, serverError: '' }); return; }
+    // ADR-043: the LMS stores the enquiry (Admin > Enquiries) and emails the team.
+    const body = {
+      kind: this.state.type === 'demo' ? 'demo' : 'consultation',
+      name: String(fd.get('name') || ''), email: em, organization: String(fd.get('org') || ''),
+      country: String(fd.get('country') || ''), industry: String(fd.get('industry') || ''),
+      solution: String(fd.get('solution') || ''), audience: String(fd.get('audience') || ''),
+      timeline: String(fd.get('timeline') || ''), details: String(fd.get('details') || ''), consent: true
+    };
+    this.setState({ errors: {}, serverError: '', sending: true });
+    try {
+      const url = (window.LV ? window.LV.lmsUrl('/api/enquiries') : 'https://lms.lernoviq.com/api/enquiries');
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok && j.ok) { this.setState({ submitted: true, sending: false }); return; }
+      const fe = j.fieldErrors || {};
+      const map = { organization: 'org' }, next = {};
+      Object.keys(fe).forEach(k => { next[map[k] || k] = fe[k]; });
+      this.setState({ errors: next, serverError: j.error || 'We couldn’t send your enquiry. Please try again shortly.', sending: false });
+    } catch (err) {
+      this.setState({ serverError: 'We couldn’t reach our servers. Please check your connection and try again.', sending: false });
+    }
   };
   renderVals() {
     const { type, errors, submitted } = this.state, demo = type === 'demo';
@@ -130,23 +150,24 @@ class Component extends DCLogic {
       { name: 'org', label: 'Organization', type: 'text', ac: 'organization' },
       { name: 'country', label: 'Country or region', type: 'text', ac: 'country-name' },
       { name: 'industry', label: 'Industry', select: ['Corporate & Enterprise', 'Banking, Financial Services & Insurance', 'Government & Public Institutions', 'Training provider', 'Other'] },
-      { name: 'solution', label: 'Solution of interest', def: demo ? 'Lernoviq LMS & Learning Technology' : '', select: ['Learning Consulting & Curriculum Design', 'Custom E-Learning Development', 'Lernoviq LMS & Learning Technology', 'Assessments & Certification Solutions', 'Localization & Video Learning', 'Managed Learning Services', 'Not sure yet'] },
+      { name: 'solution', label: 'Solution of interest', def: demo ? 'LERNOVIQ LMS & Learning Technology' : '', select: ['Learning Consulting & Curriculum Design', 'Custom E-Learning Development', 'LERNOVIQ LMS & Learning Technology', 'Assessments & Certification Solutions', 'Localization & Video Learning', 'Managed Learning Services', 'Not sure yet'] },
       { name: 'audience', label: 'Approximate learner audience', optional: true, select: ['Under 100', '100–1,000', '1,000–10,000', 'Over 10,000', 'Not sure yet'] },
       { name: 'timeline', label: 'Desired timeline', optional: true, select: ['Within 3 months', '3–6 months', '6–12 months', 'Exploring options'] }
     ];
     return {
       showForm: !submitted, submitted,
       formTitle: demo ? 'Request an LMS walkthrough' : 'Tell us about your learning needs',
-      submitLabel: demo ? 'Request an LMS Demo' : 'Request a Consultation',
+      submitLabel: this.state.sending ? 'Sending…' : (demo ? 'Request an LMS Demo' : 'Request a Consultation'),
       isConsultStr: demo ? 'false' : 'true', isDemoStr: demo ? 'true' : 'false',
       consultBg: demo ? 'transparent' : '#FFFFFF', demoBg: demo ? '#FFFFFF' : 'transparent',
       setConsult: () => this.setState({ type: 'consult' }), setDemo: () => this.setState({ type: 'demo' }),
-      hasErrors: Object.keys(errors).length > 0,
+      showAlert: Object.keys(errors).length > 0 || !!this.state.serverError,
+      alertText: this.state.serverError || 'Please complete the highlighted fields.',
       fields: F.map(f => ({ ...f, isInput: !f.select, isSelect: !!f.select, options: f.select || [], opt: f.optional ? ' (optional)' : '', def: f.def || '', err: errors[f.name] || '', invalid: errors[f.name] ? 'true' : 'false', border: errors[f.name] ? '#DC2626' : '#CBD5E1' })),
       detailsInvalid: errors.details ? 'true' : 'false', detailsBorder: errors.details ? '#DC2626' : '#CBD5E1',
       consentInvalid: errors.consent ? 'true' : 'false', consentMsg: errors.consent ? 'Please confirm to continue.' : '', consentColor: '#B91C1C',
       submit: this.submit,
-      reset: () => this.setState({ submitted: false, errors: {} })
+      reset: () => this.setState({ submitted: false, errors: {}, serverError: '' })
     };
   }
 }

@@ -19,7 +19,7 @@
         </sc-for>
       </nav>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <a href="Cart.dc.html" aria-label="{{ cartLabel }}" style="position:relative;width:46px;height:46px;border-radius:10px;border:1.5px solid #CBD5E1;display:flex;align-items:center;justify-content:center;text-decoration:none;background:{{ cartBg }}" style-hover="border-color:#0066FF">
+        <a href="https://lms.lernoviq.com/cart" aria-label="{{ cartLabel }}" style="position:relative;width:46px;height:46px;border-radius:10px;border:1.5px solid #CBD5E1;display:flex;align-items:center;justify-content:center;text-decoration:none;background:{{ cartBg }}" style-hover="border-color:#0066FF">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A1F54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20a1 1 0 1 0 0-2a1 1 0 0 0 0 2zM17 20a1 1 0 1 0 0-2a1 1 0 0 0 0 2z"></path></svg>
           <sc-if value="{{ hasItems }}" hint-placeholder-val="{{ false }}">
             <span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#0066FF;color:#FFFFFF;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF">{{ count }}</span>
@@ -32,7 +32,7 @@
     </sc-if>
     <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;align-items:center;gap:8px">
-        <a href="Cart.dc.html" aria-label="{{ cartLabel }}" style="position:relative;width:48px;height:48px;border-radius:10px;border:1.5px solid #CBD5E1;display:flex;align-items:center;justify-content:center;text-decoration:none">
+        <a href="https://lms.lernoviq.com/cart" aria-label="{{ cartLabel }}" style="position:relative;width:48px;height:48px;border-radius:10px;border:1.5px solid #CBD5E1;display:flex;align-items:center;justify-content:center;text-decoration:none">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A1F54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 20a1 1 0 1 0 0-2a1 1 0 0 0 0 2zM17 20a1 1 0 1 0 0-2a1 1 0 0 0 0 2z"></path></svg>
           <sc-if value="{{ hasItems }}" hint-placeholder-val="{{ false }}">
             <span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#0066FF;color:#FFFFFF;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #FFFFFF">{{ count }}</span>
@@ -73,7 +73,7 @@ class Component extends DCLogic {
   componentWillUnmount() { window.removeEventListener('resize', this.onR); window.removeEventListener('lv-change', this.sync); clearInterval(this.t); }
   renderVals() {
     const active = this.props.active ?? 'home';
-    const items = [['home','Home','Home.dc.html'],['about','About','About.dc.html'],['solutions','Solutions','Solutions.dc.html'],['courses','Courses','Courses.dc.html'],['lms','Lernoviq LMS','LMS.dc.html'],['industries','Industries','Industries.dc.html'],['delivery','Delivery','Delivery.dc.html'],['faqs','FAQs','FAQs.dc.html']];
+    const items = [['home','Home','Home.dc.html'],['about','About','About.dc.html'],['solutions','Solutions','Solutions.dc.html'],['courses','Courses','https://lms.lernoviq.com/courses'],['lms','Lernoviq LMS','LMS.dc.html'],['industries','Industries','Industries.dc.html'],['delivery','Delivery','Delivery.dc.html'],['faqs','FAQs','FAQs.dc.html']];
     const isDesktop = this.state.w >= 768;
     const navBelow = this.state.w < 1440;
     const lms = (p) => (window.LV ? window.LV.lmsUrl(p) : 'https://lms.lernoviq.com' + p);

@@ -156,6 +156,15 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-801 | Permission-aware retrieval           | ADR-017, SECURITY §16      | Unauthorized org/course chunks never retrieved         |
 | F-802 | Knowledge base admin                 | ScreenKnowledgeBase        | Test retrieval, re-index, delete removes from retrieval |
 
+## Marketing website
+
+| ID    | Feature                                  | Source                  | Done when                                               |
+| ----- | ---------------------------------------- | ----------------------- | ------------------------------------------------------- |
+| F-960 | Marketing site pages                     | ADR-042                 | Home, About, Solutions, LMS, Industries, Delivery, FAQs match the design export; shared header/footer; responsive at 375–1440 |
+| F-961 | Public course catalogue (marketing)      | ADR-042                 | /courses uses the design with live courses; search, filters and sort work; empty/error states |
+| F-962 | Cart (pre-checkout)                      | ADR-042, ADR-038        | Add/remove courses, Myself/Company with seats and GSTIN, summary totals; checkout disabled until Dodo is live |
+| F-963 | Contact enquiries                        | ADR-042, SECURITY §28   | Validated, rate-limited form stores enquiries, emails a notification, admins read them in Admin → Enquiries |
+
 ## Platform & quality
 
 | ID    | Feature                                  | Source                  | Done when                                               |

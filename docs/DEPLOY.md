@@ -26,6 +26,38 @@ The second hostname is the separate content origin that multi-frame SCORM packag
 
 When you have a domain, point two DNS **A records** at the VPS (for example `lms.example.com` and `content.example.com`). Then set the repository **variables** `PROD_APP_HOST` and `PROD_CONTENT_HOST` and re-run the deploy.
 
+## Production hosting for lernoviq.com (ADR-043)
+
+| Host | Serves | Where |
+|---|---|---|
+| `lernoviq.com`, `www.lernoviq.com` | Static marketing site from `Lernoviq landing page design/export/website-v2/` | Hostinger web hosting (`public_html`) |
+| `lms.lernoviq.com` | The LMS app (this repo), including its own marketing pages, `/courses`, `/cart`, `/login` | Hostinger KVM VPS (Ubuntu 24.04), Docker + Caddy |
+| `content.lernoviq.com` | SCORM content origin (ADR-029) | Same VPS |
+
+**DNS** (in Hostinger's DNS zone for `lernoviq.com`):
+
+| Type | Name | Value |
+|---|---|---|
+| A | `lms` | VPS public IPv4 |
+| A | `content` | VPS public IPv4 |
+| A / CNAME | `@`, `www` | Leave as Hostinger web hosting sets them |
+
+Wait until `lms.lernoviq.com` and `content.lernoviq.com` resolve to the VPS before the first deploy, or Caddy cannot get certificates.
+
+**Repository variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Variable | Value |
+|---|---|
+| `PROD_APP_HOST` | `lms.lernoviq.com` |
+| `PROD_CONTENT_HOST` | `content.lernoviq.com` |
+| `PROD_RESEND_FROM_EMAIL` | A sender on a domain verified in Resend |
+| `PROD_CONTACT_NOTIFY_EMAIL` | Where contact-form enquiries are emailed (optional; they are always stored) |
+| `PROD_MARKETING_SITE_ORIGINS` | Optional. Defaults to `https://lernoviq.com,https://www.lernoviq.com` (who may POST the static contact form) |
+
+**Static site upload:** upload the *contents* of `website-v2/` (not the folder) to `public_html`, keeping `support.js`, `lv-store.js`, `assets/` and `brand/` next to the pages. `index.html` redirects to `Home.dc.html`. Course and cart links go to `https://lms.lernoviq.com`; the contact form posts to `https://lms.lernoviq.com/api/enquiries`, so it works only once the app is deployed and the `enquiries` migration is applied.
+
+**Supabase Auth** (step 4 below): Site URL `https://lms.lernoviq.com`; Redirect URLs `https://lms.lernoviq.com/**`.
+
 ## One-time setup
 
 ### 1. Create a deploy key (on your computer)

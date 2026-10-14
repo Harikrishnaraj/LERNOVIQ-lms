@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CatalogLoading() {
   return (
-    <div aria-busy="true" aria-live="polite" className="space-y-6">
+    <div aria-busy="true" aria-live="polite" className="mx-auto max-w-[1280px] space-y-6 px-6 py-10">
       <span className="sr-only">Loading courses…</span>
       <Skeleton className="h-9 w-64" />
       <Skeleton className="h-32" />

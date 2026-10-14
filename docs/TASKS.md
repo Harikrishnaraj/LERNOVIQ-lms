@@ -186,6 +186,15 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-224** Wire AI Tutor to retrieval. — F-701, F-801
 - [ ] **T-225** Tests: TEST_PLAN §17. — F-800…F-802
 
+## Phase 13 — Marketing website (ADR-042)
+
+- [x] **T-260** Marketing shell: `(marketing)` route group, design header/footer, landing colour tokens, Home page from the design export. — F-960
+- [x] **T-261** About, Solutions, LMS (tabs + accordion), Industries, Delivery (stepper) and FAQs (category tabs + accordion) pages from the design export. — F-960
+- [x] **T-262** Restyle `/courses` to the design with the live catalogue: search, filters, sort, empty/error states, site header/footer. — F-961
+- [x] **T-263** Cart: localStorage cart, Add to cart on Home and catalogue, header count, Myself/Company with seats and GSTIN, order summary; checkout disabled until Dodo (T-180). — F-962
+- [~] **T-264** Contact: consultation/demo form, server validation + rate limit, `enquiries` table with `enquiry.read`, email notification, Admin → Enquiries; `POST /api/enquiries` for the static site (ADR-043). — F-963
+- [~] **T-265** Tests: TEST_PLAN §26. — F-960…F-963
+
 ## Phase 12 — Production hardening & launch
 
 - [x] **T-240** Security headers + CSP (SECURITY §22). — F-940
