@@ -141,6 +141,8 @@ jobs:
       PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
       PROD_CONTACT_NOTIFY_EMAIL: ${{ vars.PROD_CONTACT_NOTIFY_EMAIL }}
       PROD_MARKETING_SITE_ORIGINS: ${{ vars.PROD_MARKETING_SITE_ORIGINS }}
+      HOSTINGER_MAIL_API: ${{ secrets.HOSTINGER_MAIL_API }}
+      PROD_HOSTINGER_MAIL_FROM: ${{ vars.PROD_HOSTINGER_MAIL_FROM }}
       # Optional: your own domain names. Without them the app gets free sslip.io names for the IP.
       PROD_APP_HOST: ${{ vars.PROD_APP_HOST }}
       PROD_CONTENT_HOST: ${{ vars.PROD_CONTENT_HOST }}
@@ -248,6 +250,8 @@ jobs:
             echo "CRON_SECRET=$PROD_CRON_SECRET"
             echo "CONTACT_NOTIFY_EMAIL=$PROD_CONTACT_NOTIFY_EMAIL"
             if [ -n "$PROD_MARKETING_SITE_ORIGINS" ]; then echo "MARKETING_SITE_ORIGINS=$PROD_MARKETING_SITE_ORIGINS"; fi
+            echo "HOSTINGER_MAIL_API=$HOSTINGER_MAIL_API"
+            echo "HOSTINGER_MAIL_FROM=$PROD_HOSTINGER_MAIL_FROM"
           } > "$RUNNER_TEMP/server.env"
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'umask 077; cat > ~/lernoviq-lms/.env' < "$RUNNER_TEMP/server.env"
           rm -f "$RUNNER_TEMP/server.env"

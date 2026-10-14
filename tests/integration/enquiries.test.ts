@@ -5,6 +5,8 @@ import { cleanup, createUserWithRole, serviceClient, uniqueTag } from "../suppor
 // One address per run, so the per-IP limit never collides with other runs.
 const ip = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
 vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": ip }) }));
+// tests/setup.ts stubs the limiter to "allowed"; this file checks the real one is wired in.
+vi.unmock("@/services/rate-limit");
 
 import { submitEnquiry } from "@/features/enquiries/actions";
 import type { EnquiryInput } from "@/features/enquiries/schema";

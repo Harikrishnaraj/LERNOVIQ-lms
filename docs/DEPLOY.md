@@ -52,6 +52,7 @@ Wait until `lms.lernoviq.com` and `content.lernoviq.com` resolve to the VPS befo
 | `PROD_CONTENT_HOST` | `content.lernoviq.com` |
 | `PROD_RESEND_FROM_EMAIL` | A sender on a domain verified in Resend |
 | `PROD_CONTACT_NOTIFY_EMAIL` | Where contact-form enquiries are emailed (optional; they are always stored) |
+| `PROD_HOSTINGER_MAIL_FROM` | Optional. Sending mailbox for Hostinger Mail, e.g. `support@lernoviq.com` (default: the token's first mailbox) |
 | `PROD_MARKETING_SITE_ORIGINS` | Optional. Defaults to `https://lernoviq.com,https://www.lernoviq.com` (who may POST the static contact form) |
 
 **Static site upload:** upload the *contents* of `website-v2/` (not the folder) to `public_html`, keeping `support.js`, `lv-store.js`, `assets/` and `brand/` next to the pages. `index.html` redirects to `Home.dc.html`. Course and cart links go to `https://lms.lernoviq.com`; the contact form posts to `https://lms.lernoviq.com/api/enquiries`, so it works only once the app is deployed and the `enquiries` migration is applied.
@@ -97,6 +98,7 @@ In GitHub, open the repo → Settings → Secrets and variables → Actions → 
 | `PROD_SUPABASE_ANON_KEY` | The same page, the `anon` `public` key |
 | `PROD_SUPABASE_SERVICE_ROLE_KEY` | The same page, the `service_role` key (full DB access: secret only) |
 | `PROD_RESEND_API_KEY` | Optional. Resend key for announcement emails. |
+| `HOSTINGER_MAIL_API` | Optional. Hostinger Mail API token; when set, all email is sent through Hostinger from the lernoviq.com mailbox instead of Resend (ADR-044). |
 | `PROD_CRON_SECRET` | Optional. Any long random string; enables scheduled reports. |
 | `VPS_KNOWN_HOSTS` | Optional. Output of `ssh-keyscan -H <ip>`; pins the server's host key. |
 

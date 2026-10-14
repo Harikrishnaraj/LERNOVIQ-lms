@@ -415,3 +415,13 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 **Consequences:** Two copies of the marketing content exist (static export and in-app pages); copy changes must be made in both until one is retired. The static site depends on the app for the contact form and catalogue. Production cleanup deletes data irreversibly, so it needs a backup first (`docs/RUNBOOKS.md`) and explicit approval.
 
 **Status:** Accepted (user decision).
+
+## ADR-044 — Email Through Hostinger Mail
+
+**Decision:** Outgoing email (announcements, contact-form notifications) is sent through the Hostinger Mail API (`hostinger-mail-api-sdk`, published by Hostinger) from the lernoviq.com mailbox whenever `HOSTINGER_MAIL_API` (API token) is set; `HOSTINGER_MAIL_FROM` picks the mailbox (default: the token's first mailbox), sender name "LERNOVIQ". Resend (T-141) remains the fallback when no token is set, so local development and tests are unchanged. `services/email` stays the only place that sends mail and keeps its never-throw contract.
+
+**Reason:** User decision (2026-10-14): installed the Hostinger Mail SDK and added the `HOSTINGER_MAIL_API` repository secret; the domain's mail is hosted at Hostinger, and Resend's sandbox sender cannot deliver to `support@lernoviq.com`.
+
+**Consequences:** Sent messages are also saved to the mailbox's Sent folder. The API returns no message ID, so delivery logs record an empty provider ID. The deploy job writes `HOSTINGER_MAIL_API` / `HOSTINGER_MAIL_FROM` to the server `.env`.
+
+**Status:** Accepted (user decision).
