@@ -9,7 +9,8 @@ import consultationImage from "@/assets/landing/contact-consultation-team.webp";
 // "Business contact details" placeholder is left out until verified details exist.
 export const metadata: Metadata = {
   title: { absolute: "Contact LERNOVIQ | Discuss Your Learning Requirements" },
-  description: "Tell us what you want to achieve. We’ll help explore a learning solution that fits your learners, systems and business objectives.",
+  description:
+    "Tell us what you want to achieve. We’ll help explore a learning solution that fits your learners, systems and business objectives.",
 };
 
 const OTHER = [
@@ -18,7 +19,11 @@ const OTHER = [
   { label: "Read the FAQs →", href: "/faqs" },
 ];
 
-export default async function ContactPage({ searchParams }: { searchParams: Promise<{ topic?: string }> }) {
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ topic?: string }>;
+}) {
   const { topic } = await searchParams;
 
   return (
@@ -26,11 +31,13 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
       <section aria-labelledby="hero-h" className="border-b border-border bg-landing-tint">
         <div className={`${container} flex flex-col gap-5 pt-[72px] pb-16`}>
           <p className={eyebrow}>Contact</p>
-          <h1 id="hero-h" className={`${h1} max-w-[820px]`}>Let’s Build Better Learning Together.</h1>
+          <h1 id="hero-h" className={`${h1} max-w-[820px]`}>
+            Let’s Build Better Learning Together.
+          </h1>
           <p className={`${heroLead} max-w-[720px]`}>
-            Planning a new training program, modernizing existing content or evaluating learning technology?
-            Tell us what you want to achieve. We’ll help explore a solution that fits your learners, systems
-            and business objectives.
+            Planning a new training program, modernizing existing content or evaluating learning
+            technology? Tell us what you want to achieve. We’ll help explore a solution that fits
+            your learners, systems and business objectives.
           </p>
         </div>
       </section>
@@ -49,7 +56,11 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
           <div className="flex flex-col gap-3 rounded-card border border-border p-6">
             <h2 className="text-[17px] font-extrabold">Other ways to start</h2>
             {OTHER.map((o) => (
-              <Link key={o.href} href={o.href} className="flex min-h-8 items-center text-[15px] font-semibold text-primary-dark hover:text-text">
+              <Link
+                key={o.href}
+                href={o.href}
+                className="flex min-h-8 items-center text-[15px] font-semibold text-primary-dark hover:text-text"
+              >
                 {o.label}
               </Link>
             ))}

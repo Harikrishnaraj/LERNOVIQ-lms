@@ -31,7 +31,11 @@ export function LmsTabs({ tabs }: { tabs: LmsTab[] }) {
 
   return (
     <>
-      <div role="tablist" aria-label="Product areas" className="mb-6 flex w-fit max-w-full flex-wrap gap-1.5 rounded-xl border border-border bg-surface p-1.5">
+      <div
+        role="tablist"
+        aria-label="Product areas"
+        className="mb-6 flex w-fit max-w-full flex-wrap gap-1.5 rounded-xl border border-border bg-surface p-1.5"
+      >
         {tabs.map((t, i) => (
           <button
             key={t.label}
@@ -63,11 +67,14 @@ export function LmsTabs({ tabs }: { tabs: LmsTab[] }) {
             Product direction
           </span>
           <h3 className="text-[26px] leading-[1.2] font-extrabold">{cur.title}</h3>
-          <p className="text-base leading-[1.7] text-landing-body text-pretty">{cur.body}</p>
+          <p className="text-base leading-[1.7] text-pretty text-landing-body">{cur.body}</p>
           <ul className="flex flex-col gap-2.5">
             {cur.points.map((p) => (
               <li key={p} className="flex items-baseline gap-2.5 text-[15px] leading-[1.5]">
-                <span className="size-1.5 shrink-0 -translate-y-0.5 bg-primary" aria-hidden="true" />
+                <span
+                  className="size-1.5 shrink-0 -translate-y-0.5 bg-primary"
+                  aria-hidden="true"
+                />
                 {p}
               </li>
             ))}
@@ -75,9 +82,16 @@ export function LmsTabs({ tabs }: { tabs: LmsTab[] }) {
         </div>
         <figure className="m-0 flex min-w-0 flex-col gap-2.5">
           <div className="overflow-hidden rounded-card border border-border bg-surface shadow-[0_24px_48px_-32px_rgba(10,31,84,0.45)]">
-            <Image src={cur.image} alt={cur.alt} sizes="(min-width: 1024px) 640px, 100vw" className="aspect-[16/10] w-full object-cover object-top-left" />
+            <Image
+              src={cur.image}
+              alt={cur.alt}
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="aspect-[16/10] w-full object-cover object-top-left"
+            />
           </div>
-          <figcaption className="text-[13px] text-neutral-text">Product design concept. Not a screenshot of a released feature.</figcaption>
+          <figcaption className="text-[13px] text-neutral-text">
+            Product design concept. Not a screenshot of a released feature.
+          </figcaption>
         </figure>
       </div>
     </>

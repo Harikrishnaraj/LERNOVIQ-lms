@@ -6,7 +6,8 @@ import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit
 import { createAdminClient } from "@/services/supabase/admin";
 import { enquiryErrors, enquirySchema, type EnquiryInput } from "./schema";
 
-export type SubmitEnquiryResult = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
+export type SubmitEnquiryResult =
+  { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -17,7 +18,11 @@ export async function submitEnquiry(input: EnquiryInput): Promise<SubmitEnquiryR
   const fieldErrors = enquiryErrors(input);
   const parsed = enquirySchema.safeParse(input);
   if (fieldErrors || !parsed.success) {
-    return { ok: false, error: "Please complete the highlighted fields.", fieldErrors: fieldErrors ?? {} };
+    return {
+      ok: false,
+      error: "Please complete the highlighted fields.",
+      fieldErrors: fieldErrors ?? {},
+    };
   }
   const e = parsed.data;
 
@@ -59,7 +64,15 @@ export async function submitEnquiry(input: EnquiryInput): Promise<SubmitEnquiryR
       .filter(([, v]) => v)
       .map(([k, v]) => `<tr><th align="left">${k}</th><td>${escapeHtml(v!)}</td></tr>`)
       .join("")}</table><p>${escapeHtml(e.details).replace(/\n/g, "<br>")}</p>`;
-    const sent = await sendEmail({ to, subject: `New ${e.kind === "demo" ? "LMS demo" : "consultation"} enquiry from ${e.organization}`.slice(0, 200), html });
+    const sent = await sendEmail({
+      to,
+      subject:
+        `New ${e.kind === "demo" ? "LMS demo" : "consultation"} enquiry from ${e.organization}`.slice(
+          0,
+          200,
+        ),
+      html,
+    });
     if (!sent.ok) log.error("enquiry.email_failed", { detail: sent.error });
   } else {
     log.warn("enquiry.email_skipped", { detail: "CONTACT_NOTIFY_EMAIL is not set" });

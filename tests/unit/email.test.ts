@@ -24,7 +24,12 @@ vi.mock("hostinger-mail-api-sdk", () => ({
 
 import { resetEmailProviderCache, sendEmail } from "@/services/email";
 
-const keys = ["RESEND_API_KEY", "RESEND_FROM_EMAIL", "HOSTINGER_MAIL_API", "HOSTINGER_MAIL_FROM"] as const;
+const keys = [
+  "RESEND_API_KEY",
+  "RESEND_FROM_EMAIL",
+  "HOSTINGER_MAIL_API",
+  "HOSTINGER_MAIL_FROM",
+] as const;
 const original = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
 const msg = { to: "a@example.com", subject: "Hi", html: "<p>hi</p>" };
 
@@ -114,7 +119,10 @@ describe("sendEmail via Hostinger Mail (ADR-044)", () => {
 
   it("reports API errors without throwing, and retries the mailbox lookup after a failure", async () => {
     process.env.HOSTINGER_MAIL_FROM = "nobody@lernoviq.com";
-    expect(await sendEmail(msg)).toEqual({ ok: false, error: "Mailbox nobody@lernoviq.com is not available to this token" });
+    expect(await sendEmail(msg)).toEqual({
+      ok: false,
+      error: "Mailbox nobody@lernoviq.com is not available to this token",
+    });
 
     process.env.HOSTINGER_MAIL_FROM = "support@lernoviq.com";
     hostingerSend.mockRejectedValue({ response: { status: 403, data: { message: "Forbidden" } } });

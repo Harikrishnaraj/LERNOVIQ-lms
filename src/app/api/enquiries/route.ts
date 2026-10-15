@@ -29,7 +29,10 @@ function corsHeaders(origin: string | null): Record<string, string> {
 export function OPTIONS(req: NextRequest) {
   const origin = req.headers.get("origin");
   const headers = corsHeaders(origin);
-  return new NextResponse(null, { status: "Access-Control-Allow-Origin" in headers ? 204 : 403, headers });
+  return new NextResponse(null, {
+    status: "Access-Control-Allow-Origin" in headers ? 204 : 403,
+    headers,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -45,7 +48,10 @@ export async function POST(req: NextRequest) {
 
   const raw = await req.text();
   if (raw.length > MAX_BODY_BYTES) {
-    return NextResponse.json({ ok: false, error: "Enquiry is too long." }, { status: 413, headers });
+    return NextResponse.json(
+      { ok: false, error: "Enquiry is too long." },
+      { status: 413, headers },
+    );
   }
   let body: unknown;
   try {
@@ -55,6 +61,12 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await submitEnquiry(body as EnquiryInput);
-  const status = result.ok ? 200 : result.fieldErrors ? 422 : result.error === RATE_LIMITED_MESSAGE ? 429 : 500;
+  const status = result.ok
+    ? 200
+    : result.fieldErrors
+      ? 422
+      : result.error === RATE_LIMITED_MESSAGE
+        ? 429
+        : 500;
   return NextResponse.json(result, { status, headers });
 }

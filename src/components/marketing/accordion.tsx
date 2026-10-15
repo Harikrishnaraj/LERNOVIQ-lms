@@ -36,7 +36,13 @@ export function Accordion({
         const bid = `${base}-q${i}`;
         const pid = `${base}-a${i}`;
         return (
-          <div key={item.q} className={cn("rounded-xl border bg-surface", isOpen ? "border-primary" : "border-border")}>
+          <div
+            key={item.q}
+            className={cn(
+              "rounded-xl border bg-surface",
+              isOpen ? "border-primary" : "border-border",
+            )}
+          >
             <h3>
               <button
                 id={bid}
@@ -59,7 +65,12 @@ export function Accordion({
               </button>
             </h3>
             {isOpen && (
-              <div id={pid} role="region" aria-labelledby={bid} className="max-w-[760px] px-[22px] pb-[22px] text-base leading-[1.7] text-landing-body">
+              <div
+                id={pid}
+                role="region"
+                aria-labelledby={bid}
+                className="max-w-[760px] px-[22px] pb-[22px] text-base leading-[1.7] text-landing-body"
+              >
                 {item.a}
               </div>
             )}

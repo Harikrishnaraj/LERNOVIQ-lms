@@ -19,7 +19,9 @@ export interface EnquiryRow {
 export async function listEnquiries(supabase: SupabaseClient, limit = 200): Promise<EnquiryRow[]> {
   const { data, error } = await supabase
     .from("enquiries")
-    .select("id, kind, name, email, organization, country, industry, solution, audience, timeline, details, created_at")
+    .select(
+      "id, kind, name, email, organization, country, industry, solution, audience, timeline, details, created_at",
+    )
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`listEnquiries failed: ${error.message}`);

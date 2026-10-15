@@ -20,10 +20,22 @@ export const SOLUTION_OPTIONS = [
   "Not sure yet",
 ] as const;
 
-export const AUDIENCE_OPTIONS = ["Under 100", "100–1,000", "1,000–10,000", "Over 10,000", "Not sure yet"] as const;
-export const TIMELINE_OPTIONS = ["Within 3 months", "3–6 months", "6–12 months", "Exploring options"] as const;
+export const AUDIENCE_OPTIONS = [
+  "Under 100",
+  "100–1,000",
+  "1,000–10,000",
+  "Over 10,000",
+  "Not sure yet",
+] as const;
+export const TIMELINE_OPTIONS = [
+  "Within 3 months",
+  "3–6 months",
+  "6–12 months",
+  "Exploring options",
+] as const;
 
-const required = (max: number) => z.string().trim().min(1, "Required").max(max, `Use ${max} characters or fewer`);
+const required = (max: number) =>
+  z.string().trim().min(1, "Required").max(max, `Use ${max} characters or fewer`);
 const optionalOf = <T extends readonly [string, ...string[]]>(options: T) =>
   z
     .union([z.enum(options), z.literal("")])

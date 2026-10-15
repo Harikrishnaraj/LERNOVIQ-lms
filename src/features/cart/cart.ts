@@ -66,15 +66,17 @@ export function parseCart(raw: string | null): CartState {
   try {
     const v = JSON.parse(raw) as Partial<CartState>;
     const items = Array.isArray(v.items)
-      ? v.items.filter(
-          (i): i is CartItem =>
-            !!i &&
-            typeof i.courseId === "string" &&
-            typeof i.slug === "string" &&
-            typeof i.title === "string" &&
-            typeof i.priceCents === "number" &&
-            typeof i.currency === "string",
-        ).map((i) => ({ ...i, seats: clampSeats(i.seats) }))
+      ? v.items
+          .filter(
+            (i): i is CartItem =>
+              !!i &&
+              typeof i.courseId === "string" &&
+              typeof i.slug === "string" &&
+              typeof i.title === "string" &&
+              typeof i.priceCents === "number" &&
+              typeof i.currency === "string",
+          )
+          .map((i) => ({ ...i, seats: clampSeats(i.seats) }))
       : [];
     return { items, buyer: v.buyer === "company" ? "company" : "individual" };
   } catch {

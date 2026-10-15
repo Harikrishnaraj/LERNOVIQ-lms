@@ -30,11 +30,21 @@ export function DeliveryStepper() {
                 )}
               >
                 <span className="flex w-full items-center justify-between gap-2">
-                  <Image src={s.icon} alt="" width={60} height={60} className="size-[60px] rounded-full" />
+                  <Image
+                    src={s.icon}
+                    alt=""
+                    width={60}
+                    height={60}
+                    className="size-[60px] rounded-full"
+                  />
                   <span
                     className={cn(
                       "flex size-7 items-center justify-center rounded-full text-xs font-extrabold",
-                      on ? "bg-primary text-white" : done ? "bg-text text-white" : "bg-border-subtle text-text",
+                      on
+                        ? "bg-primary text-white"
+                        : done
+                          ? "bg-text text-white"
+                          : "bg-border-subtle text-text",
                     )}
                   >
                     {k + 1}
@@ -51,7 +61,9 @@ export function DeliveryStepper() {
         className="mt-4 flex flex-wrap items-center justify-between gap-6 rounded-card border border-border bg-landing-tint px-[clamp(20px,4vw,40px)] py-8"
       >
         <div className="flex max-w-[760px] flex-col gap-2.5">
-          <span className="text-[13px] font-extrabold tracking-[0.08em] text-primary-dark">STAGE 0{i + 1} OF 06</span>
+          <span className="text-[13px] font-extrabold tracking-[0.08em] text-primary-dark">
+            STAGE 0{i + 1} OF 06
+          </span>
           <h3 className="text-2xl font-extrabold">{cur.title}</h3>
           <p className="text-[17px] leading-[1.7] text-landing-body">{cur.detail}</p>
         </div>

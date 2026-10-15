@@ -140,23 +140,43 @@ export default async function HomePage() {
 
   return (
     <>
-      <section aria-labelledby="hero-h" className="relative isolate overflow-hidden border-b border-border">
-        <Image src={heroImage} alt="" fill priority sizes="100vw" className="-z-20 object-cover object-right" />
+      <section
+        aria-labelledby="hero-h"
+        className="relative isolate overflow-hidden border-b border-border"
+      >
+        <Image
+          src={heroImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="-z-20 object-cover object-right"
+        />
         {/* Export: white up to 46%, fading out by 80%. Below md the text spans the image, so it gets a wash. */}
         <div className="absolute inset-0 -z-10 bg-surface/90 md:bg-transparent md:bg-[linear-gradient(90deg,var(--color-surface)_0%,var(--color-surface)_46%,color-mix(in_srgb,var(--color-surface)_90%,transparent)_60%,transparent_80%)]" />
         <div className={`${container} flex pt-24 pb-[104px]`}>
           <div className="flex max-w-[520px] flex-col gap-6">
-            <p className={`${eyebrow} leading-[1.6]`}>Learning Solutions • LMS Technology • Global Delivery</p>
-            <h1 id="hero-h" className="text-[clamp(38px,5vw,60px)] leading-[1.06] font-extrabold tracking-[-0.025em] text-balance">
+            <p className={`${eyebrow} leading-[1.6]`}>
+              Learning Solutions • LMS Technology • Global Delivery
+            </p>
+            <h1
+              id="hero-h"
+              className="text-[clamp(38px,5vw,60px)] leading-[1.06] font-extrabold tracking-[-0.025em] text-balance"
+            >
               Smarter Learning. Stronger Outcomes.
             </h1>
-            <p className="max-w-[540px] text-lg leading-[1.65] text-landing-body text-pretty">
+            <p className="max-w-[540px] text-lg leading-[1.65] text-pretty text-landing-body">
               From learning strategy and custom e-learning to LMS technology and managed delivery,
-              LERNOVIQ brings every stage of the learning journey together in one integrated approach.
+              LERNOVIQ brings every stage of the learning journey together in one integrated
+              approach.
             </p>
             <div className="mt-1 flex flex-wrap gap-3">
-              <Link href="/contact" className={btnPrimary}>Discuss Your Learning Needs</Link>
-              <Link href="/solutions" className={btnOutline}>Explore Our Solutions</Link>
+              <Link href="/contact" className={btnPrimary}>
+                Discuss Your Learning Needs
+              </Link>
+              <Link href="/solutions" className={btnOutline}>
+                Explore Our Solutions
+              </Link>
             </div>
           </div>
         </div>
@@ -166,7 +186,9 @@ export default async function HomePage() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))] items-start gap-x-[72px] gap-y-8">
           <div className="flex flex-col gap-3.5">
             <p className={eyebrow}>Who we are</p>
-            <h2 id="intro-h" className={h2}>One Partner. Complete Learning Solutions.</h2>
+            <h2 id="intro-h" className={h2}>
+              One Partner. Complete Learning Solutions.
+            </h2>
           </div>
           <div className={`flex flex-col gap-4 ${lead}`}>
             <p>
@@ -187,20 +209,38 @@ export default async function HomePage() {
           <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div className="flex max-w-[620px] flex-col gap-3.5">
               <p className={eyebrow}>Solutions</p>
-              <h2 id="svc-h" className={h2}>Six solution areas, one connected approach.</h2>
+              <h2 id="svc-h" className={h2}>
+                Six solution areas, one connected approach.
+              </h2>
             </div>
-            <Link href="/solutions" className={textLink}>View all solutions →</Link>
+            <Link href="/solutions" className={textLink}>
+              View all solutions →
+            </Link>
           </div>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-5">
             {SERVICES.map((s) => (
-              <Link key={s.title} href={s.href} className={`${card} ${cardHover} flex flex-col gap-4 p-7 text-text`}>
+              <Link
+                key={s.title}
+                href={s.href}
+                className={`${card} ${cardHover} flex flex-col gap-4 p-7 text-text`}
+              >
                 <span className="flex size-11 items-center justify-center rounded-input bg-primary-light text-primary">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
                     <path d={s.icon} />
                   </svg>
                 </span>
                 <h3 className="text-[19px] leading-[1.3] font-bold">{s.title}</h3>
-                <p className="text-[15px] leading-[1.6] text-neutral-text text-pretty">{s.body}</p>
+                <p className="text-[15px] leading-[1.6] text-pretty text-neutral-text">{s.body}</p>
                 <span className="mt-auto text-sm font-bold text-primary-dark">Learn more →</span>
               </Link>
             ))}
@@ -218,7 +258,9 @@ export default async function HomePage() {
           />
           <div className="flex flex-col gap-5">
             <p className={eyebrow}>Why LERNOVIQ</p>
-            <h2 id="why-h" className={h2}>Learning First. Technology That Supports It.</h2>
+            <h2 id="why-h" className={h2}>
+              Learning First. Technology That Supports It.
+            </h2>
             <p className={lead}>
               We start with your goals, not a pre-set template. By uniting strategy, content,
               technology and delivery, we help reduce complexity and build learning experiences
@@ -226,31 +268,42 @@ export default async function HomePage() {
             </p>
             <div className="my-1 grid grid-cols-2 gap-2.5">
               {PILLARS.map((p) => (
-                <div key={p.label} className="flex items-center gap-2.5 rounded-input border border-border px-4 py-3.5 text-[15px] font-bold">
+                <div
+                  key={p.label}
+                  className="flex items-center gap-2.5 rounded-input border border-border px-4 py-3.5 text-[15px] font-bold"
+                >
                   <Square className={p.dot} />
                   {p.label}
                 </div>
               ))}
             </div>
-            <Link href="/about" className={btnOutlineSm}>Discover Why LERNOVIQ</Link>
+            <Link href="/about" className={btnOutlineSm}>
+              Discover Why LERNOVIQ
+            </Link>
           </div>
         </div>
       </section>
 
       <section aria-labelledby="lms-h" className={`${navyGradient} text-white`}>
-        <div className={`${container} grid grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-center gap-x-16 gap-y-12 py-24`}>
+        <div
+          className={`${container} grid grid-cols-[repeat(auto-fit,minmax(min(100%,400px),1fr))] items-center gap-x-16 gap-y-12 py-24`}
+        >
           <div className="flex max-w-[520px] flex-col gap-5">
             <p className={eyebrowOnDark}>LERNOVIQ LMS</p>
             <h2 id="lms-h" className={`${h2} text-white`}>
               An adaptable learning platform designed around organizational learning needs.
             </h2>
-            <p className="text-[17px] leading-[1.7] text-landing-on-dark text-pretty">
+            <p className="text-[17px] leading-[1.7] text-pretty text-landing-on-dark">
               A good learning platform should enable the learning strategy — not dictate it.
               LERNOVIQ LMS is being developed to support a connected digital learning experience.
             </p>
             <div className="mt-1 flex flex-wrap gap-3">
-              <Link href="/lms" className={btnWhite}>Explore LERNOVIQ LMS</Link>
-              <Link href="/contact?topic=demo" className={btnOnDark}>Request a Product Walkthrough</Link>
+              <Link href="/lms" className={btnWhite}>
+                Explore LERNOVIQ LMS
+              </Link>
+              <Link href="/contact?topic=demo" className={btnOnDark}>
+                Request a Product Walkthrough
+              </Link>
             </div>
           </div>
           <figure className="m-0 flex flex-col gap-3">
@@ -263,7 +316,8 @@ export default async function HomePage() {
               />
             </div>
             <figcaption className="text-[13px] text-landing-on-dark-caption">
-              Product design concept. Features shown are subject to confirmation during product discovery.
+              Product design concept. Features shown are subject to confirmation during product
+              discovery.
             </figcaption>
           </figure>
         </div>
@@ -273,10 +327,16 @@ export default async function HomePage() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
           <div className="flex max-w-[640px] flex-col gap-3.5">
             <p className={eyebrow}>Featured courses</p>
-            <h2 id="crs-h" className={h2}>Start learning today.</h2>
-            <p className="text-base leading-[1.6] text-neutral-text">For yourself or for your whole team.</p>
+            <h2 id="crs-h" className={h2}>
+              Start learning today.
+            </h2>
+            <p className="text-base leading-[1.6] text-neutral-text">
+              For yourself or for your whole team.
+            </p>
           </div>
-          <Link href="/courses" className={textLink}>Browse all courses →</Link>
+          <Link href="/courses" className={textLink}>
+            Browse all courses →
+          </Link>
         </div>
         <FeaturedCourses courses={featured} />
       </section>
@@ -284,20 +344,33 @@ export default async function HomePage() {
       <section aria-labelledby="ind-h" className={`${container} py-24`}>
         <div className="mb-10 flex max-w-[720px] flex-col gap-3.5">
           <p className={eyebrow}>Industries</p>
-          <h2 id="ind-h" className={h2}>Designed for organizations worldwide.</h2>
+          <h2 id="ind-h" className={h2}>
+            Designed for organizations worldwide.
+          </h2>
           <p className={lead}>
-            Supporting corporate and enterprise L&amp;D, banking and financial services, and government
-            and public institutions — with custom approaches for each sector’s workforce, compliance,
-            skills and learning requirements.
+            Supporting corporate and enterprise L&amp;D, banking and financial services, and
+            government and public institutions — with custom approaches for each sector’s workforce,
+            compliance, skills and learning requirements.
           </p>
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
           {INDUSTRIES.map((i) => (
-            <Link key={i.title} href={i.href} className={`${card} flex flex-col overflow-hidden text-text hover:border-primary`}>
-              <Image src={i.image} alt={i.alt} sizes="(min-width: 768px) 400px, 100vw" className="aspect-[4/3] w-full object-cover" />
+            <Link
+              key={i.title}
+              href={i.href}
+              className={`${card} flex flex-col overflow-hidden text-text hover:border-primary`}
+            >
+              <Image
+                src={i.image}
+                alt={i.alt}
+                sizes="(min-width: 768px) 400px, 100vw"
+                className="aspect-[4/3] w-full object-cover"
+              />
               <div className="flex items-center justify-between gap-3 px-6 pt-[22px] pb-[26px]">
                 <h3 className="text-lg leading-[1.3] font-bold">{i.title}</h3>
-                <span aria-hidden="true" className="font-bold text-primary-dark">→</span>
+                <span aria-hidden="true" className="font-bold text-primary-dark">
+                  →
+                </span>
               </div>
             </Link>
           ))}
@@ -309,16 +382,28 @@ export default async function HomePage() {
           <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div className="flex max-w-[640px] flex-col gap-3.5">
               <p className={eyebrow}>Delivery approach</p>
-              <h2 id="del-h" className={h2}>A Structured Journey from Requirement to Results.</h2>
+              <h2 id="del-h" className={h2}>
+                A Structured Journey from Requirement to Results.
+              </h2>
             </div>
-            <Link href="/delivery" className={textLink}>How we work →</Link>
+            <Link href="/delivery" className={textLink}>
+              How we work →
+            </Link>
           </div>
           <ol className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-3">
             {DELIVERY_STAGES.map((s, n) => (
               <li key={s.title} className={`${card} flex flex-col gap-4 px-[22px] py-6`}>
                 <div className="flex items-center justify-between gap-3">
-                  <Image src={s.icon} alt="" width={64} height={64} className="size-16 rounded-full" />
-                  <span className={`flex size-7 items-center justify-center rounded-full text-xs font-extrabold text-white ${s.badge}`}>
+                  <Image
+                    src={s.icon}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="size-16 rounded-full"
+                  />
+                  <span
+                    className={`flex size-7 items-center justify-center rounded-full text-xs font-extrabold text-white ${s.badge}`}
+                  >
                     {n + 1}
                   </span>
                 </div>
@@ -334,7 +419,10 @@ export default async function HomePage() {
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] items-center gap-x-16 gap-y-10">
           <div className="flex max-w-[480px] flex-col gap-[18px]">
             <p className={eyebrow}>Global delivery</p>
-            <h2 id="glob-h" className="text-[clamp(28px,3.4vw,40px)] leading-[1.12] font-extrabold tracking-[-0.02em]">
+            <h2
+              id="glob-h"
+              className="text-[clamp(28px,3.4vw,40px)] leading-[1.12] font-extrabold tracking-[-0.02em]"
+            >
               Learning challenges cross borders.
             </h2>
             <p className={lead}>
@@ -344,11 +432,20 @@ export default async function HomePage() {
               engagement.
             </p>
           </div>
-          <Image src={globalImage} alt="" sizes="(min-width: 1024px) 560px, 100vw" className="h-auto w-full" />
+          <Image
+            src={globalImage}
+            alt=""
+            sizes="(min-width: 1024px) 560px, 100vw"
+            className="h-auto w-full"
+          />
         </div>
       </section>
 
-      <CtaBand title="Have a learning challenge? Let’s build the right solution together." href="/contact" action="Start a Conversation" />
+      <CtaBand
+        title="Have a learning challenge? Let’s build the right solution together."
+        href="/contact"
+        action="Start a Conversation"
+      />
     </>
   );
 }
@@ -356,14 +453,26 @@ export default async function HomePage() {
 function FeaturedCourses({ courses }: { courses: CourseCardData[] | null }) {
   if (courses === null) {
     return (
-      <p role="status" className="rounded-card border border-border bg-landing-tint p-6 text-neutral-text">
+      <p
+        role="status"
+        className="rounded-card border border-border bg-landing-tint p-6 text-neutral-text"
+      >
         Featured courses could not be loaded right now.{" "}
-        <Link href="/courses" className="font-semibold text-primary-dark underline">Browse the catalogue</Link>.
+        <Link href="/courses" className="font-semibold text-primary-dark underline">
+          Browse the catalogue
+        </Link>
+        .
       </p>
     );
   }
   if (courses.length === 0) {
-    return <EmptyState icon={BookOpen} title="New courses are on the way" description="Check back soon, or create an account to be notified." />;
+    return (
+      <EmptyState
+        icon={BookOpen}
+        title="New courses are on the way"
+        description="Check back soon, or create an account to be notified."
+      />
+    );
   }
   return (
     <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-[18px]">
@@ -373,20 +482,36 @@ function FeaturedCourses({ courses }: { courses: CourseCardData[] | null }) {
           <li key={c.id} className={`${card} flex flex-col overflow-hidden`}>
             {c.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- user-uploaded, remote storage host
-              <img src={c.thumbnailUrl} alt="" loading="lazy" className="aspect-video w-full bg-primary-light object-cover" />
+              <img
+                src={c.thumbnailUrl}
+                alt=""
+                loading="lazy"
+                className="aspect-video w-full bg-primary-light object-cover"
+              />
             ) : (
-              <Image src={COURSE_FALLBACK_IMAGES[n % COURSE_FALLBACK_IMAGES.length]} alt="" sizes="300px" className="aspect-video w-full bg-primary-light object-cover" />
+              <Image
+                src={COURSE_FALLBACK_IMAGES[n % COURSE_FALLBACK_IMAGES.length]}
+                alt=""
+                sizes="300px"
+                className="aspect-video w-full bg-primary-light object-cover"
+              />
             )}
             <div className="flex flex-1 flex-col gap-2 p-[18px]">
-              {c.categoryName && <span className="text-xs font-bold text-neutral-text">{c.categoryName}</span>}
+              {c.categoryName && (
+                <span className="text-xs font-bold text-neutral-text">{c.categoryName}</span>
+              )}
               <h3 className="text-[17px] leading-[1.35] font-bold">
-                <Link href={`/courses/${c.slug}`} className="hover:text-primary-dark">{c.title}</Link>
+                <Link href={`/courses/${c.slug}`} className="hover:text-primary-dark">
+                  {c.title}
+                </Link>
               </h3>
               <span className="text-[13px] text-neutral-text">
                 {formatDuration(c.durationMinutes)} · {level}
               </span>
               <div className="mt-auto flex items-center justify-between gap-2.5 border-t border-border-subtle pt-3">
-                <span className="text-lg font-extrabold">{formatPrice(c.priceCents, c.currency)}</span>
+                <span className="text-lg font-extrabold">
+                  {formatPrice(c.priceCents, c.currency)}
+                </span>
                 <AddToCartButton
                   course={{
                     courseId: c.id,

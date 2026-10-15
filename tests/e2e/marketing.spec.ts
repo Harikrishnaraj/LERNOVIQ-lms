@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadEnvLocal } from "./support/env";
-import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
+import {
+  cleanup,
+  createCourse,
+  createUserWithRole,
+  serviceClient,
+  uniqueTag,
+} from "../support/course-fixtures";
 
 loadEnvLocal();
 // Public pages: run signed out.
@@ -20,7 +26,11 @@ const PAGES = [
 ] as const;
 
 async function noHorizontalScroll(page: Page) {
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
 }
 
 test.describe("marketing website (T-260…T-264)", () => {
@@ -28,18 +38,33 @@ test.describe("marketing website (T-260…T-264)", () => {
     test(`${path} renders its hero, the site header and footer`, async ({ page }) => {
       await page.goto(path);
       await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
-      await expect(page.getByRole("banner").getByRole("link", { name: "LERNOVIQ home" })).toBeVisible();
-      await expect(page.getByRole("contentinfo")).toContainText("LERNOVIQ AI TECHNOLOGIES PRIVATE LIMITED");
+      await expect(
+        page.getByRole("banner").getByRole("link", { name: "LERNOVIQ home" }),
+      ).toBeVisible();
+      await expect(page.getByRole("contentinfo")).toContainText(
+        "LERNOVIQ AI TECHNOLOGIES PRIVATE LIMITED",
+      );
       await noHorizontalScroll(page);
     });
   }
 
-  test("header marks the current page and the menu lists every page", async ({ page, isMobile }) => {
+  test("header marks the current page and the menu lists every page", async ({
+    page,
+    isMobile,
+  }) => {
     await page.goto("/about");
     if (isMobile) await page.getByText("Menu", { exact: true }).click();
     const nav = page.getByRole("navigation", { name: "Primary" }).filter({ visible: true });
     await expect(nav.getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "page");
-    for (const label of ["Home", "Solutions", "Courses", "LERNOVIQ LMS", "Industries", "Delivery", "FAQs"]) {
+    for (const label of [
+      "Home",
+      "Solutions",
+      "Courses",
+      "LERNOVIQ LMS",
+      "Industries",
+      "Delivery",
+      "FAQs",
+    ]) {
       await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
     await nav.getByRole("link", { name: "Solutions" }).click();
@@ -49,10 +74,15 @@ test.describe("marketing website (T-260…T-264)", () => {
   test("LMS tabs switch panels and the accordion toggles", async ({ page }) => {
     await page.goto("/lms");
     await page.getByRole("tab", { name: "Assessments" }).click();
-    await expect(page.getByRole("tab", { name: "Assessments" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: "Assessments" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await expect(page.getByRole("tabpanel")).toContainText("Assessment and knowledge evaluation");
 
-    const q = page.getByRole("button", { name: "Does LERNOVIQ offer both learning content and an LMS?" });
+    const q = page.getByRole("button", {
+      name: "Does LERNOVIQ offer both learning content and an LMS?",
+    });
     await expect(q).toHaveAttribute("aria-expanded", "false");
     await q.click();
     await expect(q).toHaveAttribute("aria-expanded", "true");
@@ -114,7 +144,11 @@ test.describe("catalogue and cart (T-262, T-263)", () => {
     const instructor = await createUserWithRole(svc, `${tag}-inst`, "instructor");
     userIds.push(instructor.id);
     for (const [i, priceCents] of [2500, 4000].entries()) {
-      const c = await createCourse(svc, instructor.id, { slug: `${tag}-${i}`, title: `${tag} paid ${i}`, priceCents });
+      const c = await createCourse(svc, instructor.id, {
+        slug: `${tag}-${i}`,
+        title: `${tag} paid ${i}`,
+        priceCents,
+      });
       courseIds.push(c.courseId);
     }
   });
@@ -129,7 +163,9 @@ test.describe("catalogue and cart (T-262, T-263)", () => {
     await page.getByRole("button", { name: `Add ${tag} paid 0 to cart` }).click();
     await page.getByRole("button", { name: `Add ${tag} paid 1 to cart` }).click();
     await expect(page.getByRole("link", { name: "✓ In cart" })).toHaveCount(2);
-    await expect(page.getByRole("link", { name: "Cart, 2 courses" }).filter({ visible: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Cart, 2 courses" }).filter({ visible: true }),
+    ).toBeVisible();
 
     await page.goto("/cart");
     const summary = page.getByRole("complementary", { name: "Order summary" });

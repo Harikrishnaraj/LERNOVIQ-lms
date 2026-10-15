@@ -43,7 +43,10 @@ describe("cart", () => {
   });
 
   it("totals per currency; seats multiply only for a company", () => {
-    let items = addItem(addItem(addItem([], course("a", 1000)), course("b", 500)), course("c", 20000, "INR"));
+    let items = addItem(
+      addItem(addItem([], course("a", 1000)), course("b", 500)),
+      course("c", 20000, "INR"),
+    );
     items = setSeats(items, "a", 3);
     expect(cartTotals({ items, buyer: "individual" })).toEqual({
       byCurrency: [
@@ -65,7 +68,10 @@ describe("cart", () => {
     expect(parseCart(null)).toEqual(EMPTY_CART);
     expect(parseCart("{not json")).toEqual(EMPTY_CART);
     const parsed = parseCart(
-      JSON.stringify({ buyer: "company", items: [{ ...course("a", 1000), seats: -4 }, { courseId: 1 }] }),
+      JSON.stringify({
+        buyer: "company",
+        items: [{ ...course("a", 1000), seats: -4 }, { courseId: 1 }],
+      }),
     );
     expect(parsed.buyer).toBe("company");
     expect(parsed.items).toHaveLength(1);

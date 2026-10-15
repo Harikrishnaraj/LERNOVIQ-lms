@@ -26,7 +26,13 @@ describe("enquiry schema", () => {
   });
 
   it("reports each missing required field and a missing consent", () => {
-    const errors = enquiryErrors({ ...valid, name: " ", organization: "", details: "", consent: false });
+    const errors = enquiryErrors({
+      ...valid,
+      name: " ",
+      organization: "",
+      details: "",
+      consent: false,
+    });
     expect(errors).toMatchObject({
       name: "Required",
       organization: "Required",
@@ -36,7 +42,9 @@ describe("enquiry schema", () => {
   });
 
   it("rejects a bad email, options outside the list and oversized text", () => {
-    expect(enquiryErrors({ ...valid, email: "not-an-email" })?.email).toBe("Enter a valid work email");
+    expect(enquiryErrors({ ...valid, email: "not-an-email" })?.email).toBe(
+      "Enter a valid work email",
+    );
     expect(enquiryErrors({ ...valid, industry: "Crypto" })?.industry).toBeTruthy();
     expect(enquiryErrors({ ...valid, timeline: "Yesterday" })?.timeline).toBeTruthy();
     expect(enquiryErrors({ ...valid, details: "x".repeat(5001) })?.details).toBeTruthy();

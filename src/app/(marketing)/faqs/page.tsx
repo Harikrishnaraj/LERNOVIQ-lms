@@ -95,21 +95,31 @@ export default function FaqsPage() {
       <section aria-labelledby="hero-h" className="border-b border-border bg-landing-tint">
         <div className="mx-auto flex max-w-[960px] flex-col gap-5 px-6 pt-[72px] pb-16">
           <p className={eyebrow}>FAQs</p>
-          <h1 id="hero-h" className="text-[clamp(34px,4.6vw,52px)] leading-[1.08] font-extrabold tracking-[-0.025em] text-balance">
+          <h1
+            id="hero-h"
+            className="text-[clamp(34px,4.6vw,52px)] leading-[1.08] font-extrabold tracking-[-0.025em] text-balance"
+          >
             Questions, answered clearly.
           </h1>
           <p className={`${heroLead} max-w-[680px]`}>
-            Short answers about our services, LERNOVIQ LMS and how engagements work. If something is not
-            covered here, ask us directly.
+            Short answers about our services, LERNOVIQ LMS and how engagements work. If something is
+            not covered here, ask us directly.
           </p>
         </div>
       </section>
 
-      <section aria-label="Frequently asked questions" className="mx-auto max-w-[960px] px-6 pt-14 pb-24">
+      <section
+        aria-label="Frequently asked questions"
+        className="mx-auto max-w-[960px] px-6 pt-14 pb-24"
+      >
         <FaqBrowser groups={GROUPS} />
       </section>
 
-      <CtaBand title="Still have a question? We’re happy to help." href="/contact" action="Start a Conversation" />
+      <CtaBand
+        title="Still have a question? We’re happy to help."
+        href="/contact"
+        action="Start a Conversation"
+      />
     </>
   );
 }

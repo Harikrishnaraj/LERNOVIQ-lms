@@ -13,7 +13,9 @@ export default function CartPage() {
           <Link href="/courses" className="text-sm font-bold text-primary-dark">
             ← Continue browsing
           </Link>
-          <h1 className="text-[clamp(28px,3.4vw,40px)] font-extrabold tracking-[-0.02em]">Your cart</h1>
+          <h1 className="text-[clamp(28px,3.4vw,40px)] font-extrabold tracking-[-0.02em]">
+            Your cart
+          </h1>
         </div>
         <CartView />
       </div>
