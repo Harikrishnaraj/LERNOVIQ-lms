@@ -26,6 +26,44 @@ The second hostname is the separate content origin that multi-frame SCORM packag
 
 When you have a domain, point two DNS **A records** at the VPS (for example `lms.example.com` and `content.example.com`). Then set the repository **variables** `PROD_APP_HOST` and `PROD_CONTENT_HOST` and re-run the deploy.
 
+## Production hosting: everything on the VPS (ADR-045)
+
+One Hostinger KVM VPS (Ubuntu 24.04) runs the whole stack. Nothing is hosted elsewhere.
+
+| Host | Serves | How |
+|---|---|---|
+| `lernoviq.com` | Marketing website (static files) | Caddy serves `/srv/website`, from `Lernoviq landing page design/export/website-v2` |
+| `www.lernoviq.com` | Redirects to `lernoviq.com` | Caddy |
+| `lms.lernoviq.com` | LMS app, including its marketing pages, `/courses`, `/cart`, `/login` | Caddy → app container |
+| `content.lernoviq.com` | SCORM content origin (ADR-029) | Caddy → app container |
+
+**DNS** (at the domain's DNS provider, A records to the VPS public IPv4):
+
+| Name | Type | Value |
+|---|---|---|
+| `@` (lernoviq.com) | A | VPS IP |
+| `www` | A | VPS IP |
+| `lms` | A | VPS IP |
+| `content` | A | VPS IP |
+
+Wait until all four names resolve to the VPS before the first deploy; Caddy needs them to issue certificates.
+
+**Repository variables** (Settings → Secrets and variables → Actions → Variables):
+
+| Variable | Value |
+|---|---|
+| `PROD_SITE_HOST` | `lernoviq.com` |
+| `PROD_APP_HOST` | `lms.lernoviq.com` |
+| `PROD_CONTENT_HOST` | `content.lernoviq.com` |
+| `PROD_RESEND_FROM_EMAIL` | A sender on a domain verified in Resend (only if Resend is used) |
+| `PROD_CONTACT_NOTIFY_EMAIL` | Where enquiries are emailed (`support@lernoviq.com`) |
+| `PROD_HOSTINGER_MAIL_FROM` | `support@lernoviq.com` (sender for Hostinger Mail, ADR-044) |
+| `PROD_MARKETING_SITE_ORIGINS` | Optional. Defaults to `https://lernoviq.com,https://www.lernoviq.com` |
+
+**Static site updates:** the marketing site is redeployed with every push to `main` (the deploy job copies the export folder). Edit the files in `Lernoviq landing page design/export/website-v2`, then push.
+
+**Supabase Auth** (step 4 below): Site URL `https://lms.lernoviq.com`; Redirect URLs `https://lms.lernoviq.com/**`.
+
 ## One-time setup
 
 ### 1. Create a deploy key (on your computer)
@@ -65,6 +103,7 @@ In GitHub, open the repo → Settings → Secrets and variables → Actions → 
 | `PROD_SUPABASE_ANON_KEY` | The same page, the `anon` `public` key |
 | `PROD_SUPABASE_SERVICE_ROLE_KEY` | The same page, the `service_role` key (full DB access: secret only) |
 | `PROD_RESEND_API_KEY` | Optional. Resend key for announcement emails. |
+| `HOSTINGER_MAIL_API` | Optional. Hostinger Mail API token; when set, all email is sent through Hostinger from the lernoviq.com mailbox instead of Resend (ADR-044). |
 | `PROD_CRON_SECRET` | Optional. Any long random string; enables scheduled reports. |
 | `VPS_KNOWN_HOSTS` | Optional. Output of `ssh-keyscan -H <ip>`; pins the server's host key. |
 

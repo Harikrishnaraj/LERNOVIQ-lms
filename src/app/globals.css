@@ -27,6 +27,22 @@
   --color-blue: #0066ff;
   --color-blue-light: #ebf3ff;
 
+  /* Marketing landing page (Claude Design export "website-v2"), used only by src/app/page.tsx. */
+  --color-landing-body: #334155;
+  --color-landing-tint: #f5f8fc;
+  --color-landing-outline: #cbd5e1;
+  --color-landing-navy-2: #0b2a73;
+  --color-landing-cta-mid: #0b3a9e;
+  --color-landing-on-dark: #d5def2;
+  --color-landing-on-dark-accent: #7fd8ff;
+  --color-landing-on-dark-caption: #afc0e6;
+  --color-landing-dark-border: #2a4589;
+  --color-landing-dark-outline: #5a74b5;
+  --color-landing-teal: #0891b2;
+  --color-landing-green: #008a3e;
+  --color-landing-dot-cyan: #00b8d9;
+  --color-landing-dot-green: #00a844;
+
   /* Semantic (meaning only — never decoration) */
   --color-success: #10b981;
   --color-success-text: #047857;

@@ -29,8 +29,10 @@ services:
     environment:
       APP_HOST: ${APP_HOST:?APP_HOST is set by the deploy job}
       CONTENT_HOST: ${CONTENT_HOST:?CONTENT_HOST is set by the deploy job}
+      SITE_HOST: ${SITE_HOST:?SITE_HOST is set by the deploy job}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./website:/srv/website:ro
       - caddy_data:/data
       - caddy_config:/config
 

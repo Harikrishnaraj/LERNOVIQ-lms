@@ -413,3 +413,19 @@ Content server (ADR-041, SECURITY §27). Use a stand-in LMS page in the E2E suit
 [x] No learner name or email stored anywhere in LERNOVIQ
 [x] Non-admin users cannot read or change clients, licences or dispatches (UI + HTTP + RLS)
 ```
+
+## 26. Marketing Website Tests
+
+Marketing site (ADR-042).
+
+```text
+[ ] Every marketing page renders its hero heading and the shared header/footer, desktop and 375px, no horizontal scroll
+[ ] Header marks the current page; mobile menu opens and lists every page
+[ ] LMS tabs switch panels; LMS and FAQ accordions expand/collapse with aria-expanded; FAQ category tabs filter
+[ ] Delivery stepper: clicking a stage or Previous/Next updates the detail panel
+[ ] /courses shows live courses; search, filters and sort change results; empty state offers Clear all
+[ ] Add to cart → header count updates → cart lists the course; remove empties it; Company mode shows seats and GSTIN and multiplies totals
+[ ] Cart checkout is disabled and explains that payment is not available yet
+[ ] Contact form: required-field errors are announced; invalid email rejected; valid submit shows the confirmation
+[ ] Contact server action rejects bad input and is rate-limited; enquiries cannot be read by learners/anon (RLS); admins see them in Admin → Enquiries
+```

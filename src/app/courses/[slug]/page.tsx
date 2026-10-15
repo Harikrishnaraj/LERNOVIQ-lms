@@ -59,7 +59,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
   const supabase = await createClient();
   const course = await getCourseDetail(supabase, slug);
   if (!course) notFound();
-  const [reviews, { data: auth }] = await Promise.all([getCourseReviews(supabase, slug), supabase.auth.getUser()]);
+  const [reviews, { data: auth }] = await Promise.all([
+    getCourseReviews(supabase, slug),
+    supabase.auth.getUser(),
+  ]);
 
   const level = LEVEL_OPTIONS.find((l) => l.value === course.level)?.label ?? course.level;
   const language =
@@ -223,7 +226,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
               <h2 id="prereq-heading" className="text-xl font-semibold">
                 Prerequisite courses
               </h2>
-              <p className="text-sm text-text-secondary">Complete these courses before you can enroll:</p>
+              <p className="text-sm text-text-secondary">
+                Complete these courses before you can enroll:
+              </p>
               <ul className="list-disc space-y-1 pl-5">
                 {course.prerequisites.map((p) => (
                   <li key={p.id}>{p.title}</li>
@@ -238,8 +243,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<Par
                 About the instructor
               </h2>
               <p className="font-medium">{course.instructorName}</p>
-              {course.instructorHeadline && <p className="text-sm text-text-secondary">{course.instructorHeadline}</p>}
-              {course.instructorBio && <p className="whitespace-pre-line text-sm text-text-secondary">{course.instructorBio}</p>}
+              {course.instructorHeadline && (
+                <p className="text-sm text-text-secondary">{course.instructorHeadline}</p>
+              )}
+              {course.instructorBio && (
+                <p className="text-sm whitespace-pre-line text-text-secondary">
+                  {course.instructorBio}
+                </p>
+              )}
             </section>
           )}
 

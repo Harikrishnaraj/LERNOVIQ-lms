@@ -4,3 +4,7 @@ package-lock.json
 playwright-report
 test-results
 docs
+
+# Claude Design export and the static marketing site (ADR-042, ADR-043): not app code
+Lernoviq landing page design/
+website/

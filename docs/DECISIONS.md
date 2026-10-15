@@ -391,3 +391,53 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 **Consequences:** New tables (content clients, licences, dispatches, registrations) with RLS that only admins with a new `content_server.manage` permission can use; the launch and content endpoints are public but gated by signatures, licence state and rate limits (SECURITY §27). Content served to a dispatch must be embeddable from the client's allowed LMS origins, so the content origin's `frame-ancestors` becomes per-licence for dispatch launches only; the app origin's CSP is unchanged. Pricing model (per active learner, per licence or flat fee) is still open; Phase 1 records registrations so any of them can be billed later. Tests need a stand-in LMS page that implements the SCORM 1.2 API.
 
 **Status:** Accepted (user decision). Features F-520–F-525, tasks T-170–T-177.
+
+## ADR-042 — Marketing Website from the Claude Design Export
+
+**Decision:** The public marketing site follows the Claude Design export `Lernoviq landing page design/export/website-v2` (10 pages, shared header and footer) and is built inside the Next.js app, not as a separate static site: Home `/`, `/about`, `/solutions`, `/lms`, `/industries`, `/delivery`, `/contact`, `/faqs`, the course catalogue `/courses` (restyled, live data) and `/cart`. Design colours become `--color-landing-*` tokens; all text uses Plus Jakarta Sans as in the export. Adaptations:
+- **Courses:** the live catalogue (`search_courses`) replaces the export's sample courses (ADR-023). Prices stay in each course's own currency; the export's INR/USD toggle is dropped because courses have one price.
+- **Cart:** built as designed (Myself / My company, seats, GSTIN, order summary) in the browser's localStorage, but checkout is disabled with a notice until learner commerce ships with Dodo Payments (ADR-038). The export's Razorpay checkout is not built.
+- **Contact:** enquiries are validated and rate-limited server-side, stored in a new `enquiries` table readable by admins (new `enquiry.read` permission, Admin → Enquiries), and emailed to `CONTACT_NOTIFY_EMAIL` via Resend when that is set.
+- Unverified items the export marks TO_CONFIRM (contact details, privacy/terms links) are not invented.
+
+**Reason:** User decisions (2026-10-14): "The design was multi pager … first understand the design in all pages and then start applying"; Courses/Cart: "Also build cart UI"; Contact: save to database and email ("Both"); track as a new phase.
+
+**Consequences:** The old `website/` static page and the one-page landing are superseded. Routes `/about` … `/cart` are public (no portal prefix). The cart holds a snapshot of title/price at add time; real checkout must re-price server-side.
+
+**Status:** Accepted (user decision). Features F-960–F-963, tasks T-260–T-265.
+
+## ADR-043 — Hosting Split: Static Marketing Site and LMS on the VPS
+
+**Decision:** `lernoviq.com` and `www` serve the static Claude Design export (`website-v2`) from Hostinger web hosting. `lms.lernoviq.com` serves the LMS app and `content.lernoviq.com` the SCORM content origin, both from one Hostinger KVM VPS through the existing Docker/Caddy deploy (ADR-036): repository variables `PROD_APP_HOST=lms.lernoviq.com` and `PROD_CONTENT_HOST=content.lernoviq.com`, DNS A records for `lms` and `content` pointing at the VPS. `lms.lernoviq.com/` keeps serving the in-app marketing pages (ADR-042) with live courses and the cart. On the static site, sample courses are removed and course/cart links go to `https://lms.lernoviq.com/courses` and `/cart`; its contact form posts JSON to a public route on the app, `POST /api/enquiries`, which reuses the in-app validation, rate limit, storage and email, and answers browsers only from `MARKETING_SITE_ORIGINS` (default `https://lernoviq.com,https://www.lernoviq.com`). The current hosted Supabase project (`ctrizucnfaqescligsuu`) becomes production after its missing migrations are applied and its test data and seed accounts are removed (both only with the user's approval of the exact list).
+
+**Reason:** User decisions (2026-10-14): Hostinger deployment plan; "Serve in-app marketing pages" on lms.lernoviq.com; static form "POST to the app"; production database "Clean up current project".
+
+**Consequences:** Two copies of the marketing content exist (static export and in-app pages); copy changes must be made in both until one is retired. The static site depends on the app for the contact form and catalogue. Production cleanup deletes data irreversibly, so it needs a backup first (`docs/RUNBOOKS.md`) and explicit approval.
+
+**Status:** Accepted (user decision).
+
+## ADR-044 — Email Through Hostinger Mail
+
+**Decision:** Outgoing email (announcements, contact-form notifications) is sent through the Hostinger Mail API (`hostinger-mail-api-sdk`, published by Hostinger) from the lernoviq.com mailbox whenever `HOSTINGER_MAIL_API` (API token) is set; `HOSTINGER_MAIL_FROM` picks the mailbox (default: the token's first mailbox), sender name "LERNOVIQ". Resend (T-141) remains the fallback when no token is set, so local development and tests are unchanged. `services/email` stays the only place that sends mail and keeps its never-throw contract.
+
+**Reason:** User decision (2026-10-14): installed the Hostinger Mail SDK and added the `HOSTINGER_MAIL_API` repository secret; the domain's mail is hosted at Hostinger, and Resend's sandbox sender cannot deliver to `support@lernoviq.com`.
+
+**Consequences:** Sent messages are also saved to the mailbox's Sent folder. The API returns no message ID, so delivery logs record an empty provider ID. The deploy job writes `HOSTINGER_MAIL_API` / `HOSTINGER_MAIL_FROM` to the server `.env`.
+
+**Status:** Accepted (user decision).
+
+## ADR-045 — VPS Only: Everything Deployed on the Hostinger VPS
+
+**Decision:** All production hosting runs on the Hostinger KVM VPS (Ubuntu 24.04) through the Docker/Caddy stack (ADR-036). The marketing website is served from the VPS as static files by Caddy at `lernoviq.com` (`www` redirects to the apex); the LMS app at `lms.lernoviq.com`; the SCORM content origin at `content.lernoviq.com`. No other hosting platform is used (no Hostinger web hosting, Vercel, Netlify or other cloud), so there is one deploy path and one set of logs.
+
+**Supersedes:** the static-site part of ADR-043 (Hostinger web hosting for `lernoviq.com`). ADR-043's app and content hosting and its contact-form design still stand.
+
+**Reason:** User decision (2026-10-15): "we will proceed with VPS deployment only … do not implement alternative deployment options."
+
+**Consequences:**
+- The site files are the export folder `Lernoviq landing page design/export/website-v2`; CI copies them to `~/lernoviq-lms/website` on each deploy and Caddy mounts that read-only at `/srv/website`.
+- New repository variable `PROD_SITE_HOST` (defaults to `<ip>.sslip.io` without a domain). DNS needs A records for `@` and `www` pointing at the VPS.
+- The static contact form posts to `https://lms.lernoviq.com/api/enquiries`; `lernoviq.com` is already in the allowed origins.
+- Nothing is deployed until the VPS details, deploy key and secrets are provided.
+
+**Status:** Accepted (user decision). Supersedes the static hosting in ADR-043.
