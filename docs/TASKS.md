@@ -195,6 +195,12 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [~] **T-264** Contact: consultation/demo form, server validation + rate limit, `enquiries` table with `enquiry.read`, email notification, Admin → Enquiries; `POST /api/enquiries` for the static site (ADR-043). — F-963
 - [~] **T-265** Tests: TEST_PLAN §26. — F-960…F-963
 
+## Phase 14 — VPS-only deployment (ADR-045)
+
+- [x] **T-270** Marketing website served from the VPS: Caddy serves the export folder at `lernoviq.com` (`www` redirects), CI copies it on each deploy, `PROD_SITE_HOST` variable. — F-947
+- [ ] **T-271** VPS provisioned, DNS A records for `@`, `www`, `lms`, `content`, deploy key and GitHub secrets set (`docs/DEPLOY.md`). Blocked on the user supplying the VPS IP and secrets. — F-947
+- [ ] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
+
 ## Phase 12 — Production hardening & launch
 
 - [x] **T-240** Security headers + CSP (SECURITY §22). — F-940

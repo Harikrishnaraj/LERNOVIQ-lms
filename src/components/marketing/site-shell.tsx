@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getPortalPathForUser } from "@/features/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import { BackToTop } from "./back-to-top";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 
@@ -18,6 +19,7 @@ export async function SiteShell({ children }: { children: ReactNode }) {
       <SiteHeader portalHref={portalHref} />
       {children}
       <SiteFooter />
+      <BackToTop />
     </div>
   );
 }

@@ -63,7 +63,7 @@
 class Component extends DCLogic {
   state = { w: typeof window !== 'undefined' ? window.innerWidth : 1440, open: false, n: 0 };
   componentDidUpdate(_, prev) { if (prev.w < 768 && this.state.w >= 768 && this.state.open) this.setState({ open: false }); }
-  sync = () => this.setState({ n: window.LV ? window.LV.count() : 0 });
+  sync = () => this.setState({ n: 0 }); // cart lives in LERNOVIQ LMS (ADR-043)
   componentDidMount() {
     this.onR = () => this.setState({ w: window.innerWidth });
     window.addEventListener('resize', this.onR);

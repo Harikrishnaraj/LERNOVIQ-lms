@@ -146,6 +146,7 @@ jobs:
       # Optional: your own domain names. Without them the app gets free sslip.io names for the IP.
       PROD_APP_HOST: ${{ vars.PROD_APP_HOST }}
       PROD_CONTENT_HOST: ${{ vars.PROD_CONTENT_HOST }}
+      PROD_SITE_HOST: ${{ vars.PROD_SITE_HOST }}
     steps:
       - name: Check deploy secrets
         id: gate
@@ -165,7 +166,7 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         id: names
         run: |
-          app_host="$PROD_APP_HOST"; content_host="$PROD_CONTENT_HOST"
+          app_host="$PROD_APP_HOST"; content_host="$PROD_CONTENT_HOST"; site_host="$PROD_SITE_HOST"
           if [ -z "$app_host" ] || [ -z "$content_host" ]; then
             if [[ ! "$VPS_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "::error::VPS_HOST is not an IPv4 address; set PROD_APP_HOST and PROD_CONTENT_HOST variables."
@@ -174,11 +175,13 @@ jobs:
             dashed="${VPS_HOST//./-}"
             app_host="${app_host:-$dashed.sslip.io}"
             content_host="${content_host:-content-$dashed.sslip.io}"
+            site_host="${site_host:-$dashed.sslip.io}"
           fi
           repo="${GITHUB_REPOSITORY,,}"
           {
             echo "app_host=$app_host"
             echo "content_host=$content_host"
+            echo "site_host=$site_host"
             echo "image=ghcr.io/$repo:${GITHUB_SHA}"
             echo "image_latest=ghcr.io/$repo:latest"
           } >> "$GITHUB_OUTPUT"
@@ -230,16 +233,20 @@ jobs:
         env:
           APP_HOST: ${{ steps.names.outputs.app_host }}
           CONTENT_HOST: ${{ steps.names.outputs.content_host }}
+          SITE_HOST: ${{ steps.names.outputs.site_host }}
           APP_IMAGE: ${{ steps.names.outputs.image }}
         run: |
           ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_SSH_PORT" -o BatchMode=yes)
-          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms'
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms && rm -rf ~/lernoviq-lms/website && mkdir -p ~/lernoviq-lms/website'
           scp -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:lernoviq-lms/"
+          # Marketing site (ADR-045): the static export, copied as-is into the Caddy volume.
+          scp -r -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes "Lernoviq landing page design/export/website-v2/." "$VPS_USER@$VPS_HOST:lernoviq-lms/website/"
           umask 077
           {
             echo "APP_IMAGE=$APP_IMAGE"
             echo "APP_HOST=$APP_HOST"
             echo "CONTENT_HOST=$CONTENT_HOST"
+            echo "SITE_HOST=$SITE_HOST"
             echo "NEXT_PUBLIC_APP_URL=https://$APP_HOST"
             echo "NEXT_PUBLIC_SCORM_CONTENT_ORIGIN=https://$CONTENT_HOST"
             echo "NEXT_PUBLIC_SUPABASE_URL=$PROD_SUPABASE_URL"

@@ -425,3 +425,19 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 **Consequences:** Sent messages are also saved to the mailbox's Sent folder. The API returns no message ID, so delivery logs record an empty provider ID. The deploy job writes `HOSTINGER_MAIL_API` / `HOSTINGER_MAIL_FROM` to the server `.env`.
 
 **Status:** Accepted (user decision).
+
+## ADR-045 — VPS Only: Everything Deployed on the Hostinger VPS
+
+**Decision:** All production hosting runs on the Hostinger KVM VPS (Ubuntu 24.04) through the Docker/Caddy stack (ADR-036). The marketing website is served from the VPS as static files by Caddy at `lernoviq.com` (`www` redirects to the apex); the LMS app at `lms.lernoviq.com`; the SCORM content origin at `content.lernoviq.com`. No other hosting platform is used (no Hostinger web hosting, Vercel, Netlify or other cloud), so there is one deploy path and one set of logs.
+
+**Supersedes:** the static-site part of ADR-043 (Hostinger web hosting for `lernoviq.com`). ADR-043's app and content hosting and its contact-form design still stand.
+
+**Reason:** User decision (2026-10-15): "we will proceed with VPS deployment only … do not implement alternative deployment options."
+
+**Consequences:**
+- The site files are the export folder `Lernoviq landing page design/export/website-v2`; CI copies them to `~/lernoviq-lms/website` on each deploy and Caddy mounts that read-only at `/srv/website`.
+- New repository variable `PROD_SITE_HOST` (defaults to `<ip>.sslip.io` without a domain). DNS needs A records for `@` and `www` pointing at the VPS.
+- The static contact form posts to `https://lms.lernoviq.com/api/enquiries`; `lernoviq.com` is already in the allowed origins.
+- Nothing is deployed until the VPS details, deploy key and secrets are provided.
+
+**Status:** Accepted (user decision). Supersedes the static hosting in ADR-043.

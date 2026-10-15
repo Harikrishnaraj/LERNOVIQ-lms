@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="back-to-top.js"></script>
 </head>
 <body>
 <x-dc>
@@ -251,11 +252,7 @@ class Component extends DCLogic {
   componentDidMount() { window.addEventListener('lv-change', this.sync); this.t = setInterval(() => { if (window.LV) { this.sync(); clearInterval(this.t); } }, 80); }
   componentWillUnmount() { window.removeEventListener('lv-change', this.sync); clearInterval(this.t); }
   renderVals() {
-    const LV = window.LV, cur = LV ? LV.currency() : 'INR';
-    const ids = ['c1','c2','c4','c5'];
-    const fv = ids.map(id => { const c = LV && LV.byId(id); if (!c) return {}; const inCart = LV.has(id); return { title: c.title, category: c.category, meta: LV.duration(c.minutes) + ' · ' + c.level.replace('_', ' '), price: LV.fmt(LV.price(c, cur), cur), canAdd: !inCart, inCart, addLabel: 'Add ' + c.title + ' to cart', onAdd: () => LV.add(id) }; });
     return {
-      f0: fv[0], f1: fv[1], f2: fv[2], f3: fv[3],
       services: [
         { title: 'Learning Consulting & Curriculum Design', body: 'Translate business objectives into learning strategies, role-based curricula and structured development pathways.', href: 'Solutions.dc.html#consulting', icon: 'M9 4h6M4 8h16v12H4zM8 12h8M8 16h5' },
         { title: 'Custom E-Learning Development', body: 'Create interactive, accessible and instructionally sound digital training tailored to your audience.', href: 'Solutions.dc.html#elearning', icon: 'M3 5h18v11H3zM8 20h8M12 16v4M10 8.5v4l3.5-2z' },

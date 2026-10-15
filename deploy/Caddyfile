@@ -1,3 +1,15 @@
+# Marketing website (static files, ADR-045): served by Caddy from /srv/website on the VPS.
+# www redirects to the apex so there is one canonical address.
+{$SITE_HOST} {
+	encode zstd gzip
+	root * /srv/website
+	file_server
+}
+
+www.{$SITE_HOST} {
+	redir https://{$SITE_HOST}{uri} permanent
+}
+
 # Both hostnames reach the same app. The SCORM content host only serves /api/scorm/*; src/proxy.ts
 # returns 404 for everything else there (ADR-029), so it never carries a session.
 {$APP_HOST} {
