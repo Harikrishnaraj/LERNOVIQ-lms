@@ -19,6 +19,8 @@
 html{scroll-behavior:smooth}
 body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
+@media (min-width:768px){.ind-grid{grid-template-columns:1.4fr 1fr!important}.ind-feat{grid-row:span 2}.del-grid{grid-template-columns:repeat(3,1fr)!important}}
+@media (min-width:1100px){.del-grid{grid-template-columns:repeat(6,1fr)!important}}
 h1,h2,h3,p{margin:0}
 a{color:#0066FF}a:hover{color:#0052CC}
 :focus-visible{outline:3px solid #0066FF;outline-offset:3px}
@@ -101,7 +103,7 @@ a{color:#0066FF}a:hover{color:#0052CC}
     <div style="display:flex;flex-direction:column;gap:20px;max-width:520px">
       <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#7FD8FF">Lernoviq LMS</p>
       <h2 id="lms-h" style="font-size:clamp(28px,3.4vw,42px);font-weight:800;line-height:1.12;letter-spacing:-0.02em;color:#FFFFFF;text-wrap:balance">An adaptable learning platform designed around organizational learning needs.</h2>
-      <p style="font-size:17px;line-height:1.7;color:#D5DEF2;text-wrap:pretty">A good learning platform should enable the learning strategy — not dictate it. Lernoviq LMS is being developed to support a connected digital learning experience.</p>
+      <p style="font-size:17px;line-height:1.7;color:#D5DEF2;text-wrap:pretty">A good learning platform should enable the learning strategy, not dictate it. Lernoviq LMS is being developed to support a connected digital learning experience.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
         <a href="LMS.dc.html" style="padding:15px 24px;border-radius:10px;background:#FFFFFF;color:#0A1F54;font-size:15px;font-weight:700;text-decoration:none" style-hover="background:#EBF3FF;color:#0A1F54">Explore Lernoviq LMS</a>
         <a href="Contact.dc.html?topic=demo" style="padding:15px 24px;border-radius:10px;border:1.5px solid #5A74B5;color:#FFFFFF;font-size:15px;font-weight:700;text-decoration:none" style-hover="border-color:#FFFFFF;color:#FFFFFF">Request a Product Walkthrough</a>
@@ -132,25 +134,25 @@ a{color:#0066FF}a:hover{color:#0052CC}
   <div style="display:flex;flex-direction:column;gap:14px;max-width:720px;margin-bottom:40px">
     <p style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0052CC">Industries</p>
     <h2 id="ind-h" style="font-size:clamp(28px,3.4vw,42px);font-weight:800;line-height:1.12;letter-spacing:-0.02em">Designed for organizations worldwide.</h2>
-    <p style="font-size:17px;line-height:1.7;color:#334155;text-wrap:pretty">Supporting corporate and enterprise L&amp;D, banking and financial services, and government and public institutions — with custom approaches for each sector’s workforce, compliance, skills and learning requirements.</p>
+    <p style="font-size:17px;line-height:1.7;color:#334155;text-wrap:pretty">Supporting corporate and enterprise L&amp;D, banking and financial services, and government and public institutions, with custom approaches for each sector’s workforce, compliance, skills and learning requirements.</p>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
-    <a href="Industries.dc.html#corporate" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;color:#0A1F54;background:#FFFFFF" style-hover="border-color:#0066FF;color:#0A1F54">
-        <img src="assets/images/industries/industry-corporate-learning.webp" alt="Professionals collaborating around a laptop during a workplace training session" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block">
+  <div class="ind-grid" style="display:grid;grid-template-columns:1fr;gap:20px">
+    <a class="ind-feat" href="Industries.dc.html#corporate" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;color:#0A1F54;background:#FFFFFF" style-hover="border-color:#0066FF;color:#0A1F54">
+        <img src="assets/images/industries/industry-corporate-learning.webp" alt="Professionals collaborating around a laptop during a workplace training session" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;flex:1 1 auto;min-height:0">
         <div style="padding:22px 24px 26px;display:flex;justify-content:space-between;align-items:center;gap:12px">
           <h3 style="font-size:18px;font-weight:700;line-height:1.3">Corporate &amp; Enterprise Learning</h3>
           <span aria-hidden="true" style="font-weight:700;color:#0052CC">→</span>
         </div>
       </a>
       <a href="Industries.dc.html#bfsi" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;color:#0A1F54;background:#FFFFFF" style-hover="border-color:#0066FF;color:#0A1F54">
-        <img src="assets/images/industries/industry-bfsi-learning.webp" alt="Financial services professionals reviewing training material together" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block">
+        <img src="assets/images/industries/industry-bfsi-learning.webp" alt="Financial services professionals reviewing training material together" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">
         <div style="padding:22px 24px 26px;display:flex;justify-content:space-between;align-items:center;gap:12px">
           <h3 style="font-size:18px;font-weight:700;line-height:1.3">Banking, Financial Services &amp; Insurance</h3>
           <span aria-hidden="true" style="font-weight:700;color:#0052CC">→</span>
         </div>
       </a>
       <a href="Industries.dc.html#government" style="display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;text-decoration:none;color:#0A1F54;background:#FFFFFF" style-hover="border-color:#0066FF;color:#0A1F54">
-        <img src="assets/images/industries/industry-government-learning.webp" alt="Institutional staff attending a structured training session" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block">
+        <img src="assets/images/industries/industry-government-learning.webp" alt="Institutional staff attending a structured training session" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block">
         <div style="padding:22px 24px 26px;display:flex;justify-content:space-between;align-items:center;gap:12px">
           <h3 style="font-size:18px;font-weight:700;line-height:1.3">Government &amp; Public Institutions</h3>
           <span aria-hidden="true" style="font-weight:700;color:#0052CC">→</span>
@@ -168,11 +170,10 @@ a{color:#0066FF}a:hover{color:#0052CC}
       </div>
       <a href="Delivery.dc.html" style="font-size:15px;font-weight:700;color:#0052CC;text-decoration:none;padding:8px 0" style-hover="color:#0A1F54">How we work →</a>
     </div>
-    <ol style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+    <ol class="del-grid" style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px">
       <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-discover.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#0066FF;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">1</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Discover</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Goals, learners, content and constraints.</span>
@@ -180,7 +181,6 @@ a{color:#0066FF}a:hover{color:#0052CC}
         <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-define.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#0891B2;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">2</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Define</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Scope, objectives and review criteria.</span>
@@ -188,7 +188,6 @@ a{color:#0066FF}a:hover{color:#0052CC}
         <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-design.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#0066FF;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">3</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Design</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Architectures, outlines and storyboards.</span>
@@ -196,7 +195,6 @@ a{color:#0066FF}a:hover{color:#0052CC}
         <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-develop.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#008A3E;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">4</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Develop</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Content and technology, built to scope.</span>
@@ -204,7 +202,6 @@ a{color:#0066FF}a:hover{color:#0052CC}
         <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-validate.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#0066FF;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">5</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Validate</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Accuracy, usability and acceptance.</span>
@@ -212,7 +209,6 @@ a{color:#0066FF}a:hover{color:#0052CC}
         <li style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E8F0">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <img src="assets/icons/delivery-deliver-support.webp" alt="" width="64" height="64" style="width:64px;height:64px;display:block;border-radius:999px">
-            <span style="width:28px;height:28px;border-radius:999px;background:#008A3E;color:#FFFFFF;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">6</span>
           </div>
           <span style="font-size:17px;font-weight:700;line-height:1.3">Deliver &amp; Support</span>
           <span style="font-size:14px;line-height:1.55;color:#475569">Handover, orientation and support.</span>
