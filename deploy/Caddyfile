@@ -1,9 +1,29 @@
-# Marketing website (static files, ADR-045): served by Caddy from /srv/website on the VPS.
+# Marketing website (ADR-046): the app's server-rendered (marketing) pages, on the apex.
+# Everything else (login, portals, APIs) goes to the app host, so sessions stay on one host.
 # www redirects to the apex so there is one canonical address.
 {$SITE_HOST} {
 	encode zstd gzip
-	root * /srv/website
-	file_server
+
+	# Old static-site addresses (ADR-045) keep working.
+	redir /index.html / permanent
+	redir /Home.dc.html / permanent
+	redir /About.dc.html /about permanent
+	redir /Solutions.dc.html /solutions permanent
+	redir /LMS.dc.html /lms permanent
+	redir /Industries.dc.html /industries permanent
+	redir /Delivery.dc.html /delivery permanent
+	redir /Contact.dc.html /contact permanent
+	redir /FAQs.dc.html /faqs permanent
+	redir /Courses.dc.html /courses permanent
+	redir /Cart.dc.html /cart permanent
+
+	@marketing path / /about /solutions /lms /industries /delivery /contact /faqs /cart /courses /courses/* /_next/* /favicon.ico /apple-icon.png
+	handle @marketing {
+		reverse_proxy app:3000
+	}
+	handle {
+		redir https://{$APP_HOST}{uri}
+	}
 }
 
 www.{$SITE_HOST} {

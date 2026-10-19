@@ -72,6 +72,30 @@ test.describe("marketing website (T-260…T-264)", () => {
     await expect(page).toHaveURL(/\/solutions$/);
   });
 
+  test("home: featured industry, unnumbered delivery stages, no em dashes in copy", async ({
+    page,
+    isMobile,
+  }) => {
+    await page.goto("/");
+    const industries = page.locator("section[aria-labelledby='ind-h'] a");
+    await expect(industries).toHaveCount(3);
+    if (!isMobile) {
+      // Corporate spans the height of the two stacked cards beside it.
+      const [a, b, c] = await Promise.all([0, 1, 2].map((i) => industries.nth(i).boundingBox()));
+      expect(b!.x).toBeGreaterThan(a!.x + a!.width - 1);
+      expect(c!.y).toBeGreaterThan(b!.y);
+      expect(Math.abs(a!.y + a!.height - (c!.y + c!.height))).toBeLessThan(2);
+    }
+    const stages = page.locator("section[aria-labelledby='del-h'] ol > li");
+    await expect(stages).toHaveCount(6);
+    await expect(stages.first()).toContainText("Discover");
+    await expect(page.locator("section[aria-labelledby='del-h'] ol")).not.toContainText(/\d/);
+    // Page copy only: featured course titles come from the database.
+    for (const id of ["lms-h", "ind-h", "del-h"]) {
+      await expect(page.locator(`section[aria-labelledby='${id}']`)).not.toContainText("—");
+    }
+  });
+
   test("LMS tabs switch panels and the accordion toggles", async ({ page }) => {
     await page.goto("/lms");
     await page.getByRole("tab", { name: "Assessments" }).click();

@@ -12,7 +12,6 @@ export const DELIVERY_STAGES: {
   short: string;
   detail: string;
   icon: StaticImageData;
-  badge: string;
 }[] = [
   {
     title: "Discover",
@@ -20,7 +19,6 @@ export const DELIVERY_STAGES: {
     detail:
       "Understand business goals, target learners, existing content, technology context, timelines and constraints.",
     icon: discoverIcon,
-    badge: "bg-primary",
   },
   {
     title: "Define",
@@ -28,7 +26,6 @@ export const DELIVERY_STAGES: {
     detail:
       "Agree on scope, learning objectives, content levels, deliverables, governance and review criteria.",
     icon: defineIcon,
-    badge: "bg-landing-teal",
   },
   {
     title: "Design",
@@ -36,7 +33,6 @@ export const DELIVERY_STAGES: {
     detail:
       "Build learning architectures, course outlines, storyboards, experience flows and assessment plans.",
     icon: designIcon,
-    badge: "bg-primary",
   },
   {
     title: "Develop",
@@ -44,7 +40,6 @@ export const DELIVERY_STAGES: {
     detail:
       "Produce and configure agreed content and technology through coordinated specialist teams.",
     icon: developIcon,
-    badge: "bg-landing-green",
   },
   {
     title: "Validate",
@@ -52,7 +47,6 @@ export const DELIVERY_STAGES: {
     detail:
       "Review instructional integrity, content accuracy, usability and agreed technical acceptance criteria.",
     icon: validateIcon,
-    badge: "bg-primary",
   },
   {
     title: "Deliver & Support",
@@ -60,6 +54,5 @@ export const DELIVERY_STAGES: {
     detail:
       "Deploy or hand over agreed deliverables, orient stakeholder teams and provide scoped post-delivery support.",
     icon: supportIcon,
-    badge: "bg-landing-green",
   },
 ];
