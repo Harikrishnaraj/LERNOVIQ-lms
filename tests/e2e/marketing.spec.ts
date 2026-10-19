@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { loadEnvLocal } from "./support/env";
+import { loginAsRole } from "./support/role-user";
 import {
   cleanup,
   createCourse,
@@ -108,6 +109,7 @@ test.describe("marketing website (T-260…T-264)", () => {
   });
 
   test("contact form shows errors, then a confirmation", async ({ page }) => {
+    test.setTimeout(120_000);
     await page.goto("/contact?topic=demo");
     await expect(page.getByRole("heading", { name: "Request an LMS walkthrough" })).toBeVisible();
     await page.getByRole("button", { name: "Request an LMS Demo" }).last().click();
@@ -129,8 +131,25 @@ test.describe("marketing website (T-260…T-264)", () => {
     await page.getByRole("button", { name: "Request an LMS Demo" }).last().click();
     await expect(page.getByRole("status")).toContainText("Thank you for contacting LERNOVIQ.");
 
+    // Admin → Enquiries (F-963): readers without enquiry.read are refused; admins see the enquiry.
     const svc = serviceClient();
-    await svc.from("enquiries").delete().eq("email", `${tag}@example.com`);
+    const dones: Array<() => Promise<unknown>> = [];
+    try {
+      dones.push(await loginAsRole(page, "support_agent"));
+      await page.goto("/admin/enquiries");
+      await expect(page.getByText("You cannot read enquiries")).toBeVisible();
+
+      dones.push(await loginAsRole(page, "admin"));
+      await page.goto("/admin/enquiries");
+      await expect(page.getByRole("heading", { level: 1, name: "Enquiries" })).toBeVisible();
+      const entry = page.getByRole("listitem").filter({ hasText: `${tag} Visitor` });
+      await expect(entry).toContainText(`${tag} Org`);
+      await expect(entry).toContainText("LMS demo");
+      await expect(entry.getByRole("link", { name: `${tag}@example.com` })).toBeVisible();
+    } finally {
+      await svc.from("enquiries").delete().eq("email", `${tag}@example.com`);
+      for (const done of dones) await done();
+    }
   });
 });
 
