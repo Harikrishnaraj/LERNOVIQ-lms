@@ -238,7 +238,9 @@ jobs:
           APP_IMAGE: ${{ steps.names.outputs.image }}
         run: |
           ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_SSH_PORT" -o BatchMode=yes)
-          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms && rm -rf ~/lernoviq-lms/website && mkdir -p ~/lernoviq-lms/website'
+          # Empty the site folder in place: Caddy bind-mounts it, so deleting and recreating it
+          # leaves the running container serving the old (deleted) directory, i.e. nothing.
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms/website && find ~/lernoviq-lms/website -mindepth 1 -delete'
           scp -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:lernoviq-lms/"
           # Marketing site (ADR-045): the static export, copied as-is into the Caddy volume.
           scp -r -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes "Lernoviq landing page design/export/website-v2/." "$VPS_USER@$VPS_HOST:lernoviq-lms/website/"
@@ -279,13 +281,16 @@ jobs:
       - name: Smoke check
         if: steps.gate.outputs.ready == 'true'
         run: |
-          url="https://${{ steps.names.outputs.app_host }}/"
-          for i in $(seq 1 24); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || true)
-            if [ "$code" = "200" ]; then echo "$url is up"; exit 0; fi
-            echo "attempt $i: HTTP $code"; sleep 5
-          done
-          echo "::error::$url did not answer 200 within 2 minutes"; exit 1
+          check() {
+            for i in $(seq 1 24); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$1" || true)
+              if [ "$code" = "200" ]; then echo "$1 is up"; return 0; fi
+              echo "attempt $i: HTTP $code"; sleep 5
+            done
+            echo "::error::$1 did not answer 200 within 2 minutes"; return 1
+          }
+          check "https://${{ steps.names.outputs.app_host }}/"
+          check "https://${{ steps.names.outputs.site_host }}/Home.dc.html"
 
       - name: Remove the SSH key
         if: always()
