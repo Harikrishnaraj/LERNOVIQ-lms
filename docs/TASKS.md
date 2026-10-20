@@ -200,7 +200,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-270** Marketing website served from the VPS: Caddy serves the export folder at `lernoviq.com` (`www` redirects), CI copies it on each deploy, `PROD_SITE_HOST` variable. — F-947
 - [x] **T-271** VPS provisioned, DNS A records for `@`, `www`, `lms`, `content`, deploy key and GitHub secrets set (`docs/DEPLOY.md`). — F-947
 - [ ] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
-- [~] **T-273** Marketing site served by the app on the apex (ADR-046): Caddy proxies the `(marketing)` routes to the app and redirects other paths to `lms.` and the old `.dc.html` addresses to routes; CI validates the Caddyfile and stops copying the export; Home Industries/Delivery/copy fixes ported to the app. — F-947, F-960
+- [x] **T-273** Marketing site served by the app on the apex (ADR-046): Caddy proxies the `(marketing)` routes to the app and redirects other paths to `lms.` and the old `.dc.html` addresses to routes; CI validates the Caddyfile and stops copying the export; Home Industries/Delivery/copy fixes ported to the app. — F-947, F-960
 
 ## Phase 12 — Production hardening & launch
 
