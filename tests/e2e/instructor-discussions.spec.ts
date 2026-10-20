@@ -129,10 +129,13 @@ test.describe("instructor discussions", () => {
     await instructorPost.getByRole("button", { name: "Mark as answer" }).click();
     await expect(instructorPost.getByText("Accepted Answer")).toBeVisible();
 
-    // Resolve reports on the classmate's post
+    // Resolve reports on the classmate's post. "Reports resolved" is only an interim label inside the
+    // report notice, which the refreshed page drops once no reports are open, so it can come and go
+    // between two expect polls. Assert the durable outcome: the notice is gone, the reply stays.
     const reportedPost = repliesList.getByRole("listitem").filter({ hasText: "Try resetting your terminal" });
     await reportedPost.getByRole("button", { name: "Resolve reports" }).click();
-    await expect(reportedPost.getByText("Reports resolved")).toBeVisible();
+    await expect(reportedPost.getByText("Reported content:")).toBeHidden();
+    await expect(reportedPost).toBeVisible();
 
     // Return to discussions queue - it should now be in the Answered tab
     await page.goto("/instructor/discussions?filter=answered");
