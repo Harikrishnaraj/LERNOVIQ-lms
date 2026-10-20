@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="back-to-top.js"></script>
+<script src="back-to-top.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -12,8 +12,9 @@
 <title>Lernoviq LMS | Adaptable Learning Technology</title>
 <meta name="description" content="Lernoviq LMS is being developed to support a connected digital learning experience, pairing learning-domain expertise with an adaptable technology foundation.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="lv-store.js"></script>
+<script src="lv-store.js" defer></script>
 <style>
 html{scroll-behavior:smooth}
 body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -26,6 +27,7 @@ a{color:#0066FF}a:hover{color:#0052CC}
 </helmet>
 <div data-screen-label="04 LMS" style="min-height:100vh;background:#FFFFFF">
 <dc-import name="SiteHeader" active="lms" hint-size="100%,124px"></dc-import>
+<main>
 
 <section aria-labelledby="hero-h" style="background:linear-gradient(160deg,#0A1F54 0%,#0B2A73 100%);color:#FFFFFF">
   <div style="max-width:1240px;margin:0 auto;padding:80px 24px 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:22px">
@@ -132,6 +134,7 @@ a{color:#0066FF}a:hover{color:#0052CC}
   </div>
 </section>
 
+</main>
 <dc-import name="SiteFooter" hint-size="100%,340px"></dc-import>
 </div>
 </x-dc>

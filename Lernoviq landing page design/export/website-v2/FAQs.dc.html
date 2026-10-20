@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="back-to-top.js"></script>
+<script src="back-to-top.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -12,8 +12,9 @@
 <title>FAQs | Lernoviq Learning Solutions &amp; LMS</title>
 <meta name="description" content="Answers to common questions about Lernoviq’s learning services, Lernoviq LMS, industries, delivery and getting started.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="lv-store.js"></script>
+<script src="lv-store.js" defer></script>
 <style>
 html{scroll-behavior:smooth}
 body{margin:0;background:#FFFFFF;color:#0A1F54;font-family:'Plus Jakarta Sans',Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -26,6 +27,7 @@ a{color:#0066FF}a:hover{color:#0052CC}
 </helmet>
 <div data-screen-label="08 FAQs" style="min-height:100vh;background:#FFFFFF">
 <dc-import name="SiteHeader" active="faqs" hint-size="100%,124px"></dc-import>
+<main>
 
 <section aria-labelledby="hero-h" style="background:#F5F8FC;border-bottom:1px solid #E2E8F0">
   <div style="max-width:960px;margin:0 auto;padding:72px 24px 64px;display:flex;flex-direction:column;gap:20px">
@@ -67,6 +69,7 @@ a{color:#0066FF}a:hover{color:#0052CC}
   </div>
 </section>
 
+</main>
 <dc-import name="SiteFooter" hint-size="100%,340px"></dc-import>
 </div>
 </x-dc>

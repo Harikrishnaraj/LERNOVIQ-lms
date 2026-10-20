@@ -294,7 +294,7 @@ export default async function HomePage() {
               An adaptable learning platform designed around organizational learning needs.
             </h2>
             <p className="text-[17px] leading-[1.7] text-pretty text-landing-on-dark">
-              A good learning platform should enable the learning strategy — not dictate it.
+              A good learning platform should enable the learning strategy, not dictate it.
               LERNOVIQ LMS is being developed to support a connected digital learning experience.
             </p>
             <div className="mt-1 flex flex-wrap gap-3">
@@ -349,22 +349,23 @@ export default async function HomePage() {
           </h2>
           <p className={lead}>
             Supporting corporate and enterprise L&amp;D, banking and financial services, and
-            government and public institutions — with custom approaches for each sector’s workforce,
+            government and public institutions, with custom approaches for each sector’s workforce,
             compliance, skills and learning requirements.
           </p>
         </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
-          {INDUSTRIES.map((i) => (
+        {/* First industry is featured; the other two stack beside it (md+). */}
+        <div className="grid gap-5 md:grid-cols-[1.4fr_1fr]">
+          {INDUSTRIES.map((i, n) => (
             <Link
               key={i.title}
               href={i.href}
-              className={`${card} flex flex-col overflow-hidden text-text hover:border-primary`}
+              className={`${card} flex flex-col overflow-hidden text-text hover:border-primary ${n === 0 ? "md:row-span-2" : ""}`}
             >
               <Image
                 src={i.image}
                 alt={i.alt}
-                sizes="(min-width: 768px) 400px, 100vw"
-                className="aspect-[4/3] w-full object-cover"
+                sizes={n === 0 ? "(min-width: 768px) 700px, 100vw" : "(min-width: 768px) 500px, 100vw"}
+                className={`w-full object-cover ${n === 0 ? "aspect-[4/3] min-h-0 md:flex-1" : "aspect-video"}`}
               />
               <div className="flex items-center justify-between gap-3 px-6 pt-[22px] pb-[26px]">
                 <h3 className="text-lg leading-[1.3] font-bold">{i.title}</h3>
@@ -390,23 +391,17 @@ export default async function HomePage() {
               How we work →
             </Link>
           </div>
-          <ol className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-3">
-            {DELIVERY_STAGES.map((s, n) => (
+          {/* One continuous row of stages (the <ol> carries the order; no step numbers). */}
+          <ol className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-3 min-[768px]:grid-cols-3 min-[1100px]:grid-cols-6">
+            {DELIVERY_STAGES.map((s) => (
               <li key={s.title} className={`${card} flex flex-col gap-4 px-[22px] py-6`}>
-                <div className="flex items-center justify-between gap-3">
-                  <Image
-                    src={s.icon}
-                    alt=""
-                    width={64}
-                    height={64}
-                    className="size-16 rounded-full"
-                  />
-                  <span
-                    className={`flex size-7 items-center justify-center rounded-full text-xs font-extrabold text-white ${s.badge}`}
-                  >
-                    {n + 1}
-                  </span>
-                </div>
+                <Image
+                  src={s.icon}
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="size-16 rounded-full"
+                />
                 <span className="text-[17px] leading-[1.3] font-bold">{s.title}</span>
                 <span className="text-sm leading-[1.55] text-neutral-text">{s.short}</span>
               </li>

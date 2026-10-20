@@ -32,7 +32,7 @@ One Hostinger KVM VPS (Ubuntu 24.04) runs the whole stack. Nothing is hosted els
 
 | Host | Serves | How |
 |---|---|---|
-| `lernoviq.com` | Marketing website (static files) | Caddy serves `/srv/website`, from `Lernoviq landing page design/export/website-v2` |
+| `lernoviq.com` | Marketing website (the app's `(marketing)` pages, ADR-046); other paths redirect to `lms.` | Caddy → app container |
 | `www.lernoviq.com` | Redirects to `lernoviq.com` | Caddy |
 | `lms.lernoviq.com` | LMS app, including its marketing pages, `/courses`, `/cart`, `/login` | Caddy → app container |
 | `content.lernoviq.com` | SCORM content origin (ADR-029) | Caddy → app container |
@@ -60,7 +60,7 @@ Wait until all four names resolve to the VPS before the first deploy; Caddy need
 | `PROD_HOSTINGER_MAIL_FROM` | `support@lernoviq.com` (sender for Hostinger Mail, ADR-044) |
 | `PROD_MARKETING_SITE_ORIGINS` | Optional. Defaults to `https://lernoviq.com,https://www.lernoviq.com` |
 
-**Static site updates:** the marketing site is redeployed with every push to `main` (the deploy job copies the export folder). Edit the files in `Lernoviq landing page design/export/website-v2`, then push.
+**Marketing site updates (ADR-046):** the site is the app's `src/app/(marketing)/` pages, deployed with the app on every push to `main`. The export folder `Lernoviq landing page design/export/website-v2` is the design reference only and is not deployed.
 
 **Supabase Auth** (step 4 below): Site URL `https://lms.lernoviq.com`; Redirect URLs `https://lms.lernoviq.com/**`.
 

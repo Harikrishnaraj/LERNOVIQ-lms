@@ -440,4 +440,20 @@ Instructors' column grants on `course_versions.price_cents` and `currency` are r
 - The static contact form posts to `https://lms.lernoviq.com/api/enquiries`; `lernoviq.com` is already in the allowed origins.
 - Nothing is deployed until the VPS details, deploy key and secrets are provided.
 
-**Status:** Accepted (user decision). Supersedes the static hosting in ADR-043.
+**Status:** Accepted (user decision). Supersedes the static hosting in ADR-043. Static-site part superseded by ADR-046.
+
+## ADR-046 — Marketing Site Served by the App on the Apex
+
+**Decision:** `lernoviq.com` is served by the Next.js app's server-rendered `(marketing)` pages (ADR-042), not by Caddy as static files. Caddy proxies `/`, `/about`, `/solutions`, `/lms`, `/industries`, `/delivery`, `/contact`, `/faqs`, `/cart`, `/courses` (and `/courses/*`), `/_next/*` and the icons to `app:3000`; every other apex path redirects to `https://lms.lernoviq.com{uri}`, so login and portal sessions stay on one host. The old addresses (`/index.html`, `/Home.dc.html`, `/About.dc.html` …) redirect permanently to the matching route. Everything still runs on the VPS (ADR-045).
+
+**Supersedes:** the static-site part of ADR-045 (Caddy serving `/srv/website`). ADR-045's VPS-only hosting stands.
+
+**Reason:** User decision (2026-10-20): "For homepage performance, implement both the quick wins and option B." Lighthouse (mobile, 2026-10-19) scored the static export Performance 52: it is assembled in the browser by the design runtime (`support.js` loads React from unpkg and evaluates templates), giving LCP 6.3 s and 960 ms blocking time. The app's copy of the same pages is rendered on the server, self-hosts its fonts and uses `next/image`.
+
+**Consequences:**
+- One copy of the marketing site to maintain and test (`tests/e2e/marketing.spec.ts`). Copy and layout changes go in `src/app/(marketing)/`; the export folder stays as the design reference only and is no longer deployed.
+- `deploy/docker-compose.yml` drops the `website` mount; CI stops copying the export, validates the Caddyfile on every PR (`caddy validate`), reloads Caddy on each deploy, and smoke-checks `https://<site>/` (200) and `/Home.dc.html` (301).
+- The static contact form's cross-origin post is no longer used (the app's form posts to itself); `MARKETING_SITE_ORIGINS` can stay for now.
+- Rollback: revert the Caddyfile, compose and CI changes (the export folder is still in the repo).
+
+**Status:** Accepted (user decision). Supersedes the static hosting in ADR-045.

@@ -192,14 +192,15 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-261** About, Solutions, LMS (tabs + accordion), Industries, Delivery (stepper) and FAQs (category tabs + accordion) pages from the design export. — F-960
 - [x] **T-262** Restyle `/courses` to the design with the live catalogue: search, filters, sort, empty/error states, site header/footer. — F-961
 - [x] **T-263** Cart: localStorage cart, Add to cart on Home and catalogue, header count, Myself/Company with seats and GSTIN, order summary; checkout disabled until Dodo (T-180). — F-962
-- [~] **T-264** Contact: consultation/demo form, server validation + rate limit, `enquiries` table with `enquiry.read`, email notification, Admin → Enquiries; `POST /api/enquiries` for the static site (ADR-043). — F-963
-- [~] **T-265** Tests: TEST_PLAN §26. — F-960…F-963
+- [x] **T-264** Contact: consultation/demo form, server validation + rate limit, `enquiries` table with `enquiry.read`, email notification, Admin → Enquiries; `POST /api/enquiries` for the static site (ADR-043). — F-963
+- [x] **T-265** Tests: TEST_PLAN §26. — F-960…F-963
 
 ## Phase 14 — VPS-only deployment (ADR-045)
 
 - [x] **T-270** Marketing website served from the VPS: Caddy serves the export folder at `lernoviq.com` (`www` redirects), CI copies it on each deploy, `PROD_SITE_HOST` variable. — F-947
 - [x] **T-271** VPS provisioned, DNS A records for `@`, `www`, `lms`, `content`, deploy key and GitHub secrets set (`docs/DEPLOY.md`). — F-947
 - [ ] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
+- [~] **T-273** Marketing site served by the app on the apex (ADR-046): Caddy proxies the `(marketing)` routes to the app and redirects other paths to `lms.` and the old `.dc.html` addresses to routes; CI validates the Caddyfile and stops copying the export; Home Industries/Delivery/copy fixes ported to the app. — F-947, F-960
 
 ## Phase 12 — Production hardening & launch
 

@@ -63,6 +63,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" npm run seed
       - name: npm run check
         run: npm run check
+      # A broken Caddyfile would take every host down, so check it on every PR, before deploy.
+      - name: Validate the Caddyfile
+        run: |
+          docker run --rm -v "$PWD/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            -e SITE_HOST=example.com -e APP_HOST=app.example.com -e CONTENT_HOST=content.example.com \
+            caddy:2 caddy validate --config /etc/caddy/Caddyfile
 
   e2e:
     # The full suite (desktop + mobile, ~450 tests) is split into shards that run in parallel;
@@ -238,12 +244,9 @@ jobs:
           APP_IMAGE: ${{ steps.names.outputs.image }}
         run: |
           ssh_opts=(-i ~/.ssh/deploy_key -p "$VPS_SSH_PORT" -o BatchMode=yes)
-          # Empty the site folder in place: Caddy bind-mounts it, so deleting and recreating it
-          # leaves the running container serving the old (deleted) directory, i.e. nothing.
-          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms/website && find ~/lernoviq-lms/website -mindepth 1 -delete'
+          ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" 'mkdir -p ~/lernoviq-lms'
           scp -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes deploy/docker-compose.yml deploy/Caddyfile "$VPS_USER@$VPS_HOST:lernoviq-lms/"
-          # Marketing site (ADR-045): the static export, copied as-is into the Caddy volume.
-          scp -r -i ~/.ssh/deploy_key -P "$VPS_SSH_PORT" -o BatchMode=yes "Lernoviq landing page design/export/website-v2/." "$VPS_USER@$VPS_HOST:lernoviq-lms/website/"
+          # The marketing site is served by the app (ADR-046), so the static export is not copied.
           umask 077
           {
             echo "APP_IMAGE=$APP_IMAGE"
@@ -276,7 +279,8 @@ jobs:
           # The token goes over stdin, so it never appears in a process list on the server.
           printf '%s' "$GHCR_TOKEN" | ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" "docker login ghcr.io -u '$GHCR_USER' --password-stdin"
           ssh "${ssh_opts[@]}" "$VPS_USER@$VPS_HOST" \
-            'cd ~/lernoviq-lms && docker compose pull && docker compose up -d --remove-orphans; rc=$?; docker logout ghcr.io >/dev/null; docker image prune -f >/dev/null; exit $rc'
+            'cd ~/lernoviq-lms && docker compose pull && docker compose up -d --remove-orphans && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile; rc=$?; docker logout ghcr.io >/dev/null; docker image prune -f >/dev/null; exit $rc'
+          # caddy reload: a changed Caddyfile alone does not recreate the container, so load it explicitly.
 
       - name: Smoke check
         if: steps.gate.outputs.ready == 'true'
@@ -290,7 +294,10 @@ jobs:
             echo "::error::$1 did not answer 200 within 2 minutes"; return 1
           }
           check "https://${{ steps.names.outputs.app_host }}/"
-          check "https://${{ steps.names.outputs.site_host }}/Home.dc.html"
+          check "https://${{ steps.names.outputs.site_host }}/"
+          # Old static-site addresses (ADR-045) must keep working as redirects (ADR-046).
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://${{ steps.names.outputs.site_host }}/Home.dc.html" || true)
+          if [ "$code" != "301" ]; then echo "::error::/Home.dc.html answered $code, expected 301"; exit 1; fi
 
       - name: Remove the SSH key
         if: always()
