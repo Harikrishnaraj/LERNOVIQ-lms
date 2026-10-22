@@ -14,7 +14,7 @@ import {
   VIDEO_BUCKET,
   supabaseStorage,
 } from "@/services/storage";
-import { MAX_TOTAL_BYTES, ScormValidationError, validateAndExtractPackage } from "@/services/scorm/parse";
+import { MAX_ZIP_BYTES, ScormValidationError, validateAndExtractPackage } from "@/services/scorm/parse";
 import { getCourseForEditing } from "./queries";
 import { getLessonForEditing } from "./lessons";
 import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
@@ -257,7 +257,7 @@ export async function attachLibraryResource(courseId: string, lessonId: string, 
   return { ok: true };
 }
 
-const MAX_SCORM_ZIP_BYTES = MAX_TOTAL_BYTES;
+const MAX_SCORM_ZIP_BYTES = MAX_ZIP_BYTES;
 
 /** Issues a one-time upload ticket for the raw .zip into the staging bucket (server processes it next). */
 export async function requestScormUpload(
@@ -309,13 +309,18 @@ export async function processScormUpload(
     return { ok: false, error: err instanceof ScormValidationError ? err.message : "That package could not be processed." };
   }
 
+  // One entry is decompressed and stored at a time, so peak memory is the zip plus its largest file.
   const prefix = `${ctx.courseId}/${lessonId}/${randomUUID()}`;
+  const stored: string[] = [];
   try {
     for (const file of parsed.files) {
-      await supabaseStorage.upload(SCORM_BUCKET, `${prefix}/${file.path}`, file.bytes, file.contentType);
+      await supabaseStorage.upload(SCORM_BUCKET, `${prefix}/${file.path}`, await file.read(), file.contentType);
+      stored.push(`${prefix}/${file.path}`);
     }
-  } catch {
+  } catch (err) {
     await supabaseStorage.remove(SCORM_STAGING_BUCKET, [stagingPath]).catch(() => {});
+    await supabaseStorage.remove(SCORM_BUCKET, stored).catch(() => {});
+    if (err instanceof ScormValidationError) return { ok: false, error: err.message };
     return { ok: false, error: "We could not store that package. Please try again." };
   }
 
