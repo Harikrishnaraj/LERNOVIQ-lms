@@ -44,12 +44,15 @@ const THEME: Record<
   },
 };
 
-/** Logo + portal name. Always on white: the logo has no approved artwork for dark backgrounds. */
+/**
+ * Secondary mark + portal name: at sidebar width the primary lockup's small text is unreadable
+ * (brand guide §5). Always on white: the logo has no approved artwork for dark backgrounds.
+ */
 function Brand({ portal }: { portal: Portal }) {
   const nav = NAVIGATION[portal];
   return (
     <Link href={nav.home} className="block w-fit rounded-control">
-      <BrandLogo width={128} />
+      <BrandLogo variant="secondary" width={96} />
       <span className="block px-1 text-[11px] font-semibold tracking-wider text-text-secondary uppercase">
         {nav.label}
       </span>

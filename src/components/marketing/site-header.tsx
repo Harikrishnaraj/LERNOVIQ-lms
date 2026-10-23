@@ -85,7 +85,9 @@ export function SiteHeader({ portalHref }: { portalHref: string | null }) {
           aria-label="LERNOVIQ home"
           className="shrink-0 rounded-control"
         >
-          <BrandLogo width={120} />
+          {/* Brand guide §5: the compact secondary mark on small screens, the primary lockup from md up. */}
+          <BrandLogo variant="secondary" width={96} className="md:hidden" />
+          <BrandLogo width={120} className="hidden md:inline-block" />
         </Link>
 
         <nav
