@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { HOST_FRAME_PATH } from "@/services/scorm/host-frame";
 
 interface ScormMessage {
@@ -27,7 +28,10 @@ function isScormMessage(data: unknown): data is ScormMessage {
  * frame escape its sandbox — every document gets a unique opaque origin instead (single-frame
  * packages only).
  */
-export function frameConfig(contentOrigin: string | undefined, appOrigin: string): { origin: string; sandbox: string } {
+export function frameConfig(
+  contentOrigin: string | undefined,
+  appOrigin: string,
+): { origin: string; sandbox: string } {
   let origin = "";
   try {
     origin = contentOrigin ? new URL(contentOrigin).origin : "";
@@ -58,6 +62,9 @@ export function ScormPlayer({
   onCommit?: (cmi: Record<string, string>) => Promise<unknown>;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // "native" = browser Fullscreen API; "overlay" = fixed full-viewport fallback (iPhone Safari has no element fullscreen).
+  const [fullscreen, setFullscreen] = useState<"off" | "native" | "overlay">("off");
   const [status, setStatus] = useState<"active" | "saving" | "saved" | "error">("active");
   const [frame, setFrame] = useState<{ origin: string; sandbox: string } | null>(null);
 
@@ -81,23 +88,101 @@ export function ScormPlayer({
     return () => window.removeEventListener("message", onMessage);
   }, [onCommit]);
 
+  useEffect(() => {
+    function onChange() {
+      if (!document.fullscreenElement) setFullscreen((f) => (f === "native" ? "off" : f));
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setFullscreen((f) => (f === "overlay" ? "off" : f));
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  async function toggleFullscreen() {
+    if (fullscreen === "native")
+      return void document.exitFullscreen().catch(() => setFullscreen("off"));
+    if (fullscreen === "overlay") return setFullscreen("off");
+    const el = wrapperRef.current;
+    if (el?.requestFullscreen) {
+      try {
+        await el.requestFullscreen();
+        setFullscreen("native");
+        return;
+      } catch {
+        // Fall through to the overlay.
+      }
+    }
+    setFullscreen("overlay");
+  }
+
+  const isFull = fullscreen !== "off";
+  const frameHeight = isFull ? "h-full" : "h-[70vh]";
+
   return (
     <div className="space-y-2">
-      {frame ? (
-        <iframe
-          ref={iframeRef}
-          src={`${frame.origin}/api/scorm/${lessonId}/${token}/${
-            // The host frame needs its child to share its origin, which only a content origin gives.
-            frame.origin ? HOST_FRAME_PATH : launchPath.split("/").map(encodeURIComponent).join("/")
-          }`}
-          sandbox={frame.sandbox}
-          title="SCORM content"
-          className="h-[70vh] w-full rounded-card border border-border bg-white"
-        />
-      ) : (
-        <div aria-hidden="true" className="h-[70vh] w-full rounded-card border border-border bg-white" />
+      <div
+        ref={wrapperRef}
+        data-fullscreen={fullscreen}
+        className={
+          fullscreen === "overlay"
+            ? "fixed inset-0 z-50 flex flex-col bg-black"
+            : fullscreen === "native"
+              ? "flex h-full flex-col bg-black"
+              : "space-y-2"
+        }
+      >
+        <div className={isFull ? "flex justify-end p-2" : "flex justify-end"}>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            aria-pressed={isFull}
+            className={
+              isFull
+                ? "inline-flex items-center gap-1.5 rounded-control bg-white/90 px-3 py-1.5 text-sm font-medium text-text"
+                : "inline-flex items-center gap-1.5 rounded-control border border-border px-3 py-1.5 text-sm font-medium text-text hover:bg-border-subtle"
+            }
+          >
+            {isFull ? (
+              <Minimize2 className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Maximize2 className="h-4 w-4" aria-hidden="true" />
+            )}
+            {isFull ? "Exit full screen" : "Full screen"}
+          </button>
+        </div>
+        <div className={isFull ? "min-h-0 flex-1" : ""}>
+          {frame ? (
+            <iframe
+              ref={iframeRef}
+              src={`${frame.origin}/api/scorm/${lessonId}/${token}/${
+                // The host frame needs its child to share its origin, which only a content origin gives.
+                frame.origin
+                  ? HOST_FRAME_PATH
+                  : launchPath.split("/").map(encodeURIComponent).join("/")
+              }`}
+              sandbox={frame.sandbox}
+              allow="fullscreen"
+              title="SCORM content"
+              className={`${frameHeight} w-full rounded-card border border-border bg-white`}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className={`${frameHeight} w-full rounded-card border border-border bg-white`}
+            />
+          )}
+        </div>
+      </div>
+      {status === "error" && (
+        <p role="alert" className="text-sm text-danger-text">
+          We could not save your progress just now.
+        </p>
       )}
-      {status === "error" && <p role="alert" className="text-sm text-danger-text">We could not save your progress just now.</p>}
     </div>
   );
 }
