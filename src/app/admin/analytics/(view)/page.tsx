@@ -36,6 +36,13 @@ export default async function AdminAnalyticsPage({
     );
   }
 
+  const [courseRows, orgRows] = await Promise.all([
+    supabase.from("course_versions").select("course_id, title").eq("status", "published").order("title").limit(500),
+    supabase.from("organizations").select("id, name").order("name").limit(500),
+  ]);
+  const courseOptions = (courseRows.data ?? []).map((c) => ({ id: c.course_id as string, label: c.title as string }));
+  const organizationOptions = (orgRows.data ?? []).map((o) => ({ id: o.id as string, label: o.name as string }));
+
   const [points, top, savedReports] = await Promise.all([
     getDailyAnalytics(supabase, range),
     getTopCourses(supabase, range),
@@ -114,7 +121,7 @@ export default async function AdminAnalyticsPage({
       <Card className="mt-6">
         <CardHeader title="Saved reports" description="Save a date range as a CSV export you can re-run or schedule." />
         <CardContent>
-          <SavedReportsPanel reports={savedReports} />
+          <SavedReportsPanel reports={savedReports} courses={courseOptions} organizations={organizationOptions} />
         </CardContent>
       </Card>
     </>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Range } from "./analytics";
 import { generateReportCsv } from "./report-generation";
+import { parseStoredFilters, validateFilters } from "./report-filters";
 import { computeNextRunAt, getReportDefinition, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +24,7 @@ async function actor() {
   return { supabase, user };
 }
 
-export async function createSavedReportAction(input: { name: string; reportType: string; rangeDays: number; schedule: string }): Promise<ReportActionResult> {
+export async function createSavedReportAction(input: { name: string; reportType: string; rangeDays: number; schedule: string; filters?: unknown }): Promise<ReportActionResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
   const name = validateReportName(input.name);
@@ -31,6 +32,8 @@ export async function createSavedReportAction(input: { name: string; reportType:
   const reportType = validateReportType(input.reportType);
   if (!reportType.ok) return reportType;
   if (!getReportDefinition(reportType.value)?.available) return { ok: false, error: "This report is not available yet." };
+  const filters = validateFilters(reportType.value, input.filters);
+  if (!filters.ok) return filters;
   if (!RANGE_VALUES.includes(input.rangeDays)) return { ok: false, error: "Choose a valid date range." };
   if (!SCHEDULE_VALUES.includes(input.schedule as ReportSchedule)) return { ok: false, error: "Choose a valid schedule." };
   const schedule = input.schedule as ReportSchedule;
@@ -41,6 +44,7 @@ export async function createSavedReportAction(input: { name: string; reportType:
     name: name.value,
     report_type: reportType.value,
     range_days: input.rangeDays,
+    filters: filters.value,
     schedule,
     next_run_at: nextRunAt ? nextRunAt.toISOString() : null,
   });
@@ -65,13 +69,16 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
 
   const { data: report } = await ctx.supabase
     .from("saved_reports")
-    .select("id, report_type, range_days")
+    .select("id, report_type, range_days, filters")
     .eq("id", reportId)
     .eq("owner_id", ctx.user.id)
     .maybeSingle();
   if (!report) return { ok: false, error: "That report is not available." };
 
-  const generated = await generateReportCsv(ctx.supabase, { type: report.report_type as ReportType, rangeDays: report.range_days as Range });
+  const generated = await generateReportCsv(ctx.supabase, {
+    type: report.report_type as ReportType, rangeDays: report.range_days as Range,
+    filters: parseStoredFilters(report.report_type as ReportType, report.filters),
+  });
   if (!generated.ok) return generated;
   const path = `${ctx.user.id}/${reportId}/${Date.now()}.csv`;
   await supabaseStorage.upload(REPORT_EXPORT_BUCKET, path, new TextEncoder().encode(generated.csv), "text/csv");

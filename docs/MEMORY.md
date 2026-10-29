@@ -523,3 +523,9 @@ This follows the final workflow in the supplied guide.
 - Five security-definer RPCs (`admin_report_module_usage`, `_product_module_usage`, `_library_usage`, `_product_library_usage`, `_library_licence_status`) in `20261016200000_usage_reports.sql`, applied to the hosted project. Gated on analytics.read or service role; no email or learner_key returned.
 - "Module" = lesson; "library" = content-server licence. Licence status label comes from `licenceStatus()` in TypeScript. Code in `src/features/admin/usage-reports.ts`.
 - Only `user_product_duration` remains unavailable (needs T-292). Full `npm run check` passed (CHECK_EXIT=0).
+
+## T-290 — report filter model (F-421)
+- `src/features/admin/report-filters.ts`: one filter model (course, user, organisation, status) with per-report support table; unsupported or malformed filters are refused, not ignored. Stored in `saved_reports.filters` (migration `20261017100000_report_filters.sql`, applied to modern-lms), applied after each RPC in `generateReportCsv`; manual run and cron both pass them. Saved-reports panel shows only the filters a report supports.
+- Known limit: filters apply after the RPCs' 10,000-row cap. Date range stays `range_days`.
+- Test reliability: `tests/setup.ts` retries sign-in on `AuthRetryableFetchError` and global fetch on `TypeError("fetch failed")`. A gate run is invalid if the machine sleeps.
+- Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 178 files, 1289 tests).

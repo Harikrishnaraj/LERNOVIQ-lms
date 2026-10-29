@@ -1,3 +1,4 @@
+import { parseStoredFilters, type ReportFilters } from "./report-filters";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DailyPoint, Range } from "./analytics";
 
@@ -68,6 +69,7 @@ export interface SavedReport {
   reportType: ReportType;
   reportLabel: string;
   rangeDays: Range;
+  filters: ReportFilters;
   schedule: ReportSchedule;
   nextRunAt: string | null;
   createdAt: string;
@@ -78,6 +80,7 @@ interface Row {
   name: string;
   report_type: string;
   range_days: Range;
+  filters: unknown;
   schedule: ReportSchedule;
   next_run_at: string | null;
   created_at: string;
@@ -86,7 +89,7 @@ interface Row {
 export async function getSavedReports(supabase: SupabaseClient): Promise<SavedReport[]> {
   const { data, error } = await supabase
     .from("saved_reports")
-    .select("id, name, report_type, range_days, schedule, next_run_at, created_at")
+    .select("id, name, report_type, range_days, filters, schedule, next_run_at, created_at")
     .order("created_at", { ascending: false });
   if (error) throw new Error(`saved_reports failed: ${error.message}`);
   return ((data ?? []) as Row[]).map((r) => {
@@ -97,6 +100,7 @@ export async function getSavedReports(supabase: SupabaseClient): Promise<SavedRe
       reportType: def.type,
       reportLabel: def.label,
       rangeDays: r.range_days,
+      filters: parseStoredFilters(def.type, r.filters),
       schedule: r.schedule,
       nextRunAt: r.next_run_at,
       createdAt: r.created_at,
