@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Loader2, Trash2 } from "lucide-react";
 import { createSavedReportAction, deleteSavedReportAction, runReportNowAction } from "@/features/admin/report-actions";
-import type { SavedReport } from "@/features/admin/reports";
+import { DEFAULT_REPORT_TYPE, REPORT_CATALOGUE, REPORT_CATEGORIES, type SavedReport } from "@/features/admin/reports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -45,7 +45,7 @@ function ReportRow({ report }: { report: SavedReport }) {
         <div>
           <p className="font-medium">{report.name}</p>
           <p className="text-xs text-text-secondary">
-            Last {report.rangeDays} days &middot; {report.schedule === "none" ? "Manual only" : `Auto-runs ${report.schedule}`}
+            {report.reportLabel} &middot; Last {report.rangeDays} days &middot; {report.schedule === "none" ? "Manual only" : `Auto-runs ${report.schedule}`}
             {report.nextRunAt && ` · next ${dateFormat.format(new Date(report.nextRunAt))}`}
           </p>
         </div>
@@ -77,6 +77,7 @@ function ReportRow({ report }: { report: SavedReport }) {
 export function SavedReportsPanel({ reports }: { reports: SavedReport[] }) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [reportType, setReportType] = useState<string>(DEFAULT_REPORT_TYPE);
   const [rangeDays, setRangeDays] = useState("30");
   const [schedule, setSchedule] = useState("none");
   const [busy, setBusy] = useState(false);
@@ -86,7 +87,7 @@ export function SavedReportsPanel({ reports }: { reports: SavedReport[] }) {
     if (name.trim() === "") return;
     setBusy(true);
     setError(null);
-    const res = await createSavedReportAction({ name, rangeDays: Number(rangeDays), schedule });
+    const res = await createSavedReportAction({ name, reportType, rangeDays: Number(rangeDays), schedule });
     setBusy(false);
     if (!res.ok) {
       setError(res.error);
@@ -102,6 +103,20 @@ export function SavedReportsPanel({ reports }: { reports: SavedReport[] }) {
         <div className="min-w-48 flex-1">
           <Input label="Report name" value={name} onChange={(e) => setName(e.target.value)} maxLength={150} disabled={busy} />
         </div>
+        <label className="flex flex-col gap-1.5 text-sm font-medium">
+          Report type
+          <select value={reportType} onChange={(e) => setReportType(e.target.value)} disabled={busy} className="h-10 rounded-input border border-border bg-surface px-3 text-sm font-normal">
+            {REPORT_CATEGORIES.map((category) => (
+              <optgroup key={category.id} label={category.label}>
+                {REPORT_CATALOGUE.filter((r) => r.category === category.id).map((r) => (
+                  <option key={r.type} value={r.type} disabled={!r.available}>
+                    {r.available ? r.label : `${r.label} (Not available yet)`}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Range
           <select value={rangeDays} onChange={(e) => setRangeDays(e.target.value)} disabled={busy} className="h-10 rounded-input border border-border bg-surface px-3 text-sm font-normal">
@@ -119,7 +134,7 @@ export function SavedReportsPanel({ reports }: { reports: SavedReport[] }) {
             <option value="monthly">Monthly</option>
           </select>
         </label>
-        <Button type="button" variant="secondary" onClick={create} disabled={busy || name.trim() === ""}>
+        <Button type="button" variant="secondary" onClick={create} disabled={busy || name.trim() === "" || !REPORT_CATALOGUE.find((r) => r.type === reportType)?.available}>
           {busy && <Loader2 className="mr-1.5 size-3.5 animate-spin" aria-hidden="true" />}
           Save report
         </Button>

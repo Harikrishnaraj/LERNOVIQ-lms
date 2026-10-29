@@ -218,3 +218,29 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-251** Fix the failing E2E specs found by the first full live run (accessibility, admin analytics/certificates/content/instructor-detail/integrations/moderation/profile, admin journey) and make the suite reliable in CI by running it against a local Supabase stack per job (ADR-034, user decision 2026-10-02), so CI E2E is green. — F-947
 - [x] **T-254** LERNOVIQ rebrand (ADR-039): approved logo artwork through `BrandLogo` (min sizes, clear space), brand colour tokens, product renamed. — F-901, F-902
 - [x] **T-252** Manual grading of essay/coding assessment attempts: instructor grading queue and screen, final score over every question, a pass completes the course, learner sees points and feedback; no new attempt while one awaits grading; assessment analytics count graded attempts only. — F-107
+
+## Phase 15 — Reporting extension (extends F-412, T-140, T-164, T-176)
+
+- [x] **T-274** Report catalogue: nine reports in the three categories (User, Consolidated usage, Product) registered in the saved-report engine in `src/features/admin/reports.ts`; no separate engine; same CSV conventions, scheduling, export history and audit. — F-420
+- [ ] **T-275** Filter models: date range, organisation, course/library, specific user and status; access-date filtering on course-module and course-library usage; shared filter builder. — F-421
+- [ ] **T-276** Role scoping for report data (learner: own data; instructor: owned courses; org admin: own org; platform admin: assigned analytics permission) and loading, empty, error and permission-denied states on every report screen. — F-422
+- [ ] **T-277** Export hardening: minimise PII columns, short-lived signed download links, retention limit on artifacts, log every download. — F-423
+- [ ] **T-278** Tests: query plans for new report queries, unit tests for filter builders, integration tests for report generation and exports, E2E role-isolation tests for learner, instructor, org admin and platform admin. — F-420, F-421, F-422, F-423
+
+- [ ] **T-289** Audit logging for saved reports: write `audit_logs` rows for report create, delete, manual run, scheduled run and every download (actor, report ID, type, range, row count); append-only like other audit rows. Split out of T-274. — F-423
+
+## Phase 16 — Expiry extension (extends T-170 to T-174, ADR-041)
+
+- [ ] **T-279** Resource library expiry: optional expiry on resources, UTC end-of-day, future-date validation, status badges and pre-expiry warning, hidden from learner/instructor selection, server-side refusal after expiry, audit events for create, modify and access attempts. — F-430
+- [ ] **T-280** Licence expiry standardisation: course and library licences use the existing content-licence expiry rules (no duplicate model), same warnings and badges, audited access attempts. Certificates, accounts and enrolments are out of scope. — F-431
+- [ ] **T-281** Tests: unit tests for UTC end-of-day and future-date validation, integration tests for access blocking after expiry, E2E for hidden expired items. — F-430, F-431
+
+## Phase 17 — GDPR readiness & data governance
+
+- [ ] **T-282** Data-processing register (`docs/PRIVACY_REGISTER.md`) for the 14 data categories, with lawful basis marked for legal/product confirmation and anything unconfirmed set to Requires Legal Decision. — F-440
+- [ ] **T-283** Harden self-service export and account deletion against `src/features/privacy/account.ts` and the account privacy migration: identity verification, rate limit, 30-day grace, legal-retention exceptions, completion log, automated notices; tests. — F-441
+- [ ] **T-284** Retention schedule (`docs/RETENTION.md`) covering tables, buckets, server logs, exports, backups and vendor tools, with the jobs that enforce it. — F-442
+- [ ] **T-285** Consent records table: policy version, timestamp, exact purpose, withdrawal state; written where consent is the legal basis. — F-443
+- [ ] **T-286** Subject rights workflow with a one-month SLA tracker and audit trail. — F-444
+- [ ] **T-287** DPIA decision log (`docs/DPIA.md`) and pseudonymised or aggregated analytics where identity is unnecessary. — F-445
+- [ ] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446
