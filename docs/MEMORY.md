@@ -529,3 +529,8 @@ This follows the final workflow in the supplied guide.
 - Known limit: filters apply after the RPCs' 10,000-row cap. Date range stays `range_days`.
 - Test reliability: `tests/setup.ts` retries sign-in on `AuthRetryableFetchError` and global fetch on `TypeError("fetch failed")`. A gate run is invalid if the machine sleeps.
 - Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 178 files, 1289 tests).
+
+## T-291 — role scoping for report data (F-422)
+- Report RPCs stay gated on `analytics.read` or the service role; `tests/integration/report-role-scoping.test.ts` proves instructor, org admin and learner are refused all seven admin report RPCs, admin is allowed, a learner reads only their own `lesson_progress`, and an org admin cannot call `list_org_assigned_learning` for another org.
+- `src/app/org_admin/loading.tsx` and `error.tsx` added; `tests/unit/report-screen-states.test.ts` checks loading and error boundaries exist for admin analytics, instructor analytics, org_admin and learner progress.
+- Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 180 files, 1306 tests).
