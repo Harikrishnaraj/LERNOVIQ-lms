@@ -52,3 +52,6 @@ next-env.d.ts
 # Supabase CLI local state
 supabase/.branches/
 supabase/.temp/
+
+# graphify knowledge graph output
+graphify-out/
