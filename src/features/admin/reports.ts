@@ -39,9 +39,10 @@ export interface ReportDefinition {
  */
 export const REPORT_CATALOGUE: readonly ReportDefinition[] = [
   { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true },
-  { type: "idle_users", category: "user", label: "Idle users", available: false },
+  { type: "idle_users", category: "user", label: "Idle users", available: true },
+  // Unavailable until T-292 records time spent; lesson_progress only keeps a resume position.
   { type: "user_product_duration", category: "user", label: "User product duration", available: false },
-  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: false },
+  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true },
   { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: false },
   { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: false },
   { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: false },
@@ -159,6 +160,16 @@ function escapeCsv(value: string | number | null): string {
   const str = String(value);
   if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replaceAll('"', '""')}"`;
   return str;
+}
+
+/** A text cell that starts with a formula character would run as a formula in Excel; prefix it so it stays text. */
+function safeCell(value: string | number | null): string | number | null {
+  return typeof value === "string" && /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
+/** Shared CSV writer for the report catalogue: a header row, then one escaped line per row. */
+export function buildCsv(header: string[], rows: (string | number | null)[][]): string {
+  return [header.join(","), ...rows.map((r) => r.map((c) => escapeCsv(safeCell(c))).join(","))].join("\n");
 }
 
 /** CSV of the daily analytics points behind a saved report (matches what /admin/analytics shows). */

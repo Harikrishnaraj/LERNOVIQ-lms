@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDailyAnalytics } from "./analytics";
 import { buildReportCsv, getReportDefinition, type ReportType } from "./reports";
+import { buildIdleUsersCsv, buildUserProgressCsv, getIdleUsers, getUserProgress } from "./user-reports";
 import type { Range } from "./analytics";
 
 export type GenerateReportResult = { ok: true; csv: string; rowCount: number } | { ok: false; error: string };
@@ -21,6 +22,14 @@ export async function generateReportCsv(
     case "daily_analytics": {
       const points = await getDailyAnalytics(supabase, report.rangeDays);
       return { ok: true, csv: buildReportCsv(points), rowCount: points.length };
+    }
+    case "idle_users": {
+      const rows = await getIdleUsers(supabase, report.rangeDays);
+      return { ok: true, csv: buildIdleUsersCsv(rows), rowCount: rows.length };
+    }
+    case "individual_user_progress": {
+      const rows = await getUserProgress(supabase, report.rangeDays);
+      return { ok: true, csv: buildUserProgressCsv(rows), rowCount: rows.length };
     }
     default:
       // Reached only when a type is marked available in REPORT_CATALOGUE without a generator.

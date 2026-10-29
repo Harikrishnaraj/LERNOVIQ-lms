@@ -222,12 +222,15 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 ## Phase 15 — Reporting extension (extends F-412, T-140, T-164, T-176)
 
 - [x] **T-274** Report catalogue: nine reports in the three categories (User, Consolidated usage, Product) registered in the saved-report engine in `src/features/admin/reports.ts`; no separate engine; same CSV conventions, scheduling, export history and audit. — F-420
-- [ ] **T-275** Filter models: date range, organisation, course/library, specific user and status; access-date filtering on course-module and course-library usage; shared filter builder. — F-421
-- [ ] **T-276** Role scoping for report data (learner: own data; instructor: owned courses; org admin: own org; platform admin: assigned analytics permission) and loading, empty, error and permission-denied states on every report screen. — F-422
+- [x] **T-275** User reports on real data: Idle users (no login, lesson or assessment activity for the chosen range) and Individual user progress (per enrolment: lessons done, assessment results, certificate) as security-definer RPCs, CSV builders and enabled catalogue entries. No email column (data minimisation). User product duration stays unavailable until T-292 adds learning-time tracking. — F-420
+- [ ] **T-276** Consolidated usage and Product reports: course-module usage, course-library usage (by access date), course-library licence status, product course-library and course-module usage; add the library-access and licence-reporting queries each needs, enable only those with real data and open a follow-up task for any that lack schema. — F-420
 - [ ] **T-277** Export hardening: minimise PII columns, short-lived signed download links, retention limit on artifacts, log every download. — F-423
 - [ ] **T-278** Tests: query plans for new report queries, unit tests for filter builders, integration tests for report generation and exports, E2E role-isolation tests for learner, instructor, org admin and platform admin. — F-420, F-421, F-422, F-423
 
 - [ ] **T-289** Audit logging for saved reports: write `audit_logs` rows for report create, delete, manual run, scheduled run and every download (actor, report ID, type, range, row count); append-only like other audit rows. Split out of T-274. — F-423
+- [ ] **T-290** Filter models: date range, organisation, course/library, specific user and status, shared filter builder, applied to every enabled report. Split from the former T-275. — F-421
+- [ ] **T-291** Role scoping for report data (learner: own data; instructor: owned courses; org admin: own org; platform admin: assigned analytics permission) and loading, empty, error and permission-denied states on every report screen. Split from the former T-276. — F-422
+- [ ] **T-292** Learning-time tracking: record time actually spent per learner per lesson (heartbeat or session events, capped and idle-aware), then enable the User product duration report. `lesson_progress` only stores a resume position today, so the report has no real data yet. — F-420
 
 ## Phase 16 — Expiry extension (extends T-170 to T-174, ADR-041)
 

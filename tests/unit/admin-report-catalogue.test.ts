@@ -17,9 +17,9 @@ describe("report catalogue", () => {
     }
   });
 
-  it("enables only reports with real data: the daily platform analytics", () => {
+  it("enables only reports with real data behind them", () => {
     const available = REPORT_CATALOGUE.filter((r) => r.available).map((r) => r.type);
-    expect(available).toEqual(["daily_analytics"]);
+    expect(available).toEqual(["daily_analytics", "idle_users", "individual_user_progress"]);
   });
 
   it("defaults new reports to the available daily analytics type", () => {
