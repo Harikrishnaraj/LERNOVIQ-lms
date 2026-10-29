@@ -43,11 +43,11 @@ export const REPORT_CATALOGUE: readonly ReportDefinition[] = [
   // Unavailable until T-292 records time spent; lesson_progress only keeps a resume position.
   { type: "user_product_duration", category: "user", label: "User product duration", available: false },
   { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true },
-  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: false },
-  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: false },
-  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: false },
-  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: false },
-  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: false },
+  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true },
+  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true },
+  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: true },
+  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: true },
+  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: true },
 ];
 
 export const DEFAULT_REPORT_TYPE: ReportType = "daily_analytics";

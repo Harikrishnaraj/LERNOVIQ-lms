@@ -19,7 +19,8 @@ describe("report catalogue", () => {
 
   it("enables only reports with real data behind them", () => {
     const available = REPORT_CATALOGUE.filter((r) => r.available).map((r) => r.type);
-    expect(available).toEqual(["daily_analytics", "idle_users", "individual_user_progress"]);
+    expect(REPORT_CATALOGUE.filter((r) => !r.available).map((r) => r.type)).toEqual(["user_product_duration"]);
+    expect(available).toHaveLength(REPORT_CATALOGUE.length - 1);
   });
 
   it("defaults new reports to the available daily analytics type", () => {
@@ -46,7 +47,7 @@ describe("generateReportCsv", () => {
     });
     const client = { from } as unknown as SupabaseClient;
 
-    const result = await generateReportCsv(client, { type: "product_course_library_usage", rangeDays: 30 });
+    const result = await generateReportCsv(client, { type: "user_product_duration", rangeDays: 30 });
 
     expect(result).toEqual({ ok: false, error: "This report is not available yet." });
     expect(from).not.toHaveBeenCalled();
