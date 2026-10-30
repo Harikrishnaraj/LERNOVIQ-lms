@@ -584,3 +584,9 @@ This follows the final workflow in the supplied guide.
 - Deleting needs identity proof: password re-check (throwaway anon client) for password accounts, typed email for provider accounts. 5 attempts/hour via `account-privacy` rate limit (fail-closed); refusals audited as `account.deletion_refused`.
 - Request and cancel send notice emails; grace stays 30 days. `profiles.deletion_hold_reason` (staff-only) makes `purge_expired_accounts()` skip an account; what must be held is a Requires Legal Decision. Purge writes an `account.deleted` audit row (id and request date only, no PII).
 - Limitation: no completion email is possible, since the address is gone with the account. Full `npm run check` passed.
+
+## T-284 — retention schedule (F-442)
+
+- `docs/RETENTION.md` covers tables, buckets, server logs, exports, backups and vendors; `tests/unit/retention.test.ts` checks that every job and function it cites exists in the migrations.
+- New job `purge-operational-data-daily` (03:30 UTC, `purge_operational_data()`): login_history 12 months, api_request_log 90 days, enquiries 24 months, rate_limit_hits 1 day. Periods are proposals (Requires Legal Decision). Integration test in `tests/integration/retention-jobs.test.ts`.
+- Still open for T-288: storage objects are not deleted on account removal and buckets are not backed up; server-log rotation on the VPS is unrecorded.
