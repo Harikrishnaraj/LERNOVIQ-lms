@@ -572,3 +572,9 @@ This follows the final workflow in the supplied guide.
 ## T-281 — expiry tests (F-430, F-431)
 - Unit: `tests/unit/expiry-state.test.ts` (UTC end of day, future-only, today accepted, impossible dates, warning window). Integration: `resource-expiry.test.ts` (trigger refuses expired attach, owner can change only the expiry, learner view hides expired attachments and logs it) and the existing licence launch tests (revoked/expired refused). E2E: `tests/e2e/resource-expiry.spec.ts` (badges, pre-expiry warning, expired item hidden from lesson selection, extending restores it, past date refused) plus the content-server E2E audit assertion.
 - Expiry extension (T-279..T-281) is complete. Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).
+
+## T-282 — data-processing register (F-440)
+
+- `docs/PRIVACY_REGISTER.md` covers the 14 categories with all required fields. Every lawful basis, breach-response owner and international-transfer entry is "Requires Legal Decision"; nothing claims GDPR compliance.
+- `tests/unit/privacy-register.test.ts` checks the categories, fields and the no-compliance-claim rule. Full `npm run check` passed (CHECK_EXIT=0).
+- Gaps spotted while writing it, for T-283/T-284/T-288: login_history, enquiries, api_request_log and rate_limit_hits have no retention job; export omits lesson progress, assessments, discussions and login history; storage-object deletion on account removal is unverified.
