@@ -590,3 +590,9 @@ This follows the final workflow in the supplied guide.
 - `docs/RETENTION.md` covers tables, buckets, server logs, exports, backups and vendors; `tests/unit/retention.test.ts` checks that every job and function it cites exists in the migrations.
 - New job `purge-operational-data-daily` (03:30 UTC, `purge_operational_data()`): login_history 12 months, api_request_log 90 days, enquiries 24 months, rate_limit_hits 1 day. Periods are proposals (Requires Legal Decision). Integration test in `tests/integration/retention-jobs.test.ts`.
 - Still open for T-288: storage objects are not deleted on account removal and buckets are not backed up; server-log rotation on the VPS is unrecorded.
+
+## T-285 — consent records (F-443)
+
+- Migration `20261020300000_consent_records.sql` (applied): `consent_records` (user_id or subject_email, purpose, exact purpose_text, policy_version, given_at, withdrawn_at); owners read their own, writes service-role only; visitor rows purged at 24 months by `purge_operational_data()`.
+- `src/features/privacy/consent.ts` (`recordConsent`, `withdrawConsent`) and `consent-purposes.ts` (wording and `POLICY_VERSION`, shared with the contact form). The enquiry checkbox is the only consent-based flow; it now writes a record linked to the enquiry. Export includes `consents`.
+- Withdrawal has no UI; visitor withdrawal requests go through the T-286 workflow. Bump `POLICY_VERSION` when the policy text changes.

@@ -243,7 +243,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-282** Data-processing register (`docs/PRIVACY_REGISTER.md`) for the 14 data categories, with lawful basis marked for legal/product confirmation and anything unconfirmed set to Requires Legal Decision. — F-440
 - [x] **T-283** Harden self-service export and account deletion against `src/features/privacy/account.ts` and the account privacy migration: identity verification, rate limit, 30-day grace, legal-retention exceptions, completion log, automated notices; tests. — F-441
 - [x] **T-284** Retention schedule (`docs/RETENTION.md`) covering tables, buckets, server logs, exports, backups and vendor tools, with the jobs that enforce it. — F-442
-- [ ] **T-285** Consent records table: policy version, timestamp, exact purpose, withdrawal state; written where consent is the legal basis. — F-443
+- [x] **T-285** Consent records table: policy version, timestamp, exact purpose, withdrawal state; written where consent is the legal basis. — F-443
 - [ ] **T-286** Subject rights workflow with a one-month SLA tracker and audit trail. — F-444
 - [ ] **T-287** DPIA decision log (`docs/DPIA.md`) and pseudonymised or aggregated analytics where identity is unnecessary. — F-445
 - [ ] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446

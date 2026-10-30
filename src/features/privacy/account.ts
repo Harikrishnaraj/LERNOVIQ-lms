@@ -13,7 +13,7 @@ export async function getMyDeletionStatus(supabase: SupabaseClient, userId: stri
  * not a full relational graph dump.
  */
 export async function getMyDataExport(supabase: SupabaseClient, userId: string) {
-  const [profile, roles, enrollments, submissions, certificates, reviews, orgMemberships] = await Promise.all([
+  const [profile, roles, enrollments, submissions, certificates, reviews, orgMemberships, consents] = await Promise.all([
     supabase.from("profiles").select("full_name, headline, bio, avatar_url, created_at").eq("id", userId).maybeSingle(),
     supabase.from("user_roles").select("role_id, created_at").eq("user_id", userId),
     supabase.from("enrollments").select("course_id, status, enrolled_at, completed_at").eq("user_id", userId),
@@ -24,6 +24,7 @@ export async function getMyDataExport(supabase: SupabaseClient, userId: string) 
     supabase.from("certificates").select("code, course_title, issued_at, status").eq("user_id", userId),
     supabase.from("course_ratings").select("course_id, rating, body, instructor_reply, created_at").eq("user_id", userId),
     supabase.from("organization_members").select("organization_id, org_role, created_at").eq("user_id", userId),
+    supabase.from("consent_records").select("purpose, purpose_text, policy_version, given_at, withdrawn_at").eq("user_id", userId),
   ]);
 
   return {
@@ -35,6 +36,7 @@ export async function getMyDataExport(supabase: SupabaseClient, userId: string) 
     certificates: certificates.data ?? [],
     courseReviews: reviews.data ?? [],
     organizationMemberships: orgMemberships.data ?? [],
+    consents: consents.data ?? [],
   };
 }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { log } from "@/lib/log";
+import { recordConsent } from "@/features/privacy/consent";
 import { sendEmail } from "@/services/email";
 import { RATE_LIMITED_MESSAGE, clientIp, rateLimit } from "@/services/rate-limit";
 import { createAdminClient } from "@/services/supabase/admin";
@@ -30,7 +31,8 @@ export async function submitEnquiry(input: EnquiryInput): Promise<SubmitEnquiryR
     return { ok: false, error: RATE_LIMITED_MESSAGE };
   }
 
-  const { error } = await createAdminClient().from("enquiries").insert({
+  const admin = createAdminClient();
+  const { data: row, error } = await admin.from("enquiries").insert({
     kind: e.kind,
     name: e.name,
     email: e.email,
@@ -41,11 +43,15 @@ export async function submitEnquiry(input: EnquiryInput): Promise<SubmitEnquiryR
     audience: e.audience,
     timeline: e.timeline,
     details: e.details,
-  });
+  }).select("id").single();
   if (error) {
     log.error("enquiry.insert_failed", { detail: error.message });
     return { ok: false, error: "We couldn't send your enquiry. Please try again shortly." };
   }
+
+  // F-443: the checkbox is the legal basis here, so keep what was agreed to.
+  const consent = await recordConsent(admin, { purpose: "enquiry_contact", email: e.email, sourceId: row.id });
+  if (consent.error) log.error("enquiry.consent_failed", { detail: consent.error.message });
 
   const to = process.env.CONTACT_NOTIFY_EMAIL;
   if (to) {

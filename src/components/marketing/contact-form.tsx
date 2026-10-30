@@ -1,5 +1,6 @@
 "use client";
 
+import { CONSENT_PURPOSES } from "@/features/privacy/consent-purposes";
 import { useState, useTransition, type FormEvent } from "react";
 import { submitEnquiry } from "@/features/enquiries/actions";
 import {
@@ -236,7 +237,7 @@ export function ContactForm({ initialKind }: { initialKind: Kind }) {
           className="mt-0.5 size-5 shrink-0 accent-primary"
         />
         <span>
-          I agree that LERNOVIQ may use the information I provide to respond to this enquiry.{" "}
+          {CONSENT_PURPOSES.enquiry_contact.text}{" "}
           {errors.consent && (
             <span className="font-semibold text-danger-text">{errors.consent}</span>
           )}

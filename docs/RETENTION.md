@@ -18,6 +18,7 @@ checked by `tests/unit/retention.test.ts`.
 | API request log (`api_request_log`) | 90 days | `purge-operational-data-daily` | Implemented |
 | Rate-limit hits (`rate_limit_hits`) | 1 day | `purge-operational-data-daily` (and per key inside the rate-limit check) | Implemented |
 | Enquiries from the marketing site (`enquiries`) | 24 months | `purge-operational-data-daily` | Implemented |
+| Consent records (`consent_records`; visitor rows) | 24 months, like the enquiry they belong to; a signed-in person's rows go with the account | `purge-operational-data-daily` and `purge-expired-accounts-daily` (cascade) | Implemented |
 | Saved report exports (`report_exports`) | 30 days | scheduled-reports job in the app (T-277) | Implemented |
 | Learning records (`enrollments`, `lesson_progress`, `lesson_time`, `assessment_attempts`, `assignment_submissions`) | Life of the account; deleted with it | `purge-expired-accounts-daily` (cascade) | Implemented |
 | Certificates (`certificates`, `certificate_events`) | Life of the account; whether a verifiable record must outlive it is **Requires Legal Decision** | `purge-expired-accounts-daily` (cascade) | Implemented, open question |

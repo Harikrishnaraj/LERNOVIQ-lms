@@ -237,7 +237,7 @@ one organisation; **learner** is the default account.
 - **Access roles and organisation boundary:** admin and super_admin (`enquiry.read` for enquiries).
   Visitors cannot read enquiries.
 - **Storage:** `enquiries`, `instructor_applications`, `discussion_reports`, `review_reports`.
-- **Retention and deletion:** enquiries have no deletion job and no retention limit: gap.
+- **Retention and deletion:** enquiries and their consent records are deleted after 24 months by `purge-operational-data-daily` *(implemented, T-284)*. The marketing-site checkbox is stored in `consent_records` with its wording, policy version, time and withdrawal state *(implemented, T-285)*; who handles a withdrawal request is the T-286 workflow.
 - **Subject rights:** a visitor has no account, so requests arrive by email (T-286).
 - **Security controls:** server-only insert, rate limit, no public read.
 - **Audit logs:** none specific to enquiries.
