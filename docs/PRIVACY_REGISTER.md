@@ -19,7 +19,7 @@ platform is GDPR compliant; see `docs/PRIVACY_GAP_REGISTER.md` for what is still
 - Rights handling today: export is self-service (`/privacy/export`, `src/features/privacy/account.ts`);
   deletion is self-service with a 30-day grace period (`20260928050000_account_privacy.sql`); correction of
   profile fields is self-service in Settings. Restriction and objection have no tool yet; they are handled by
-  the subject-rights workflow in T-286 (until then, by an administrator, with no tracking).
+  the subject-rights workflow (T-286): Settings → Privacy → "Other privacy requests", worked in Admin → Privacy requests with a one-month deadline and an audit trail. Visitors without an account still write by email, which is not tracked.
 - Retention figures marked *(implemented)* are enforced by a job today. Figures marked *(proposed)* are
   written in `docs/RETENTION.md` and are not yet enforced.
 
@@ -48,7 +48,7 @@ one organisation; **learner** is the default account.
   purge; which data a hold must cover is **Requires Legal Decision**. Each deletion writes an `account.deleted`
   audit row (id and request date only).
 - **Subject rights:** export (profile and roles included), correction (self-service), deletion (self-service,
-  30-day grace); restriction and objection (no tool, T-286); portability (JSON export).
+  30-day grace); restriction and objection (request form and admin queue, T-286); portability (JSON export).
 - **Security controls:** row-level security on every table, MFA for back-office roles, rate limiting.
 - **Audit logs:** role changes, suspension, invitations and deletion requests are audited.
 - **Breach-response owner:** **Requires Legal Decision.**

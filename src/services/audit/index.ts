@@ -58,6 +58,8 @@ export const AUDIT_ACTIONS = [
   "account.deletion_requested",
   "account.deletion_cancelled",
   "account.deletion_refused",
+  "privacy_request.created",
+  "privacy_request.updated",
   "account.deleted",
   "account.data_exported",
   "communication.template_created",

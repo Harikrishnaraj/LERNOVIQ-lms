@@ -451,6 +451,13 @@ const admin: PortalNav = {
           description: "Contact-form enquiries from the website.",
           task: "T-264",
         },
+        {
+          label: "Privacy requests",
+          href: "/admin/privacy-requests",
+          icon: ShieldAlert,
+          description: "Data-subject rights requests and their deadlines.",
+          task: "T-286",
+        },
       ],
     },
     {

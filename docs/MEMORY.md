@@ -596,3 +596,9 @@ This follows the final workflow in the supplied guide.
 - Migration `20261020300000_consent_records.sql` (applied): `consent_records` (user_id or subject_email, purpose, exact purpose_text, policy_version, given_at, withdrawn_at); owners read their own, writes service-role only; visitor rows purged at 24 months by `purge_operational_data()`.
 - `src/features/privacy/consent.ts` (`recordConsent`, `withdrawConsent`) and `consent-purposes.ts` (wording and `POLICY_VERSION`, shared with the contact form). The enquiry checkbox is the only consent-based flow; it now writes a record linked to the enquiry. Export includes `consents`.
 - Withdrawal has no UI; visitor withdrawal requests go through the T-286 workflow. Bump `POLICY_VERSION` when the policy text changes.
+
+## T-286 — subject-rights workflow (F-444)
+
+- Migration `20261020400000_subject_requests.sql` (applied): `privacy.requests` permission (admin, super_admin) and `subject_requests` (kind, status open/in_progress/completed/rejected, `due_at` default now() + 1 month, resolution note, handled_by). RLS: owner files and reads own (email must match JWT), staff read and update.
+- App: `src/features/privacy/request-actions.ts` (file / update, both audited as `privacy_request.created|updated`, late closes flagged), `requests.ts` (`slaState`), Settings → Privacy request form, Admin → Privacy requests queue with days left / overdue. Closing needs a note; closed requests cannot be reopened.
+- Gaps for T-288: visitors without an account have no tracked path; no retention period set for closed requests; no overdue reminder email/job; erasure requests are not linked to the deletion flow.
