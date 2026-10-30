@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Range } from "@/features/admin/analytics";
 import { generateReportCsv } from "@/features/admin/report-generation";
 import { computeNextRunAt, type ReportSchedule, type ReportType } from "@/features/admin/reports";
+import { purgeExpiredExports } from "@/features/admin/report-export-policy";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
 import { createAdminClient } from "@/services/supabase/admin";
 
@@ -49,5 +50,8 @@ export async function GET(request: NextRequest) {
     processed += 1;
   }
 
-  return NextResponse.json({ processed });
+  // Retention: files older than the limit are deleted whether or not any report was due.
+  const purged = await purgeExpiredExports(admin, now);
+
+  return NextResponse.json({ processed, purged });
 }

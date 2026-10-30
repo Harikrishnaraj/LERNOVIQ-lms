@@ -32,8 +32,8 @@ export async function getIdleUsers(supabase: SupabaseClient, days: number): Prom
 
 export function buildIdleUsersCsv(rows: IdleUserRow[]): string {
   return buildCsv(
-    ["user_id", "name", "last_activity_at", "days_idle", "enrollments"],
-    rows.map((r) => [r.userId, r.fullName, r.lastActivityAt, r.daysIdle, r.enrollments]),
+    ["user_id", "last_activity_at", "days_idle", "enrollments"],
+    rows.map((r) => [r.userId, r.lastActivityAt, r.daysIdle, r.enrollments]),
   );
 }
 
@@ -103,7 +103,6 @@ export function buildUserProgressCsv(rows: UserProgressRow[]): string {
   return buildCsv(
     [
       "user_id",
-      "name",
       "course_id",
       "course",
       "status",
@@ -120,7 +119,6 @@ export function buildUserProgressCsv(rows: UserProgressRow[]): string {
     ],
     rows.map((r) => [
       r.userId,
-      r.fullName,
       r.courseId,
       r.courseTitle,
       r.enrollmentStatus,
@@ -178,7 +176,7 @@ export async function getUserProductDuration(supabase: SupabaseClient, days: num
 
 export function buildUserDurationCsv(rows: UserDurationRow[]): string {
   return buildCsv(
-    ["user_id", "name", "course_id", "course", "minutes_spent", "lessons_with_time", "active_days", "last_active_day"],
-    rows.map((r) => [r.userId, r.fullName, r.courseId, r.courseTitle, Math.round(r.totalSeconds / 60), r.lessonsWithTime, r.activeDays, r.lastActiveDay]),
+    ["user_id", "course_id", "course", "minutes_spent", "lessons_with_time", "active_days", "last_active_day"],
+    rows.map((r) => [r.userId, r.courseId, r.courseTitle, Math.round(r.totalSeconds / 60), r.lessonsWithTime, r.activeDays, r.lastActiveDay]),
   );
 }

@@ -82,4 +82,26 @@ describe.skipIf(!hasLiveProject)("scheduled reports cron (T-140, live Supabase)"
     expect(exportsRows).toHaveLength(1); // still just the one from the previous run
     expect(body.processed).toBe(0);
   });
+
+  // F-423 (T-277): files past the retention limit are deleted along with their records.
+  it("deletes an export older than the retention limit and keeps a recent one", async () => {
+    const oldPath = `scheduled/${savedReportId}/old-${tag}.csv`;
+    await svc.storage.from(REPORT_EXPORT_BUCKET).upload(oldPath, new TextEncoder().encode("a,b"), { contentType: "text/csv" });
+    const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
+    const { data: oldRow } = await svc
+      .from("report_exports")
+      .insert({ saved_report_id: savedReportId, storage_path: oldPath, row_count: 0, triggered_by: "scheduled", generated_at: old })
+      .select("id")
+      .single();
+
+    const res = await GET(request("Bearer test-cron-secret"));
+    expect((await res.json()).purged).toBeGreaterThanOrEqual(1);
+
+    const { data: gone } = await svc.from("report_exports").select("id").eq("id", oldRow!.id);
+    expect(gone).toHaveLength(0);
+    const { data: file } = await svc.storage.from(REPORT_EXPORT_BUCKET).download(oldPath);
+    expect(file).toBeNull();
+    const { data: kept } = await svc.from("report_exports").select("id").eq("saved_report_id", savedReportId);
+    expect(kept).toHaveLength(1); // the recent scheduled export survives
+  });
 });

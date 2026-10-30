@@ -54,18 +54,18 @@ describe("buildCsv", () => {
 describe("user report CSVs", () => {
   it("writes the idle users header and never an email column", () => {
     const csv = buildIdleUsersCsv([{ userId: "u1", fullName: null, lastActivityAt: "2026-07-01T00:00:00Z", daysIdle: 120, enrollments: 2 }]);
-    expect(csv).toBe("user_id,name,last_activity_at,days_idle,enrollments\nu1,,2026-07-01T00:00:00Z,120,2");
+    expect(csv).toBe("user_id,last_activity_at,days_idle,enrollments\nu1,2026-07-01T00:00:00Z,120,2");
     expect(csv.toLowerCase()).not.toContain("email");
   });
 
   it("writes one progress line per enrolment with a computed percent", () => {
     const lines = buildUserProgressCsv([progressRow]).split("\n");
     expect(lines[0]).toContain("percent_complete");
-    expect(lines[1]).toBe('u1,"Ada, Lovelace",c1,AML & KYC,active,2026-10-01T00:00:00Z,,1,3,33,0,1,62.5,,2026-10-20T00:00:00Z');
+    expect(lines[1]).toBe('u1,c1,AML & KYC,active,2026-10-01T00:00:00Z,,1,3,33,0,1,62.5,,2026-10-20T00:00:00Z');
   });
 
   it("returns just the header for no rows", () => {
-    expect(buildIdleUsersCsv([])).toBe("user_id,name,last_activity_at,days_idle,enrollments");
+    expect(buildIdleUsersCsv([])).toBe("user_id,last_activity_at,days_idle,enrollments");
   });
 });
 
@@ -131,8 +131,8 @@ describe("generateReportCsv for the user reports", () => {
     expect(result).toMatchObject({ ok: true, rowCount: 1 });
     if (result.ok) {
       const lines = result.csv.split("\n");
-      expect(lines[0]).toBe("user_id,name,course_id,course,minutes_spent,lessons_with_time,active_days,last_active_day");
-      expect(lines[1]).toBe("u,A,c,T,90,3,2,2026-10-30");
+      expect(lines[0]).toBe("user_id,course_id,course,minutes_spent,lessons_with_time,active_days,last_active_day");
+      expect(lines[1]).toBe("u,c,T,90,3,2,2026-10-30");
       expect(result.csv).not.toMatch(/email/i);
     }
     expect(rpc).toHaveBeenCalledWith("admin_report_user_product_duration", { p_days: 30 });

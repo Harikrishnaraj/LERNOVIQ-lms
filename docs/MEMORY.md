@@ -540,3 +540,9 @@ This follows the final workflow in the supplied guide.
 - Client `TimeTracker` (`src/components/player/time-tracker.tsx`) sends 30s heartbeats only while the tab is visible and the learner was active in the last 2 minutes (a playing video counts as activity). Pure rules in `src/features/player/time.ts`; server action `recordLessonTime` in `player/progress.ts`.
 - `user_product_duration` is now `available`: all nine catalogue reports run on real data. CSV is minutes per learner per course, no email. Filters: course, user, organisation.
 - Known limits: time is not recorded for previews or non-enrolled viewers; SCORM and external content count only while the tab is active. Full `npm run check` passed (CHECK_EXIT=0, 182 files, 1317 tests).
+
+## T-277 — report export hardening (F-423)
+- `src/features/admin/report-export-policy.ts`: `EXPORT_LINK_SECONDS` (300), `EXPORT_RETENTION_DAYS` (30), `purgeExpiredExports` (storage file first, then record; run by the scheduled-reports cron, which now returns `purged`), `logExportDownload`.
+- Every download link handed out (manual run and past exports) writes an `audit_logs` row, action `report.downloaded` (report id, export id, type, row count). T-289 still owns create, delete, run and scheduled-run events.
+- PII minimisation decision: the three user-level CSVs (Idle users, Individual progress, Product duration) dropped the `name` column; they carry `user_id` only, never email. Reversible if admins need names in files.
+- Full `npm run check` passed (CHECK_EXIT=0, 183 files, 1322 tests).
