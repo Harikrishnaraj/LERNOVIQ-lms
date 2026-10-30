@@ -15,6 +15,7 @@ import {
   REFUSALS,
   type RefusalReason,
 } from "@/services/content-server/launch";
+import { recordAudit } from "@/services/audit";
 import { clientIp, rateLimit } from "@/services/rate-limit";
 import { createAdminClient } from "@/services/supabase/admin";
 import { log } from "@/lib/log";
@@ -78,6 +79,16 @@ export async function POST(request: NextRequest) {
     return refuse("unavailable");
   }
   const outcome = result as { status: string; registration_id?: string; lesson_id?: string };
+  if (outcome.status === "expired" || outcome.status === "revoked") {
+    // F-431: a launch against a licence that has ended is refused and logged (no human actor: the call comes from the customer's LMS).
+    await recordAudit({
+      actorId: null,
+      action: "content_licence.access_refused",
+      resourceType: "content_licence",
+      resourceId: dispatch.licence_id as string,
+      metadata: { reason: outcome.status, dispatchId: form.dispatch },
+    });
+  }
   if (outcome.status !== "ok" || !outcome.registration_id || !outcome.lesson_id) {
     return refuse((outcome.status in REFUSALS ? outcome.status : "unavailable") as RefusalReason);
   }

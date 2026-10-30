@@ -563,3 +563,8 @@ This follows the final workflow in the supplied guide.
 - Shared rules in `content-server/rules.ts`: `validateExpiry` (UTC end of day, future only), `expiryState` (none/active/expiring/expired), `EXPIRY_WARNING_DAYS` (14), `EXPIRY_LABELS`. T-280 reuses these for licences.
 - Expired items stay in the owner's library (badge, extend or delete) but are not offered for attaching; `getAssetLinks` hides attachments whose library resource expired (checked with the service role, ids only). Audit: `resource.created`, `resource.expiry_changed`, `resource.expired_access_refused` (instructor attach attempts and learner views of hidden attachments).
 - Known limit: a signed download link issued before expiry keeps working for its 10 minutes. Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).
+
+## T-280 — licence expiry standardisation (F-431)
+- No second model: content licences already used `validateExpiry`/`licenceStatus` and the database refuses launches on revoked or expired licences (`register_content_launch`). The licence card now uses the shared `expiryState` from `content-server/rules.ts`: an active licence inside the 14-day window shows an "Expiring soon" badge and a days-left warning, same as library resources.
+- Audit: a launch refused as `expired` or `revoked` writes `content_licence.access_refused` (resource = licence id, metadata reason and dispatch id, no actor: the call comes from the customer's LMS). Creating and changing licences were already audited (`content_licence.*`). Certificates, accounts and enrolments do not expire.
+- Tested in the existing content-server E2E (refused launch leaves an audit row). Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).

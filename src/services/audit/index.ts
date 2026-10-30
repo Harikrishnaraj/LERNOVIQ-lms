@@ -73,6 +73,7 @@ export const AUDIT_ACTIONS = [
   "content_licence.course_removed",
   "content_dispatch.downloaded",
   "content_usage.exported",
+  "content_licence.access_refused",
   "report.downloaded",
   "report.created",
   "report.deleted",
