@@ -17,10 +17,9 @@ describe("report catalogue", () => {
     }
   });
 
-  it("enables only reports with real data behind them", () => {
-    const available = REPORT_CATALOGUE.filter((r) => r.available).map((r) => r.type);
-    expect(REPORT_CATALOGUE.filter((r) => !r.available).map((r) => r.type)).toEqual(["user_product_duration"]);
-    expect(available).toHaveLength(REPORT_CATALOGUE.length - 1);
+  it("enables all nine reports now that each has real data behind it", () => {
+    expect(REPORT_CATALOGUE).toHaveLength(9);
+    expect(REPORT_CATALOGUE.filter((r) => !r.available)).toEqual([]);
   });
 
   it("defaults new reports to the available daily analytics type", () => {
@@ -41,13 +40,13 @@ describe("validateReportType", () => {
 });
 
 describe("generateReportCsv", () => {
-  it("refuses an unavailable report without touching the database", async () => {
+  it("refuses a report that is not in the catalogue without touching the database", async () => {
     const from = vi.fn(() => {
-      throw new Error("database must not be queried for an unavailable report");
+      throw new Error("database must not be queried for an unknown report");
     });
     const client = { from } as unknown as SupabaseClient;
 
-    const result = await generateReportCsv(client, { type: "user_product_duration", rangeDays: 30 });
+    const result = await generateReportCsv(client, { type: "made_up" as never, rangeDays: 30 });
 
     expect(result).toEqual({ ok: false, error: "This report is not available yet." });
     expect(from).not.toHaveBeenCalled();

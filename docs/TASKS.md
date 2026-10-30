@@ -230,7 +230,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [ ] **T-289** Audit logging for saved reports: write `audit_logs` rows for report create, delete, manual run, scheduled run and every download (actor, report ID, type, range, row count); append-only like other audit rows. Split out of T-274. — F-423
 - [x] **T-290** Filter models: date range, organisation, course/library, specific user and status, shared filter builder, applied to every enabled report. Split from the former T-275. — F-421
 - [x] **T-291** Role scoping for report data (learner: own data; instructor: owned courses; org admin: own org; platform admin: assigned analytics permission) and loading, empty, error and permission-denied states on every report screen. Split from the former T-276. — F-422
-- [ ] **T-292** Learning-time tracking: record time actually spent per learner per lesson (heartbeat or session events, capped and idle-aware), then enable the User product duration report. `lesson_progress` only stores a resume position today, so the report has no real data yet. — F-420
+- [x] **T-292** Learning-time tracking: record time actually spent per learner per lesson (heartbeat or session events, capped and idle-aware), then enable the User product duration report. `lesson_progress` only stores a resume position today, so the report has no real data yet. — F-420
 
 ## Phase 16 — Expiry extension (extends T-170 to T-174, ADR-041)
 

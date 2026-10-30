@@ -41,8 +41,7 @@ export interface ReportDefinition {
 export const REPORT_CATALOGUE: readonly ReportDefinition[] = [
   { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true },
   { type: "idle_users", category: "user", label: "Idle users", available: true },
-  // Unavailable until T-292 records time spent; lesson_progress only keeps a resume position.
-  { type: "user_product_duration", category: "user", label: "User product duration", available: false },
+  { type: "user_product_duration", category: "user", label: "User product duration", available: true },
   { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true },
   { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true },
   { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true },

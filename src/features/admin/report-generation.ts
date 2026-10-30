@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDailyAnalytics } from "./analytics";
 import { buildReportCsv, getReportDefinition, type ReportType } from "./reports";
-import { buildIdleUsersCsv, buildUserProgressCsv, getIdleUsers, getUserProgress } from "./user-reports";
+import {
+  buildIdleUsersCsv,
+  buildUserDurationCsv,
+  buildUserProgressCsv,
+  getIdleUsers,
+  getUserProductDuration,
+  getUserProgress,
+} from "./user-reports";
 import type { Range } from "./analytics";
 import { matchRows, type ReportFilters } from "./report-filters";
 import {
@@ -51,6 +58,10 @@ export async function generateReportCsv(
     case "idle_users": {
       const rows = matchRows(inOrg(await getIdleUsers(supabase, report.rangeDays)), { userId: f.userId }, field);
       return { ok: true, csv: buildIdleUsersCsv(rows), rowCount: rows.length };
+    }
+    case "user_product_duration": {
+      const rows = matchRows(inOrg(await getUserProductDuration(supabase, report.rangeDays)), { userId: f.userId, courseId: f.courseId }, field);
+      return { ok: true, csv: buildUserDurationCsv(rows), rowCount: rows.length };
     }
     case "individual_user_progress": {
       const rows = matchRows(inOrg(await getUserProgress(supabase, report.rangeDays)), { userId: f.userId, courseId: f.courseId, enrollmentStatus: f.status }, field);

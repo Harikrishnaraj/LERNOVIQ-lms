@@ -123,12 +123,18 @@ describe("generateReportCsv for the user reports", () => {
     expect(rpc).toHaveBeenCalledWith("admin_report_user_progress", { p_days: 90 });
   });
 
-  it("still refuses user product duration, which has no data yet", async () => {
-    const { client, rpc } = fakeRpc([]);
-    expect(await generateReportCsv(client, { type: "user_product_duration", rangeDays: 30 })).toEqual({
-      ok: false,
-      error: "This report is not available yet.",
-    });
-    expect(rpc).not.toHaveBeenCalled();
+  it("builds the user product duration file in minutes, with no email column", async () => {
+    const { client, rpc } = fakeRpc([
+      { user_id: "u", full_name: "A", course_id: "c", course_title: "T", total_seconds: "5400", lessons_with_time: 3, active_days: 2, last_active_day: "2026-10-30" },
+    ]);
+    const result = await generateReportCsv(client, { type: "user_product_duration", rangeDays: 30 });
+    expect(result).toMatchObject({ ok: true, rowCount: 1 });
+    if (result.ok) {
+      const lines = result.csv.split("\n");
+      expect(lines[0]).toBe("user_id,name,course_id,course,minutes_spent,lessons_with_time,active_days,last_active_day");
+      expect(lines[1]).toBe("u,A,c,T,90,3,2,2026-10-30");
+      expect(result.csv).not.toMatch(/email/i);
+    }
+    expect(rpc).toHaveBeenCalledWith("admin_report_user_product_duration", { p_days: 30 });
   });
 });

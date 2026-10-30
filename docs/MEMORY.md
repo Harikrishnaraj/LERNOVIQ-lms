@@ -534,3 +534,9 @@ This follows the final workflow in the supplied guide.
 - Report RPCs stay gated on `analytics.read` or the service role; `tests/integration/report-role-scoping.test.ts` proves instructor, org admin and learner are refused all seven admin report RPCs, admin is allowed, a learner reads only their own `lesson_progress`, and an org admin cannot call `list_org_assigned_learning` for another org.
 - `src/app/org_admin/loading.tsx` and `error.tsx` added; `tests/unit/report-screen-states.test.ts` checks loading and error boundaries exist for admin analytics, instructor analytics, org_admin and learner progress.
 - Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 180 files, 1306 tests).
+
+## T-292 — learning-time tracking and User product duration (F-420)
+- Migration `20261018100000_learning_time.sql` (applied to modern-lms): `lesson_time` (enrollment, lesson, UTC day, seconds; RLS on with no policies, so no direct access), `record_lesson_time(lesson, seconds)` and `admin_report_user_product_duration(days)`. One heartbeat credits at most 60s and never more than real time since that lesson's last heartbeat today; refused if not enrolled.
+- Client `TimeTracker` (`src/components/player/time-tracker.tsx`) sends 30s heartbeats only while the tab is visible and the learner was active in the last 2 minutes (a playing video counts as activity). Pure rules in `src/features/player/time.ts`; server action `recordLessonTime` in `player/progress.ts`.
+- `user_product_duration` is now `available`: all nine catalogue reports run on real data. CSV is minutes per learner per course, no email. Filters: course, user, organisation.
+- Known limits: time is not recorded for previews or non-enrolled viewers; SCORM and external content count only while the tab is active. Full `npm run check` passed (CHECK_EXIT=0, 182 files, 1317 tests).

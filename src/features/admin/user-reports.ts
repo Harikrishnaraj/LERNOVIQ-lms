@@ -137,3 +137,48 @@ export function buildUserProgressCsv(rows: UserProgressRow[]): string {
     ]),
   );
 }
+
+export interface UserDurationRow {
+  userId: string;
+  fullName: string | null;
+  courseId: string;
+  courseTitle: string;
+  totalSeconds: number;
+  lessonsWithTime: number;
+  activeDays: number;
+  lastActiveDay: string;
+}
+
+interface DurationDbRow {
+  user_id: string;
+  full_name: string | null;
+  course_id: string;
+  course_title: string;
+  total_seconds: number | string;
+  lessons_with_time: number;
+  active_days: number;
+  last_active_day: string;
+}
+
+/** Time spent per learner per course over the last `days` UTC days, from recorded heartbeats. Needs analytics.read. */
+export async function getUserProductDuration(supabase: SupabaseClient, days: number): Promise<UserDurationRow[]> {
+  const { data, error } = await supabase.rpc("admin_report_user_product_duration", { p_days: days });
+  if (error) throw new Error(`admin_report_user_product_duration failed: ${error.message}`);
+  return ((data ?? []) as DurationDbRow[]).map((r) => ({
+    userId: r.user_id,
+    fullName: r.full_name,
+    courseId: r.course_id,
+    courseTitle: r.course_title,
+    totalSeconds: Number(r.total_seconds),
+    lessonsWithTime: r.lessons_with_time,
+    activeDays: r.active_days,
+    lastActiveDay: r.last_active_day,
+  }));
+}
+
+export function buildUserDurationCsv(rows: UserDurationRow[]): string {
+  return buildCsv(
+    ["user_id", "name", "course_id", "course", "minutes_spent", "lessons_with_time", "active_days", "last_active_day"],
+    rows.map((r) => [r.userId, r.fullName, r.courseId, r.courseTitle, Math.round(r.totalSeconds / 60), r.lessonsWithTime, r.activeDays, r.lastActiveDay]),
+  );
+}
