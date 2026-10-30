@@ -236,7 +236,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 - [x] **T-279** Resource library expiry: optional expiry on resources, UTC end-of-day, future-date validation, status badges and pre-expiry warning, hidden from learner/instructor selection, server-side refusal after expiry, audit events for create, modify and access attempts. — F-430
 - [x] **T-280** Licence expiry standardisation: course and library licences use the existing content-licence expiry rules (no duplicate model), same warnings and badges, audited access attempts. Certificates, accounts and enrolments are out of scope. — F-431
-- [ ] **T-281** Tests: unit tests for UTC end-of-day and future-date validation, integration tests for access blocking after expiry, E2E for hidden expired items. — F-430, F-431
+- [x] **T-281** Tests: unit tests for UTC end-of-day and future-date validation, integration tests for access blocking after expiry, E2E for hidden expired items. — F-430, F-431
 
 ## Phase 17 — GDPR readiness & data governance
 
