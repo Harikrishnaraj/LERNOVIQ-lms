@@ -2,7 +2,9 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { validateExpiry } from "@/features/content-server/rules";
 import { validateUpload } from "@/features/course-authoring/uploads";
+import { recordAudit } from "@/services/audit";
 import { attachLibraryResource } from "@/features/course-authoring/lesson-actions";
 import { getAttachableLessons, type AttachableLesson } from "@/features/instructor/resources";
 import { createClient } from "@/lib/supabase/server";
@@ -52,6 +54,7 @@ export async function registerResource(file: {
   name: string;
   size: number;
   type: string;
+  expiresOn?: string;
 }): Promise<ResourceResult> {
   const supabase = await createClient();
   const {
@@ -70,15 +73,65 @@ export async function registerResource(file: {
     return { ok: false, error: "The upload did not complete. Please try again." };
   }
 
-  const { error } = await supabase.from("resource_library_items").insert({
-    owner_id: user.id,
-    name: check.safeName,
-    storage_path: file.path,
-    mime_type: check.type,
-    size_bytes: file.size,
-  });
-  if (error) return { ok: false, error: "We could not save that resource. Please try again." };
+  const expiry = validateExpiry(file.expiresOn);
+  if (!expiry.ok) return expiry;
 
+  const { data: created, error } = await supabase
+    .from("resource_library_items")
+    .insert({
+      owner_id: user.id,
+      name: check.safeName,
+      storage_path: file.path,
+      mime_type: check.type,
+      size_bytes: file.size,
+      expires_at: expiry.value,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { ok: false, error: "We could not save that resource. Please try again." };
+  await recordAudit({
+    actorId: user.id,
+    action: "resource.created",
+    resourceType: "resource_library_item",
+    resourceId: created.id as string,
+    metadata: { expiresAt: expiry.value },
+  });
+
+  revalidatePath("/instructor/resources");
+  return { ok: true };
+}
+
+/** Sets or clears (blank) the expiry date of one of the caller's own resources. The date must be in the future. */
+export async function updateResourceExpiry(resourceId: string, expiresOn: string): Promise<ResourceResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Please log in again." };
+  const expiry = validateExpiry(expiresOn);
+  if (!expiry.ok) return expiry;
+
+  const { data: before } = await supabase
+    .from("resource_library_items")
+    .select("expires_at")
+    .eq("id", resourceId)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!before) return { ok: false, error: "That resource is not available." };
+
+  const { error } = await supabase
+    .from("resource_library_items")
+    .update({ expires_at: expiry.value })
+    .eq("id", resourceId)
+    .eq("owner_id", user.id);
+  if (error) return { ok: false, error: "We could not change the expiry. Please try again." };
+  await recordAudit({
+    actorId: user.id,
+    action: "resource.expiry_changed",
+    resourceType: "resource_library_item",
+    resourceId,
+    metadata: { from: before.expires_at, to: expiry.value },
+  });
   revalidatePath("/instructor/resources");
   return { ok: true };
 }

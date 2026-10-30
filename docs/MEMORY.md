@@ -557,3 +557,9 @@ This follows the final workflow in the supplied guide.
 - New audit actions `report.created`, `report.deleted`, `report.run`, `report.scheduled_run` (with T-277's `report.downloaded`). `logReportEvent` in `report-export-policy.ts` writes actor, report id, type, range, row count and export id into the append-only `audit_logs`; scheduled runs have no actor. Wired into create/delete/run actions and the scheduled-reports cron.
 - Tests: unit (helper), live (scheduled run writes one row), E2E (create, run, download, delete all leave rows). Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1334 tests).
 - Reporting module (T-274..T-278, T-289..T-292) is complete.
+
+## T-279 — resource library expiry (F-430)
+- Migration `20261019100000_resource_expiry.sql` (applied to modern-lms): `resource_library_items.expires_at` (owner may update only that column), trigger `resource_usage_not_expired` refusing to attach an expired resource, `instructor_resource_library` now returns `expires_at`.
+- Shared rules in `content-server/rules.ts`: `validateExpiry` (UTC end of day, future only), `expiryState` (none/active/expiring/expired), `EXPIRY_WARNING_DAYS` (14), `EXPIRY_LABELS`. T-280 reuses these for licences.
+- Expired items stay in the owner's library (badge, extend or delete) but are not offered for attaching; `getAssetLinks` hides attachments whose library resource expired (checked with the service role, ids only). Audit: `resource.created`, `resource.expiry_changed`, `resource.expired_access_refused` (instructor attach attempts and learner views of hidden attachments).
+- Known limit: a signed download link issued before expiry keeps working for its 10 minutes. Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).

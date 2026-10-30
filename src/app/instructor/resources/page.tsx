@@ -8,6 +8,9 @@ import { RESOURCE_LIBRARY_BUCKET, supabaseStorage } from "@/services/storage";
 import { formatFileSize } from "@/lib/utils/format";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { ResourceExpiryControl } from "@/components/instructor/resource-expiry-control";
+import { EXPIRY_LABELS, expiryInputValue, expiryState, type ExpiryState } from "@/features/content-server/rules";
 import { Card } from "@/components/ui/card";
 import { ResourceAttachControl } from "@/components/instructor/resource-attach-control";
 import { ResourceDeleteButton } from "@/components/instructor/resource-delete-button";
@@ -17,6 +20,8 @@ export const metadata: Metadata = {
   title: "Resources | Instructor",
   description: "Your reusable media and documents.",
 };
+
+const EXPIRY_TONE: Record<ExpiryState, BadgeTone> = { none: "neutral", active: "success", expiring: "warning", expired: "danger" };
 
 const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" });
 
@@ -59,7 +64,9 @@ export default async function InstructorResourcesPage() {
         />
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
-          {resourcesWithUrls.map((r) => (
+          {resourcesWithUrls.map((r) => {
+            const state = expiryState(r.expiresAt);
+            return (
             <li key={r.id}>
               <Card className="flex h-full flex-col gap-3 p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -72,6 +79,23 @@ export default async function InstructorResourcesPage() {
                   </div>
                   <ResourceDeleteButton resourceId={r.id} />
                 </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                  <Badge tone={EXPIRY_TONE[state]} dot>
+                    {EXPIRY_LABELS[state]}
+                  </Badge>
+                  {r.expiresAt && <span>Ends {dateFormat.format(new Date(r.expiresAt))} (UTC)</span>}
+                </div>
+                {state === "expiring" && (
+                  <p role="status" className="text-sm text-warning-text">
+                    This resource expires soon. Extend the date to keep it available to learners.
+                  </p>
+                )}
+                {state === "expired" && (
+                  <p role="status" className="text-sm text-danger-text">
+                    Expired: hidden from learners and not available for new lessons.
+                  </p>
+                )}
 
                 <p className="text-sm text-text-secondary">
                   Used in {r.usageCount} {r.usageCount === 1 ? "lesson" : "lessons"}
@@ -88,10 +112,12 @@ export default async function InstructorResourcesPage() {
                   </a>
                 )}
 
-                <ResourceAttachControl resourceId={r.id} courses={courseOptions} />
+                <ResourceExpiryControl resourceId={r.id} current={expiryInputValue(r.expiresAt)} />
+                {state !== "expired" && <ResourceAttachControl resourceId={r.id} courses={courseOptions} />}
               </Card>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </>

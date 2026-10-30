@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 export function ResourceUploadForm() {
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [expiresOn, setExpiresOn] = useState("");
   const inputId = useId();
+  const expiryId = useId();
 
   async function upload(file: File) {
     setErrorMsg(null);
@@ -27,7 +29,7 @@ export function ResourceUploadForm() {
         setErrorMsg("The upload failed. Please try again.");
         return;
       }
-      const result = await registerResource({ path: ticket.path, name: file.name, size: file.size, type: file.type });
+      const result = await registerResource({ path: ticket.path, name: file.name, size: file.size, type: file.type, expiresOn });
       if (!result.ok) setErrorMsg(result.error);
     } catch {
       setErrorMsg("The upload failed. Please try again.");
@@ -44,6 +46,19 @@ export function ResourceUploadForm() {
 
   return (
     <div className="space-y-2">
+      <div className="flex flex-col gap-1">
+        <label htmlFor={expiryId} className="text-xs font-medium text-text-secondary">
+          Expiry date (optional, UTC)
+        </label>
+        <input
+          id={expiryId}
+          type="date"
+          value={expiresOn}
+          onChange={(e) => setExpiresOn(e.target.value)}
+          disabled={uploading}
+          className="h-9 w-44 rounded-input border border-border bg-surface px-3 text-sm"
+        />
+      </div>
       <label htmlFor={inputId} className="sr-only">
         Upload a resource
       </label>

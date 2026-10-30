@@ -10,6 +10,7 @@ export interface LibraryResource {
   sizeBytes: number | null;
   createdAt: string;
   usageCount: number;
+  expiresAt: string | null;
 }
 
 interface ResourceRow {
@@ -20,6 +21,7 @@ interface ResourceRow {
   size_bytes: number | null;
   created_at: string;
   usage_count: number | string;
+  expires_at: string | null;
 }
 
 /** The caller's own resource library, most recent first. */
@@ -39,6 +41,7 @@ export async function getResourceLibrary(
     sizeBytes: r.size_bytes,
     createdAt: r.created_at,
     usageCount: Number(r.usage_count),
+    expiresAt: r.expires_at,
   }));
 }
 

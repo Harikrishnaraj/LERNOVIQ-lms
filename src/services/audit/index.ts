@@ -78,6 +78,9 @@ export const AUDIT_ACTIONS = [
   "report.deleted",
   "report.run",
   "report.scheduled_run",
+  "resource.created",
+  "resource.expiry_changed",
+  "resource.expired_access_refused",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

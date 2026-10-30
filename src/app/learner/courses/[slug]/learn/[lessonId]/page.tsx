@@ -58,7 +58,7 @@ export default async function LessonPage({
 
   // Entitlement was proven by reading the lesson under this learner RLS above; only now sign URLs.
   const videoSrc = lesson.type === "video" ? await resolveVideoSrc(lesson.videoUrl) : null;
-  const assets = await getAssetLinks(supabase, lessonId);
+  const assets = await getAssetLinks(supabase, lessonId, user.id);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
 
   return (
