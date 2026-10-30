@@ -546,3 +546,9 @@ This follows the final workflow in the supplied guide.
 - Every download link handed out (manual run and past exports) writes an `audit_logs` row, action `report.downloaded` (report id, export id, type, row count). T-289 still owns create, delete, run and scheduled-run events.
 - PII minimisation decision: the three user-level CSVs (Idle users, Individual progress, Product duration) dropped the `name` column; they carry `user_id` only, never email. Reversible if admins need names in files.
 - Full `npm run check` passed (CHECK_EXIT=0, 183 files, 1322 tests).
+
+## T-278 — report tests (F-420..F-423)
+- `tests/integration/report-performance.test.ts`: all 8 admin report RPCs answer in under 5s and return at most 10,000 rows (live DB). `EXPLAIN` of the duration query shows an index scan on `lesson_time_day_idx` (checked 2026-10-30, small data; re-check plans if tables grow).
+- `tests/e2e/report-role-isolation.spec.ts` (run with `--project=desktop`): learner, instructor and org admin are redirected away from `/admin/analytics`; platform admin sees nine reports in three categories, none disabled.
+- Filter builders (`admin-report-filters.test.ts`) and report generation/export integration tests already existed from T-274..T-277 and were not duplicated.
+- Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1330 tests).
