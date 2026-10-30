@@ -227,7 +227,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-277** Export hardening: minimise PII columns, short-lived signed download links, retention limit on artifacts, log every download. — F-423
 - [x] **T-278** Tests: query plans for new report queries, unit tests for filter builders, integration tests for report generation and exports, E2E role-isolation tests for learner, instructor, org admin and platform admin. — F-420, F-421, F-422, F-423
 
-- [ ] **T-289** Audit logging for saved reports: write `audit_logs` rows for report create, delete, manual run, scheduled run and every download (actor, report ID, type, range, row count); append-only like other audit rows. Split out of T-274. — F-423
+- [x] **T-289** Audit logging for saved reports: write `audit_logs` rows for report create, delete, manual run, scheduled run and every download (actor, report ID, type, range, row count); append-only like other audit rows. Split out of T-274. — F-423
 - [x] **T-290** Filter models: date range, organisation, course/library, specific user and status, shared filter builder, applied to every enabled report. Split from the former T-275. — F-421
 - [x] **T-291** Role scoping for report data (learner: own data; instructor: owned courses; org admin: own org; platform admin: assigned analytics permission) and loading, empty, error and permission-denied states on every report screen. Split from the former T-276. — F-422
 - [x] **T-292** Learning-time tracking: record time actually spent per learner per lesson (heartbeat or session events, capped and idle-aware), then enable the User product duration report. `lesson_progress` only stores a resume position today, so the report has no real data yet. — F-420

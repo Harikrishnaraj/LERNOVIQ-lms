@@ -552,3 +552,8 @@ This follows the final workflow in the supplied guide.
 - `tests/e2e/report-role-isolation.spec.ts` (run with `--project=desktop`): learner, instructor and org admin are redirected away from `/admin/analytics`; platform admin sees nine reports in three categories, none disabled.
 - Filter builders (`admin-report-filters.test.ts`) and report generation/export integration tests already existed from T-274..T-277 and were not duplicated.
 - Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1330 tests).
+
+## T-289 — audit logging for saved reports (F-423)
+- New audit actions `report.created`, `report.deleted`, `report.run`, `report.scheduled_run` (with T-277's `report.downloaded`). `logReportEvent` in `report-export-policy.ts` writes actor, report id, type, range, row count and export id into the append-only `audit_logs`; scheduled runs have no actor. Wired into create/delete/run actions and the scheduled-reports cron.
+- Tests: unit (helper), live (scheduled run writes one row), E2E (create, run, download, delete all leave rows). Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1334 tests).
+- Reporting module (T-274..T-278, T-289..T-292) is complete.

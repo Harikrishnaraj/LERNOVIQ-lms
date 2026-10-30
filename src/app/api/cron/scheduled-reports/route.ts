@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Range } from "@/features/admin/analytics";
 import { generateReportCsv } from "@/features/admin/report-generation";
 import { computeNextRunAt, type ReportSchedule, type ReportType } from "@/features/admin/reports";
-import { purgeExpiredExports } from "@/features/admin/report-export-policy";
+import { logReportEvent, purgeExpiredExports } from "@/features/admin/report-export-policy";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
 import { createAdminClient } from "@/services/supabase/admin";
 
@@ -39,11 +39,24 @@ export async function GET(request: NextRequest) {
     if (!generated.ok) continue;
     const path = `scheduled/${report.id}/${Date.now()}.csv`;
     await supabaseStorage.upload(REPORT_EXPORT_BUCKET, path, new TextEncoder().encode(generated.csv), "text/csv");
-    await admin.from("report_exports").insert({
-      saved_report_id: report.id,
-      storage_path: path,
-      row_count: generated.rowCount,
-      triggered_by: "scheduled",
+    const { data: exportRow } = await admin
+      .from("report_exports")
+      .insert({
+        saved_report_id: report.id,
+        storage_path: path,
+        row_count: generated.rowCount,
+        triggered_by: "scheduled",
+      })
+      .select("id")
+      .single();
+    await logReportEvent({
+      action: "report.scheduled_run",
+      actorId: null,
+      reportId: report.id,
+      reportType: report.report_type,
+      rangeDays: report.range_days,
+      rowCount: generated.rowCount,
+      exportId: (exportRow?.id as string | undefined) ?? null,
     });
     const next = computeNextRunAt(report.schedule as ReportSchedule, now);
     await admin.from("saved_reports").update({ next_run_at: next ? next.toISOString() : null }).eq("id", report.id);

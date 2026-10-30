@@ -74,6 +74,10 @@ export const AUDIT_ACTIONS = [
   "content_dispatch.downloaded",
   "content_usage.exported",
   "report.downloaded",
+  "report.created",
+  "report.deleted",
+  "report.run",
+  "report.scheduled_run",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

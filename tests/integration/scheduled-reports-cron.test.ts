@@ -68,6 +68,16 @@ describe.skipIf(!hasLiveProject)("scheduled reports cron (T-140, live Supabase)"
     expect(exportsRows).toHaveLength(1);
     expect(exportsRows![0].triggered_by).toBe("scheduled");
 
+    // T-289: the scheduled run leaves an append-only audit row with no human actor.
+    const { data: audit } = await svc
+      .from("audit_logs")
+      .select("actor_id, metadata")
+      .eq("action", "report.scheduled_run")
+      .eq("resource_id", savedReportId);
+    expect(audit).toHaveLength(1);
+    expect(audit![0].actor_id).toBeNull();
+    expect(audit![0].metadata).toMatchObject({ rangeDays: 7 });
+
     const { data: report } = await svc.from("saved_reports").select("next_run_at").eq("id", savedReportId).single();
     expect(new Date(report!.next_run_at).getTime()).toBeGreaterThan(Date.now());
 

@@ -26,6 +26,25 @@ export async function purgeExpiredExports(admin: SupabaseClient, now: Date): Pro
   return deleteError ? 0 : data.length;
 }
 
+/** T-289: one audit row per saved-report event (actor, report, type, range, row count). */
+export async function logReportEvent(args: {
+  action: "report.created" | "report.deleted" | "report.run" | "report.scheduled_run";
+  actorId: string | null;
+  reportId: string;
+  reportType: string;
+  rangeDays: number;
+  rowCount?: number | null;
+  exportId?: string | null;
+}): Promise<void> {
+  await recordAudit({
+    actorId: args.actorId,
+    action: args.action,
+    resourceType: "saved_report",
+    resourceId: args.reportId,
+    metadata: { reportType: args.reportType, rangeDays: args.rangeDays, rowCount: args.rowCount ?? null, exportId: args.exportId ?? null },
+  });
+}
+
 /** Writes the audit row for a download link handed out. A failed audit write must not block the learner-facing action. */
 export async function logExportDownload(args: {
   actorId: string;

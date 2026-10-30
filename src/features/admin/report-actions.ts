@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Range } from "./analytics";
 import { generateReportCsv } from "./report-generation";
-import { EXPORT_LINK_SECONDS, logExportDownload } from "./report-export-policy";
+import { EXPORT_LINK_SECONDS, logExportDownload, logReportEvent } from "./report-export-policy";
 import { parseStoredFilters, validateFilters } from "./report-filters";
 import { computeNextRunAt, getReportDefinition, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
 import { can } from "@/lib/permissions/can";
@@ -40,16 +40,21 @@ export async function createSavedReportAction(input: { name: string; reportType:
   const schedule = input.schedule as ReportSchedule;
   const nextRunAt = computeNextRunAt(schedule, new Date());
 
-  const { error } = await ctx.supabase.from("saved_reports").insert({
-    owner_id: ctx.user.id,
-    name: name.value,
-    report_type: reportType.value,
-    range_days: input.rangeDays,
-    filters: filters.value,
-    schedule,
-    next_run_at: nextRunAt ? nextRunAt.toISOString() : null,
-  });
-  if (error) return { ok: false, error: "We could not save that report. Please try again." };
+  const { data: created, error } = await ctx.supabase
+    .from("saved_reports")
+    .insert({
+      owner_id: ctx.user.id,
+      name: name.value,
+      report_type: reportType.value,
+      range_days: input.rangeDays,
+      filters: filters.value,
+      schedule,
+      next_run_at: nextRunAt ? nextRunAt.toISOString() : null,
+    })
+    .select("id")
+    .single();
+  if (error || !created) return { ok: false, error: "We could not save that report. Please try again." };
+  await logReportEvent({ action: "report.created", actorId: ctx.user.id, reportId: created.id as string, reportType: reportType.value, rangeDays: input.rangeDays });
   revalidatePath("/admin/analytics");
   return { ok: true };
 }
@@ -57,8 +62,16 @@ export async function createSavedReportAction(input: { name: string; reportType:
 export async function deleteSavedReportAction(reportId: string): Promise<ReportActionResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
-  const { error } = await ctx.supabase.from("saved_reports").delete().eq("id", reportId).eq("owner_id", ctx.user.id);
+  const { data: deleted, error } = await ctx.supabase
+    .from("saved_reports")
+    .delete()
+    .eq("id", reportId)
+    .eq("owner_id", ctx.user.id)
+    .select("report_type, range_days");
   if (error) return { ok: false, error: "We could not delete that report. Please try again." };
+  for (const row of deleted ?? []) {
+    await logReportEvent({ action: "report.deleted", actorId: ctx.user.id, reportId, reportType: row.report_type as string, rangeDays: row.range_days as number });
+  }
   revalidatePath("/admin/analytics");
   return { ok: true };
 }
@@ -97,6 +110,15 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
   if (error || !exportRow) return { ok: false, error: "We could not record that export. Please try again." };
 
   const url = await supabaseStorage.createSignedUrl(REPORT_EXPORT_BUCKET, path, EXPORT_LINK_SECONDS);
+  await logReportEvent({
+    action: "report.run",
+    actorId: ctx.user.id,
+    reportId,
+    reportType: report.report_type as string,
+    rangeDays: report.range_days as number,
+    rowCount: generated.rowCount,
+    exportId: exportRow.id as string,
+  });
   await logExportDownload({
     actorId: ctx.user.id,
     reportId,

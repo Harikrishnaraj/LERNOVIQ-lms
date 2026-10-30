@@ -4,7 +4,7 @@ const { recordAudit } = vi.hoisted(() => ({ recordAudit: vi.fn(async () => true)
 vi.mock("@/services/audit", async (importActual) => ({ ...(await importActual<typeof import("@/services/audit")>()), recordAudit }));
 vi.mock("@/services/storage", () => ({ REPORT_EXPORT_BUCKET: "report-exports", supabaseStorage: { remove: vi.fn() } }));
 
-import { EXPORT_LINK_SECONDS, EXPORT_RETENTION_DAYS, exportCutoff, logExportDownload } from "@/features/admin/report-export-policy";
+import { EXPORT_LINK_SECONDS, EXPORT_RETENTION_DAYS, exportCutoff, logExportDownload, logReportEvent } from "@/features/admin/report-export-policy";
 import { AUDIT_ACTIONS } from "@/services/audit";
 import { buildIdleUsersCsv, buildUserDurationCsv, buildUserProgressCsv } from "@/features/admin/user-reports";
 
@@ -30,6 +30,20 @@ describe("export policy", () => {
       metadata: { exportId: "e", reportType: "idle_users", rowCount: 4 },
     });
     expect(AUDIT_ACTIONS).toContain("report.downloaded");
+  });
+
+  // T-289: create, delete, manual run and scheduled run each leave an audit row.
+  it.each(["report.created", "report.deleted", "report.run", "report.scheduled_run"] as const)("writes %s with report, type, range and row count", async (action) => {
+    recordAudit.mockClear();
+    await logReportEvent({ action, actorId: action === "report.scheduled_run" ? null : "u", reportId: "r", reportType: "idle_users", rangeDays: 30, rowCount: 7 });
+    expect(recordAudit).toHaveBeenCalledWith({
+      actorId: action === "report.scheduled_run" ? null : "u",
+      action,
+      resourceType: "saved_report",
+      resourceId: "r",
+      metadata: { reportType: "idle_users", rangeDays: 30, rowCount: 7, exportId: null },
+    });
+    expect(AUDIT_ACTIONS).toContain(action);
   });
 });
 
