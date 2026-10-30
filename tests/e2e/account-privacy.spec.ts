@@ -36,7 +36,14 @@ test.describe("account privacy", () => {
     const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download my data" }).click()]);
     expect(download.suggestedFilename()).toMatch(/^my-data-.*\.json$/);
 
-    page.on("dialog", (dialog) => dialog.accept());
+    // Identity check (F-441): a wrong password is refused and nothing is scheduled.
+    const proof = page.getByLabel(/Confirm it is you/);
+    await proof.fill("not-the-password");
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await expect(page.getByText("That password is not correct.")).toBeVisible();
+    await expect(page.getByText(/scheduled for deletion on/)).toHaveCount(0);
+
+    await proof.fill(learner.password);
     await page.getByRole("button", { name: "Delete my account" }).click();
     await expect(page.getByText(/scheduled for deletion on/)).toBeVisible();
 

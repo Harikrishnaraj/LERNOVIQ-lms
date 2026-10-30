@@ -5,6 +5,19 @@ import { cleanup, createUserWithRole, serviceClient, uniqueTag } from "../suppor
 let currentClient: SupabaseClient;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+const sent = vi.hoisted(() => [] as { to: string; subject: string }[]);
+vi.mock("@/services/email", () => ({
+  sendEmail: async (m: { to: string; subject: string }) => {
+    sent.push(m);
+    return { ok: true, id: "x" };
+  },
+}));
+const limited = vi.hoisted(() => ({ blocked: false }));
+vi.mock("@/services/rate-limit", async (orig) => ({
+  ...(await orig<typeof import("@/services/rate-limit")>()),
+  clientIp: async () => "127.0.0.1",
+  rateLimit: async () => !limited.blocked,
+}));
 
 import { cancelAccountDeletionAction, requestAccountDeletionAction } from "@/features/privacy/actions";
 import { getMyDataExport, getMyDeletionStatus } from "@/features/privacy/account";
@@ -33,11 +46,11 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
     const client = anon();
     const { error } = await client.auth.signInWithPassword({ email: u.email, password: u.password });
     if (error) throw error;
-    return { id: u.id, client };
+    return { id: u.id, client, password: u.password };
   }
 
-  let learner: { id: string; client: SupabaseClient };
-  let other: { id: string; client: SupabaseClient };
+  let learner: { id: string; client: SupabaseClient; password: string };
+  let other: { id: string; client: SupabaseClient; password: string };
 
   beforeAll(async () => {
     learner = await user("l", `${tag} Learner`);
@@ -50,7 +63,7 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
     currentClient = learner.client;
     expect(await getMyDeletionStatus(learner.client, learner.id)).toBeNull();
 
-    expect(await requestAccountDeletionAction()).toEqual({ ok: true });
+    expect(await requestAccountDeletionAction(learner.password)).toEqual({ ok: true });
     const requested = await getMyDeletionStatus(learner.client, learner.id);
     expect(requested).not.toBeNull();
 
@@ -58,6 +71,50 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
 
     expect(await cancelAccountDeletionAction()).toEqual({ ok: true });
     expect(await getMyDeletionStatus(learner.client, learner.id)).toBeNull();
+  });
+
+  it("refuses deletion without the right password, audits it, and rate-limits attempts (F-441)", async () => {
+    currentClient = learner.client;
+    const wrong = await requestAccountDeletionAction("definitely-wrong");
+    expect(wrong.ok).toBe(false);
+    expect(await getMyDeletionStatus(learner.client, learner.id)).toBeNull();
+    const { data: refused } = await svc.from("audit_logs").select("id").eq("action", "account.deletion_refused").eq("resource_id", learner.id);
+    expect(refused?.length).toBeGreaterThanOrEqual(1);
+
+    limited.blocked = true;
+    const blocked = await requestAccountDeletionAction(learner.password);
+    limited.blocked = false;
+    expect(blocked).toEqual({ ok: false, error: expect.stringContaining("Too many") });
+    expect(await getMyDeletionStatus(learner.client, learner.id)).toBeNull();
+  });
+
+  it("emails the account on request and on cancel", async () => {
+    currentClient = learner.client;
+    sent.length = 0;
+    await requestAccountDeletionAction(learner.password);
+    await cancelAccountDeletionAction();
+    expect(sent.map((m) => m.subject)).toEqual([
+      "Your Lernoviq account is scheduled for deletion",
+      "Your Lernoviq account deletion was cancelled",
+    ]);
+  });
+
+  it("purge skips held accounts and logs each deletion without personal data (F-441)", async () => {
+    const held = await createUserWithRole(svc, `${tag}-held`, "learner");
+    const gone = await createUserWithRole(svc, `${tag}-gone`, "learner");
+    userIds.push(held.id, gone.id);
+    const old = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
+    await svc.from("profiles").update({ deletion_requested_at: old, deletion_hold_reason: "legal hold test" }).eq("id", held.id);
+    await svc.from("profiles").update({ deletion_requested_at: old }).eq("id", gone.id);
+
+    const { error } = await svc.rpc("purge_expired_accounts");
+    expect(error).toBeNull();
+
+    expect((await svc.from("profiles").select("id").eq("id", held.id).maybeSingle()).data).not.toBeNull();
+    expect((await svc.from("profiles").select("id").eq("id", gone.id).maybeSingle()).data).toBeNull();
+    const { data: log } = await svc.from("audit_logs").select("actor_email, metadata").eq("action", "account.deleted").eq("resource_id", gone.id);
+    expect(log).toHaveLength(1);
+    expect(log![0].actor_email).toBeNull();
   });
 
   it("refuses to set another user's deletion flag directly (RLS)", async () => {

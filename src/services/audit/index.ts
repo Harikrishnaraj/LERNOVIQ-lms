@@ -57,6 +57,8 @@ export const AUDIT_ACTIONS = [
   "organization.member_joined_via_sso",
   "account.deletion_requested",
   "account.deletion_cancelled",
+  "account.deletion_refused",
+  "account.deleted",
   "account.data_exported",
   "communication.template_created",
   "communication.template_updated",

@@ -578,3 +578,9 @@ This follows the final workflow in the supplied guide.
 - `docs/PRIVACY_REGISTER.md` covers the 14 categories with all required fields. Every lawful basis, breach-response owner and international-transfer entry is "Requires Legal Decision"; nothing claims GDPR compliance.
 - `tests/unit/privacy-register.test.ts` checks the categories, fields and the no-compliance-claim rule. Full `npm run check` passed (CHECK_EXIT=0).
 - Gaps spotted while writing it, for T-283/T-284/T-288: login_history, enquiries, api_request_log and rate_limit_hits have no retention job; export omits lesson progress, assessments, discussions and login history; storage-object deletion on account removal is unverified.
+
+## T-283 — export and account deletion hardening (F-441)
+
+- Deleting needs identity proof: password re-check (throwaway anon client) for password accounts, typed email for provider accounts. 5 attempts/hour via `account-privacy` rate limit (fail-closed); refusals audited as `account.deletion_refused`.
+- Request and cancel send notice emails; grace stays 30 days. `profiles.deletion_hold_reason` (staff-only) makes `purge_expired_accounts()` skip an account; what must be held is a Requires Legal Decision. Purge writes an `account.deleted` audit row (id and request date only, no PII).
+- Limitation: no completion email is possible, since the address is gone with the account. Full `npm run check` passed.

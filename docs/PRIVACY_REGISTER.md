@@ -42,8 +42,11 @@ one organisation; **learner** is the default account.
   in their own courses.
 - **Storage:** Supabase Postgres (`profiles`, `user_roles`, `auth.users`); avatars in the public `avatars`
   bucket.
-- **Retention and deletion:** kept while the account exists. After a deletion request the account is removed
-  after 30 days by `purge_expired_accounts()` *(implemented, daily 03:00 UTC)*; related rows cascade.
+- **Retention and deletion:** kept while the account exists. After a deletion request (password or email re-check, rate limited,
+  confirmation email) the account is removed after 30 days by `purge_expired_accounts()` *(implemented, daily
+  03:00 UTC)*; related rows cascade. Staff can place a legal hold (`profiles.deletion_hold_reason`) that stops the
+  purge; which data a hold must cover is **Requires Legal Decision**. Each deletion writes an `account.deleted`
+  audit row (id and request date only).
 - **Subject rights:** export (profile and roles included), correction (self-service), deletion (self-service,
   30-day grace); restriction and objection (no tool, T-286); portability (JSON export).
 - **Security controls:** row-level security on every table, MFA for back-office roles, rate limiting.

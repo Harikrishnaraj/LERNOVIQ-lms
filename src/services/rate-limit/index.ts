@@ -18,6 +18,8 @@ const LIMITS = {
   "instructor-message": { limit: 20, windowSeconds: 10 * 60 },
   "upload-initiate": { limit: 30, windowSeconds: 10 * 60 },
   "analytics-export": { limit: 20, windowSeconds: 10 * 60 },
+  // Account deletion request/cancel (F-441): per user and per IP, includes failed password checks.
+  "account-privacy": { limit: 5, windowSeconds: 60 * 60 },
   // Public marketing contact form (SECURITY §28): per IP and per email.
   "contact-enquiry": { limit: 5, windowSeconds: 60 * 60 },
   // Per dispatch (subject) and per IP: one customer's whole LMS shares a dispatch, so it is generous.
@@ -45,7 +47,7 @@ const IP_LIMIT_MULTIPLIER = 30;
 // The auth endpoints guard credentials and outbound email, so they fail closed (GAP-124): a broken
 // limiter must not silently re-open brute force or email flooding. Every other action fails open
 // so an outage in the limiter doesn't take the rest of the app down with it.
-const FAIL_CLOSED: ReadonlySet<RateLimitedAction> = new Set(["login", "password-reset", "verify-email"]);
+const FAIL_CLOSED: ReadonlySet<RateLimitedAction> = new Set(["login", "password-reset", "verify-email", "account-privacy"]);
 
 // Returns true when the request may proceed. The caller's IP and the optional
 // subject (e.g. the target email) are checked independently: either one over
