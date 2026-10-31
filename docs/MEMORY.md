@@ -602,3 +602,10 @@ This follows the final workflow in the supplied guide.
 - Migration `20261020400000_subject_requests.sql` (applied): `privacy.requests` permission (admin, super_admin) and `subject_requests` (kind, status open/in_progress/completed/rejected, `due_at` default now() + 1 month, resolution note, handled_by). RLS: owner files and reads own (email must match JWT), staff read and update.
 - App: `src/features/privacy/request-actions.ts` (file / update, both audited as `privacy_request.created|updated`, late closes flagged), `requests.ts` (`slaState`), Settings → Privacy request form, Admin → Privacy requests queue with days left / overdue. Closing needs a note; closed requests cannot be reopened.
 - Gaps for T-288: visitors without an account have no tracked path; no retention period set for closed requests; no overdue reminder email/job; erasure requests are not linked to the deletion flow.
+
+## T-287 — DPIA decision log (F-445)
+
+- `docs/DPIA.md` records decisions for profiling, learner monitoring, special-category data, AI and analytics. Proposed DPIAs: employer monitoring (before selling to employers) and AI (before T-200 ships); both **Requires Legal Decision**.
+- Analytics were already aggregated (dashboards, usage reports) or id-only (per-learner CSV exports); no code change needed. `tests/unit/dpia.test.ts` fails if any `build*Csv` header gains a name, email or IP column.
+- T-200 must send no name, email or user id to the AI provider.
+- `tools/` (untracked user files) is excluded from eslint.
