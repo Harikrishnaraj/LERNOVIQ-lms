@@ -5,8 +5,11 @@ export type ScormVersion = "1.2" | "2004";
 
 export interface ExtractedFile {
   path: string;
-  bytes: Uint8Array;
+  /** Declared uncompressed size from the zip's central directory. */
+  size: number;
   contentType: string;
+  /** Decompresses this entry on demand, so a large package is never held in memory all at once. */
+  read: () => Promise<Uint8Array>;
 }
 
 export interface ParsedScormPackage {
@@ -17,9 +20,11 @@ export interface ParsedScormPackage {
   totalBytes: number;
 }
 
-export const MAX_PACKAGE_FILES = 3000;
-export const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50MB per file
-export const MAX_TOTAL_BYTES = 300 * 1024 * 1024; // 300MB uncompressed
+const MB = 1024 * 1024;
+export const MAX_PACKAGE_FILES = 10000;
+export const MAX_FILE_BYTES = 300 * MB; // 300MB per file
+export const MAX_TOTAL_BYTES = 2048 * MB; // 2GB uncompressed
+export const MAX_ZIP_BYTES = 2048 * MB; // 2GB zip as uploaded
 
 const ALLOWED_EXTENSIONS = new Set([
   "html", "htm", "js", "css", "json", "xml", "xsd", "dtd",
@@ -104,10 +109,25 @@ function findTitle(manifest: Record<string, unknown>): string | null {
   return typeof title === "string" && title.trim() !== "" ? title.trim() : null;
 }
 
+/** Uncompressed size recorded in the central directory (JSZip keeps it on the internal `_data`). */
+function declaredSize(entry: JSZip.JSZipObject): number {
+  const size = (entry as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize;
+  return typeof size === "number" && size >= 0 ? size : Number.MAX_SAFE_INTEGER;
+}
+
+/** Decompresses one entry, refusing it if it inflates past its declared size or the per-file cap (zip bomb). */
+async function readEntry(entry: JSZip.JSZipObject, path: string): Promise<Uint8Array> {
+  const bytes = await entry.async("uint8array");
+  if (bytes.byteLength > MAX_FILE_BYTES || bytes.byteLength > declaredSize(entry)) {
+    throw new ScormValidationError(`${path} is larger than the package says it is.`);
+  }
+  return bytes;
+}
+
 /**
- * Validates an uploaded SCORM package (SECURITY.md §9: file type/size/filename/path), extracts
- * every entry, and locates the default-organization launch file from imsmanifest.xml. Supports
- * a single-SCO package only — no cross-SCO sequencing/navigation.
+ * Validates an uploaded SCORM package (SECURITY.md §9: file type/size/filename/path), lists every
+ * entry for lazy extraction (see `ExtractedFile.read`), and locates the default-organization launch
+ * file from imsmanifest.xml. Supports a single-SCO package only — no cross-SCO sequencing/navigation.
  */
 export async function validateAndExtractPackage(zipBytes: Uint8Array): Promise<ParsedScormPackage> {
   let zip: JSZip;
@@ -125,7 +145,7 @@ export async function validateAndExtractPackage(zipBytes: Uint8Array): Promise<P
 
   const files: ExtractedFile[] = [];
   let totalBytes = 0;
-  let manifestBytes: Uint8Array | null = null;
+  let manifestEntry: JSZip.JSZipObject | null = null;
 
   for (const entry of entries) {
     const path = entry.name.replace(/^\.\//, "");
@@ -137,22 +157,23 @@ export async function validateAndExtractPackage(zipBytes: Uint8Array): Promise<P
       throw new ScormValidationError(`Unsupported file type in package: ${path}`);
     }
 
-    const bytes = await entry.async("uint8array");
-    if (bytes.byteLength > MAX_FILE_BYTES) {
-      throw new ScormValidationError(`${path} exceeds the ${MAX_FILE_BYTES / (1024 * 1024)}MB per-file limit.`);
+    const size = declaredSize(entry);
+    if (size > MAX_FILE_BYTES) {
+      throw new ScormValidationError(`${path} exceeds the ${MAX_FILE_BYTES / MB}MB per-file limit.`);
     }
-    totalBytes += bytes.byteLength;
+    totalBytes += size;
     if (totalBytes > MAX_TOTAL_BYTES) {
-      throw new ScormValidationError(`The package exceeds the ${MAX_TOTAL_BYTES / (1024 * 1024)}MB total size limit.`);
+      throw new ScormValidationError(`The package exceeds the ${MAX_TOTAL_BYTES / MB}MB total size limit.`);
     }
 
-    files.push({ path, bytes, contentType: EXT_TO_MIME[ext] ?? "application/octet-stream" });
-    if (path.toLowerCase() === "imsmanifest.xml") manifestBytes = bytes;
+    files.push({ path, size, contentType: EXT_TO_MIME[ext] ?? "application/octet-stream", read: () => readEntry(entry, path) });
+    if (path.toLowerCase() === "imsmanifest.xml") manifestEntry = entry;
   }
 
-  if (!manifestBytes) {
+  if (!manifestEntry) {
     throw new ScormValidationError("The package is missing imsmanifest.xml at its root.");
   }
+  const manifestBytes = await readEntry(manifestEntry, "imsmanifest.xml");
 
   const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
   let manifest: Record<string, unknown>;

@@ -79,7 +79,7 @@ export function ScormUploadForm({
           onChange={onPick}
           className="block w-full text-sm file:mr-3 file:rounded-control file:border file:border-border file:bg-surface file:px-3 file:py-2 file:text-sm"
         />
-        <p className="mt-1 text-xs text-text-secondary">A .zip file containing imsmanifest.xml (SCORM 1.2 or 2004), up to 300MB.</p>
+        <p className="mt-1 text-xs text-text-secondary">A .zip file containing imsmanifest.xml (SCORM 1.2 or 2004), up to 2GB.</p>
       </div>
 
       {busy && (

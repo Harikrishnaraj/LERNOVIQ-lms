@@ -31,14 +31,18 @@ test.describe("roles & permissions matrix", () => {
       const checkbox = page.getByLabel(`Content reviewer: ${testPermissionId}`);
       await expect(checkbox).not.toBeChecked();
       await checkbox.check();
+      // The tick is optimistic; the box stays disabled until the save returns.
+      // Reloading earlier aborts the save, and the reload can render the old grants.
+      await expect(checkbox).toBeEnabled();
       await expect(checkbox).toBeChecked();
 
       await page.reload();
-      await expect(page.getByLabel(`Content reviewer: ${testPermissionId}`)).toBeChecked();
+      await expect(checkbox).toBeChecked();
 
       // Clean up the toggle so re-runs start from the same state.
-      await page.getByLabel(`Content reviewer: ${testPermissionId}`).uncheck();
-      await expect(page.getByLabel(`Content reviewer: ${testPermissionId}`)).not.toBeChecked();
+      await checkbox.uncheck();
+      await expect(checkbox).toBeEnabled();
+      await expect(checkbox).not.toBeChecked();
     } finally {
       await done();
     }

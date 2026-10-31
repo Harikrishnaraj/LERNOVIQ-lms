@@ -16,7 +16,9 @@ export async function PublicHeader() {
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-1">
         <Link href="/" className="rounded-control">
-          <BrandLogo width={120} />
+          {/* Brand guide §5: the compact secondary mark on small screens, the primary lockup from md up. */}
+          <BrandLogo variant="secondary" width={96} className="md:hidden" />
+          <BrandLogo width={120} className="hidden md:inline-block" />
         </Link>
         <nav aria-label="Main" className="flex flex-wrap items-center justify-end gap-2">
           <Link href="/courses" className={buttonClasses({ variant: "ghost", size: "sm" })}>
