@@ -246,4 +246,4 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-285** Consent records table: policy version, timestamp, exact purpose, withdrawal state; written where consent is the legal basis. — F-443
 - [x] **T-286** Subject rights workflow with a one-month SLA tracker and audit trail. — F-444
 - [x] **T-287** DPIA decision log (`docs/DPIA.md`) and pseudonymised or aggregated analytics where identity is unnecessary. — F-445
-- [ ] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446
+- [x] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446

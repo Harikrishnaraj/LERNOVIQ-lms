@@ -609,3 +609,10 @@ This follows the final workflow in the supplied guide.
 - Analytics were already aggregated (dashboards, usage reports) or id-only (per-learner CSV exports); no code change needed. `tests/unit/dpia.test.ts` fails if any `build*Csv` header gains a name, email or IP column.
 - T-200 must send no name, email or user id to the AI provider.
 - `tools/` (untracked user files) is excluded from eslint.
+
+## T-288 — Privacy & technical gap register (F-446)
+
+- `docs/PRIVACY_GAP_REGISTER.md`: 29 rows in the brief's 8 columns (Category, Item / Feature, Status, Owner, Risk Level, Evidence / Artifact, Implementation Task, Test Coverage) and its 5 statuses. Counts: 11 Implemented, 3 Partially Implemented, 8 Missing, 7 Requires Legal Decision.
+- Missing rows with "New task needed" have no task yet: export coverage, storage cleanup on deletion, bucket retention and backups, visitor requests, overdue reminders, erasure-to-deletion link, breach procedure.
+- `tests/unit/privacy-gap-register.test.ts` checks the columns and statuses, and that every cited test file and task ID exists.
+- Known flake: `course-versioning.test.ts` SCORM copy can time out on slow Supabase storage; passes alone.
