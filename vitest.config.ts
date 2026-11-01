@@ -11,10 +11,22 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     env: loadEnv("", process.cwd(), ""),
-    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/integration/**/*.test.{ts,tsx}"],
     setupFiles: ["tests/setup.ts"],
     // Integration tests talk to a remote Supabase project; 5s is too tight under load.
     testTimeout: 180_000,
     hookTimeout: 200_000,
+    projects: [
+      { extends: true, test: { name: "unit", include: ["tests/unit/**/*.test.{ts,tsx}"] } },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["tests/integration/**/*.test.{ts,tsx}"],
+          // They share one hosted database; running files in parallel causes statement timeouts and
+          // dropped connections that fail unrelated tests at random.
+          fileParallelism: false,
+        },
+      },
+    ],
   },
 });

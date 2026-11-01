@@ -6,6 +6,7 @@ import { deriveLessonStatus, deriveScoreRaw, deriveSuspendData, isDone } from "@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/services/supabase/admin";
 import { normalizePosition } from "./position";
+import { normalizeHeartbeat } from "./time";
 
 export type CompleteResult =
   | { completed: true; courseCompleted: boolean; certificateCode: string | null }
@@ -166,4 +167,14 @@ export async function submitScormCommit(
   }
 
   return { saved: true, courseCompleted };
+}
+
+/** Adds one heartbeat of learning time for the signed-in learner. The database caps the credit. */
+export async function recordLessonTime(lessonId: string, seconds: number): Promise<{ recorded: number } | { error: string }> {
+  const credit = normalizeHeartbeat(seconds);
+  if (credit === null || typeof lessonId !== "string" || !UUID.test(lessonId)) return { error: "Invalid time." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("record_lesson_time", { p_lesson_id: lessonId, p_seconds: credit });
+  if (error) return { error: "We could not record your time." };
+  return { recorded: Number(data ?? 0) };
 }

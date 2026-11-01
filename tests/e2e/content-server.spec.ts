@@ -364,6 +364,17 @@ test.describe("content server (ADR-041)", () => {
     await revoked.context.close();
     expect((await request.get(lastContentUrl)).status()).toBe(403);
 
+    // F-431: the refused launch left an audit row on the licence (no human actor).
+    const { data: licences } = await svc.from("content_licences").select("id").eq("client_id", client!.id);
+    const { data: refusals } = await svc
+      .from("audit_logs")
+      .select("actor_id, metadata")
+      .eq("action", "content_licence.access_refused")
+      .in("resource_id", (licences ?? []).map((l) => l.id as string));
+    expect(refusals?.length).toBeGreaterThanOrEqual(1);
+    expect(refusals![0].actor_id).toBeNull();
+    expect(refusals![0].metadata).toMatchObject({ reason: "revoked" });
+
     // The screens meet WCAG 2.2 AA and fit a 375px screen.
     for (const url of [clientUrl, "/admin/content-server"]) {
       await page.goto(url);

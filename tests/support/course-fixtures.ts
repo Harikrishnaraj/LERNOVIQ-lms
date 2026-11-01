@@ -30,9 +30,15 @@ export async function createUserWithRole(
 ): Promise<FixtureUser> {
   const email = `${tag}@example.com`;
   const password = "fixture-password-1";
-  const { data, error } = await svc.auth.admin.createUser({ email, password, email_confirm: true });
-  if (error) throw error;
-  const id = data.user.id;
+  // The tests share one hosted project, so a request occasionally drops ("fetch failed"). Retry only
+  // that network error; any real rejection (duplicate email, bad password) still throws at once.
+  let created = await svc.auth.admin.createUser({ email, password, email_confirm: true });
+  for (let attempt = 1; attempt <= 3 && created.error?.name === "AuthRetryableFetchError"; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    created = await svc.auth.admin.createUser({ email, password, email_confirm: true });
+  }
+  if (created.error) throw created.error;
+  const id = created.data.user.id;
   if (opts.fullName) await svc.from("profiles").update({ full_name: opts.fullName }).eq("id", id);
   await svc.from("user_roles").delete().eq("user_id", id);
   await svc.from("user_roles").insert({ user_id: id, role_id: role });

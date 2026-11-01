@@ -129,3 +129,31 @@ export function licenceStatus(
 export function expiryInputValue(expiresAt: string | null): string {
   return expiresAt ? expiresAt.slice(0, 10) : "";
 }
+
+// Shared expiry rules (T-279, T-280, F-430, F-431): licences and resource library items use the same
+// end-of-UTC-day expiry (validateExpiry), the same "expiring soon" window and the same states.
+
+/** How many days before the end date the "expiring soon" warning shows. */
+export const EXPIRY_WARNING_DAYS = 14;
+
+export type ExpiryState = "none" | "active" | "expiring" | "expired";
+
+export function expiryState(expiresAt: string | null, now = new Date()): ExpiryState {
+  if (!expiresAt) return "none";
+  const end = new Date(expiresAt).getTime();
+  if (end <= now.getTime()) return "expired";
+  return end - now.getTime() <= EXPIRY_WARNING_DAYS * 86_400_000 ? "expiring" : "active";
+}
+
+/** Whole days left, rounded up, or null with no expiry. Zero or negative once expired. */
+export function daysUntilExpiry(expiresAt: string | null, now = new Date()): number | null {
+  if (!expiresAt) return null;
+  return Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / 86_400_000);
+}
+
+export const EXPIRY_LABELS: Record<ExpiryState, string> = {
+  none: "No expiry",
+  active: "Active",
+  expiring: "Expiring soon",
+  expired: "Expired",
+};

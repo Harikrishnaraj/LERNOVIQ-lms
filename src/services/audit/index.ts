@@ -57,6 +57,10 @@ export const AUDIT_ACTIONS = [
   "organization.member_joined_via_sso",
   "account.deletion_requested",
   "account.deletion_cancelled",
+  "account.deletion_refused",
+  "privacy_request.created",
+  "privacy_request.updated",
+  "account.deleted",
   "account.data_exported",
   "communication.template_created",
   "communication.template_updated",
@@ -73,6 +77,15 @@ export const AUDIT_ACTIONS = [
   "content_licence.course_removed",
   "content_dispatch.downloaded",
   "content_usage.exported",
+  "content_licence.access_refused",
+  "report.downloaded",
+  "report.created",
+  "report.deleted",
+  "report.run",
+  "report.scheduled_run",
+  "resource.created",
+  "resource.expiry_changed",
+  "resource.expired_access_refused",
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

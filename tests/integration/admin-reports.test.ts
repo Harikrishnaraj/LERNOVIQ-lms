@@ -58,13 +58,13 @@ describe.skipIf(!hasLiveProject)("admin saved reports (T-140, live Supabase)", (
 
   it("rejects creating a saved report from a non-admin", async () => {
     currentClient = plainLearner.client;
-    const res = await createSavedReportAction({ name: `${tag} Report`, rangeDays: 30, schedule: "none" });
+    const res = await createSavedReportAction({ name: `${tag} Report`, reportType: "daily_analytics", rangeDays: 30, schedule: "none" });
     expect(res.ok).toBe(false);
   });
 
   it("creates, lists and deletes a saved report", async () => {
     currentClient = admin.client;
-    const created = await createSavedReportAction({ name: `${tag} Manual`, rangeDays: 7, schedule: "none" });
+    const created = await createSavedReportAction({ name: `${tag} Manual`, reportType: "daily_analytics", rangeDays: 7, schedule: "none" });
     expect(created).toEqual({ ok: true });
 
     const reports = await getSavedReports(admin.client);
@@ -78,9 +78,24 @@ describe.skipIf(!hasLiveProject)("admin saved reports (T-140, live Supabase)", (
     expect((await getSavedReports(admin.client)).some((r) => r.id === found.id)).toBe(false);
   });
 
+  it("stores a report's filters and refuses ones the report does not support", async () => {
+    currentClient = admin.client;
+    const status = "completed";
+    const created = await createSavedReportAction({ name: `${tag} Filtered`, reportType: "individual_user_progress", rangeDays: 30, schedule: "none", filters: { status } });
+    expect(created).toEqual({ ok: true });
+    const found = (await getSavedReports(admin.client)).find((r) => r.name === `${tag} Filtered`)!;
+    savedReportIds.push(found.id);
+    expect(found.filters).toEqual({ status });
+
+    const bad = await createSavedReportAction({ name: `${tag} Bad`, reportType: "daily_analytics", rangeDays: 30, schedule: "none", filters: { status } });
+    expect(bad.ok).toBe(false);
+    const badStatus = await createSavedReportAction({ name: `${tag} Bad2`, reportType: "individual_user_progress", rangeDays: 30, schedule: "none", filters: { status: "nope" } });
+    expect(badStatus.ok).toBe(false);
+  });
+
   it("sets next_run_at when a schedule is chosen", async () => {
     currentClient = admin.client;
-    await createSavedReportAction({ name: `${tag} Weekly`, rangeDays: 30, schedule: "weekly" });
+    await createSavedReportAction({ name: `${tag} Weekly`, reportType: "daily_analytics", rangeDays: 30, schedule: "weekly" });
     const reports = await getSavedReports(admin.client);
     const found = reports.find((r) => r.name === `${tag} Weekly`)!;
     savedReportIds.push(found.id);

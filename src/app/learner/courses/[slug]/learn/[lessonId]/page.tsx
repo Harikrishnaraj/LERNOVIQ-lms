@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 import { LessonControls } from "@/components/player/lesson-controls";
 import { LessonBody } from "@/components/player/lesson-body";
 import { PlayerSidebar } from "@/components/player/player-sidebar";
+import { TimeTracker } from "@/components/player/time-tracker";
 import { Progress } from "@/components/ui/progress";
 import { buttonClasses } from "@/components/ui/button";
 import { getLessonContent, getLessonProgress, getPlayerCourse } from "@/features/player/data";
@@ -57,11 +58,12 @@ export default async function LessonPage({
 
   // Entitlement was proven by reading the lesson under this learner RLS above; only now sign URLs.
   const videoSrc = lesson.type === "video" ? await resolveVideoSrc(lesson.videoUrl) : null;
-  const assets = await getAssetLinks(supabase, lessonId);
+  const assets = await getAssetLinks(supabase, lessonId, user.id);
   const lessonHref = (id: string) => `/learner/courses/${slug}/learn/${id}`;
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
+      {course.enrolled && <TimeTracker lessonId={lessonId} />}
       <header className="flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
         <Link
           href="/learner/my-learning"

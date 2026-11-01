@@ -28,5 +28,26 @@ GoTrueClient.prototype.signInWithPassword = async function patched(
     await new Promise((r) => setTimeout(r, 10_000));
     result = await original.call(this, credentials);
   }
+  // A dropped connection to the shared hosted project is not a test failure; retry a few times.
+  for (let attempt = 1; attempt <= 3 && result.error?.name === "AuthRetryableFetchError"; attempt++) {
+    await new Promise((r) => setTimeout(r, attempt * 1500));
+    result = await original.call(this, credentials);
+  }
   return result;
 } as typeof original;
+
+// The integration suite shares one hosted Supabase project over the public internet, and a request
+// occasionally dies with "TypeError: fetch failed" before reaching the server. Retry that connection
+// error (and only that) a few times so a network blip is not reported as a test failure.
+const realFetch = globalThis.fetch;
+globalThis.fetch = async function retryingFetch(...args: Parameters<typeof fetch>) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await realFetch(...args);
+    } catch (error) {
+      const isConnectionError = error instanceof TypeError && error.message === "fetch failed";
+      if (!isConnectionError || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+    }
+  }
+} as typeof fetch;

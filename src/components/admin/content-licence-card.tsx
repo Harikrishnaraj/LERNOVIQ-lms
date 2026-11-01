@@ -10,7 +10,7 @@ import {
   setLicenceRevokedAction,
 } from "@/features/content-server/actions";
 import type { ContentLicenceView, DispatchableCourse } from "@/features/content-server/queries";
-import { expiryInputValue } from "@/features/content-server/rules";
+import { daysUntilExpiry, EXPIRY_LABELS, expiryInputValue, expiryState } from "@/features/content-server/rules";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +49,13 @@ export function ContentLicenceCard({
   const [q, setQ] = useState("");
   const [results, setResults] = useState<DispatchableCourse[] | null>(null);
   const searchId = useId();
-  const status = STATUS[licence.status];
+  const expiry = expiryState(licence.expiresAt);
+  // Shared with resource library items (F-430, F-431): an active licence near its end shows the same warning.
+  const status =
+    licence.status === "active" && expiry === "expiring"
+      ? ({ tone: "warning", label: EXPIRY_LABELS.expiring } as const)
+      : STATUS[licence.status];
+  const daysLeft = daysUntilExpiry(licence.expiresAt);
   const headingId = `licence-${licence.id}`;
 
   async function run(fn: () => Promise<{ ok: true } | { ok: false; error: string }>) {
@@ -96,6 +102,11 @@ export function ContentLicenceCard({
                 </dd>
               </div>
             </dl>
+            {licence.status === "active" && expiry === "expiring" && (
+              <p role="status" className="text-sm text-warning-text">
+                This licence ends in {daysLeft} {daysLeft === 1 ? "day" : "days"}. Extend the date to keep the course available to this customer.
+              </p>
+            )}
             <p className="font-mono text-xs break-all text-text-secondary">
               {licence.allowedOrigins.join(", ")}
             </p>

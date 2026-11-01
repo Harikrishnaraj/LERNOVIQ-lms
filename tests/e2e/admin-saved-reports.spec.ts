@@ -38,6 +38,13 @@ test.describe("saved reports", () => {
 
       await page.getByRole("button", { name: `Delete ${tag} Weekly Digest` }).click();
       await expect(page.getByText(`${tag} Weekly Digest`)).toHaveCount(0);
+
+      // T-289: create, run, download and delete each left an audit row for this admin.
+      const { data: audit } = await svc.from("audit_logs").select("action").eq("actor_id", done.userId);
+      const actions = (audit ?? []).map((a) => a.action);
+      for (const expected of ["report.created", "report.run", "report.downloaded", "report.deleted"]) {
+        expect(actions).toContain(expected);
+      }
     } finally {
       await done();
     }

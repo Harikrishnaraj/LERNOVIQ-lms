@@ -183,6 +183,34 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-947 | CI, preview & production deployment     | ADR-019                 | Preview per PR; production QA checklist passes          |
 | F-948 | Backups & recovery                       | SECURITY §24            | Restore tested and documented                           |
 
+## Reporting extension
+
+| ID    | Feature                                  | Source                            | Done when                                                                 |
+| ----- | ---------------------------------------- | --------------------------------- | ------------------------------------------------------------------------- |
+| F-420 | Report catalogue (three categories)      | Report design doc, admin/reports.ts | User (Idle users, User product duration, Individual progress), Consolidated usage (Course-module, Course-library) and Product (Licence status, Library usage, Module usage) reports run through the existing saved-report engine |
+| F-421 | Report filter models                     | Report design doc                 | Date range, organisation, course/library, specific user and status filters apply where relevant; access-date filtering on usage reports |
+| F-422 | Report role scoping & states             | SECURITY §4, Report design doc    | Learner, instructor, org admin and platform admin see only their boundary; loading, empty, error and permission-denied states shown |
+| F-423 | Report export hardening                  | SECURITY §21, ADR-041             | Minimised PII, signed links with short expiry, retention limit, every download logged |
+
+## Expiry extension
+
+| ID    | Feature                                  | Source                              | Done when                                                                 |
+| ----- | ---------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| F-430 | Resource library item expiry             | content-server/rules.ts, instructor/resources.ts | Optional expiry (UTC end of day, future-only); expired items hidden from learner/instructor selection and refused server-side; status badges; pre-expiry warning; audit events |
+| F-431 | Licence expiry standardisation           | content-server/rules.ts (ADR-041)   | Course and library licences share the content-licence expiry rules and warnings; every create, modify and access attempt audited; no duplicate model. Certificates, accounts and enrolments are not expiring |
+
+## GDPR readiness
+
+| ID    | Feature                                  | Source                              | Done when                                                                 |
+| ----- | ---------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| F-440 | Data-processing register                 | SECURITY §21                        | Every personal data category documented with purpose, lawful basis (confirmed by legal/product), roles, storage, retention, rights handling, controls and transfers |
+| F-441 | Export & deletion hardening              | privacy/account.ts, 20260928050000_account_privacy.sql | Export is machine-readable, role-gated, rate-limited and logged; deletion has identity check, 30-day grace, legal-retention exceptions, completion log and notices |
+| F-442 | Retention schedule                       | SECURITY §21                        | Retention per table, bucket, server log, export, backup and vendor is written down and enforced by jobs |
+| F-443 | Consent records                          | SECURITY §21                        | Where consent is the legal basis: policy version, timestamp, exact purpose and withdrawal state stored |
+| F-444 | Subject rights workflow                  | SECURITY §21                        | Access, correction, restriction, objection, portability and deletion requests tracked to completion within one month |
+| F-445 | DPIA decision log & pseudonymised analytics | SECURITY §21, DECISIONS          | DPIA decision recorded for profiling, sensitive data, monitoring and AI; analytics use aggregated or pseudonymised data where identity is unnecessary |
+| F-446 | Privacy & technical gap register         | docs/PRIVACY_GAP_REGISTER.md        | Register with the required columns and statuses; gaps closed or marked Requires Legal Decision |
+
 ## Descoped
 
 Moving a feature here requires an ADR.

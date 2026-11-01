@@ -16,6 +16,8 @@ import {
 } from "@/services/storage";
 import { MAX_ZIP_BYTES, ScormValidationError, validateAndExtractPackage } from "@/services/scorm/parse";
 import { getCourseForEditing } from "./queries";
+import { expiryState } from "@/features/content-server/rules";
+import { recordAudit } from "@/services/audit";
 import { getLessonForEditing } from "./lessons";
 import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 import {
@@ -214,10 +216,21 @@ export async function attachLibraryResource(courseId: string, lessonId: string, 
 
   const { data: resource } = await ctx.supabase
     .from("resource_library_items")
-    .select("name, storage_path, mime_type, size_bytes")
+    .select("name, storage_path, mime_type, size_bytes, expires_at")
     .eq("id", resourceId)
     .maybeSingle();
   if (!resource) return { ok: false, error: "That resource is not available." };
+  if (expiryState(resource.expires_at as string | null) === "expired") {
+    // F-430: an expired resource cannot be attached; the attempt is logged.
+    await recordAudit({
+      actorId: ctx.userId,
+      action: "resource.expired_access_refused",
+      resourceType: "resource_library_item",
+      resourceId,
+      metadata: { lessonId, attempt: "attach" },
+    });
+    return { ok: false, error: "This resource has expired. Extend its expiry date to use it again." };
+  }
 
   const ext = resource.storage_path.includes(".") ? resource.storage_path.split(".").pop() : "bin";
   const newPath = `${ctx.courseId}/${lessonId}/${randomUUID()}.${ext}`;

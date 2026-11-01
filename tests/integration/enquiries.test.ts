@@ -71,6 +71,7 @@ describe.skipIf(!hasLiveProject)("contact enquiries (T-264, live Supabase)", () 
 
   afterAll(async () => {
     await svc.from("enquiries").delete().eq("email", email);
+    await svc.from("consent_records").delete().eq("subject_email", email.toLowerCase());
     await cleanup(svc, { userIds });
   }, 60_000);
 
@@ -88,6 +89,13 @@ describe.skipIf(!hasLiveProject)("contact enquiries (T-264, live Supabase)", () 
       .eq("email", email);
     expect(data).toEqual([
       { kind: "demo", organization: `${tag} Bank`, audience: "100–1,000", timeline: null },
+    ]);
+
+    // F-443: the stored consent points at the enquiry and keeps the wording and policy version.
+    const enquiryId = (await svc.from("enquiries").select("id").eq("email", email).single()).data!.id;
+    const consent = await svc.from("consent_records").select("purpose, purpose_text, policy_version, source_id, withdrawn_at").eq("subject_email", email.toLowerCase());
+    expect(consent.data).toEqual([
+      { purpose: "enquiry_contact", purpose_text: expect.stringContaining("respond to this enquiry"), policy_version: expect.any(String), source_id: enquiryId, withdrawn_at: null },
     ]);
   });
 

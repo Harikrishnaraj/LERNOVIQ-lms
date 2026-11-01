@@ -516,3 +516,104 @@ This follows the final workflow in the supplied guide.
 
 - **Payments provider: Dodo Payments (ADR-038, user decision 2026-10-07):** supersedes the deferred Stripe ADR-031 for learner commerce (T-180–T-185, T-187, T-188). Still blocked on the user's test-mode `DODO_PAYMENTS_API_KEY` / `DODO_PAYMENTS_WEBHOOK_KEY` in `.env.local`. Main was also brought up to date: merged `origin/main-p2cnzw` (ADR-037) into `origin/main`; the pricing task was renumbered T-253 because T-252 was already manual grading. **Known issue:** the `20261005100000_platform_course_pricing.sql` migration is not yet applied to the hosted Supabase project (it drops `instructor_payout_details`; waiting for the user's go-ahead), so 3 tests in `tests/integration/pricing-settings.test.ts` fail against it.
 - **LERNOVIQ rebrand (ADR-039, T-254, 2026-10-07):** product renamed from "Modern LMS" to LERNOVIQ in UI, metadata, docs and `package.json` (`lernoviq`). Brand guide + master artwork in `docs/brand/`; app logos in `src/assets/brand/` shown only via `src/components/brand/brand-logo.tsx` (enforces 120/96 px minimums + clear space). Tokens: Navy text and instructor sidebar, brand Blue primary, `primary-dark` for text on blue tints (12 spots switched). Logo placements are in DESIGN.md §25. **Known issues:** browser favicon is still Next.js's default (sizes below the 96 px minimum; needs approved favicon artwork from the user); repo-internal names were renamed too (VPS folder `~/lernoviq`, compose project `lernoviq`, backup artifacts, Supabase local `project_id`, SCORM tag `lernoviq-scorm`); only outside resources keep `modern-lms` until renamed (GitHub repo, hosted Supabase project name, local folder; the Cloudflare Worker in history entries is gone). If `deploy/setup-vps.sh` was already run on the VPS, `~/modern-lms` there is unused now (CI creates `~/lernoviq`). The Claude Docs user guide published earlier still says "Modern LMS".
+- **Report catalogue (T-274, F-420, 2026-10-15):** `saved_reports.report_type` (migration `20261015100000_saved_report_types.sql`, default `daily_analytics`, check constraint lists all nine types). `src/features/admin/reports.ts` holds `REPORT_CATALOGUE` in three categories (User, Consolidated usage, Product). Only `daily_analytics` is `available`; the other eight show "(Not available yet)" in the picker and are refused by `createSavedReportAction` and `generateReportCsv`. Generation is shared by the manual run and the cron route via `src/features/admin/report-generation.ts`; cron skips a report it cannot generate and keeps its `next_run_at`. T-275 (user reports) and T-276 (consolidated and product reports) each enable their types once the data query exists. Known gaps: the migration is not yet applied to the hosted Supabase project; report creation and runs still write no audit row (the brief's audit requirement is not in T-274's criteria); live integration and E2E were not run in this session.
+- **T-274 verification (2026-10-29):** migrations applied to modern-lms via the Supabase MCP: `saved_report_types` (T-274) and the pricing migration `20261005100000_platform_course_pricing.sql` **without its `drop table public.instructor_payout_details` line** (the apply tool refused the drop; the table still exists, so the committed migration file and the database differ until the drop is applied as a follow-up). `vitest.config.ts` now has two projects: `unit` (parallel) and `integration` (`fileParallelism: false`) because parallel integration files against the one hosted database caused random statement timeouts and `fetch failed` errors. `npm run check` passes: 173 files, 1240 tests, build compiled. T-289 (audit logging for saved reports) is split out of T-274.
+- **User reports (T-275, F-420, 2026-10-29):** migration `20261016100000_user_reports.sql` (applied to modern-lms) adds read-only security-definer RPCs `admin_report_idle_users` and `admin_report_user_progress`, gated by `analytics.read` or the service role (so the cron can run them). `src/features/admin/user-reports.ts` holds the fetchers and CSV builders; `buildCsv` in `reports.ts` is the shared writer and prefixes cells starting with = + - @ so spreadsheets do not run them. Idle users and Individual user progress are now `available` in `REPORT_CATALOGUE`; User product duration stays unavailable until T-292 records time spent. No email column in either CSV. Plan changes: T-275 is user reports, T-276 consolidated and product reports, and the filter models (T-290), role scoping (T-291) and learning-time tracking (T-292) are their own tasks. Test reliability: `createUserWithRole` retries only `AuthRetryableFetchError` (dropped requests to the hosted project). `npm run check` passes: 175 files, 1257 tests, build compiled.
+
+## T-276 — consolidated usage and product reports (F-420)
+- Five security-definer RPCs (`admin_report_module_usage`, `_product_module_usage`, `_library_usage`, `_product_library_usage`, `_library_licence_status`) in `20261016200000_usage_reports.sql`, applied to the hosted project. Gated on analytics.read or service role; no email or learner_key returned.
+- "Module" = lesson; "library" = content-server licence. Licence status label comes from `licenceStatus()` in TypeScript. Code in `src/features/admin/usage-reports.ts`.
+- Only `user_product_duration` remains unavailable (needs T-292). Full `npm run check` passed (CHECK_EXIT=0).
+
+## T-290 — report filter model (F-421)
+- `src/features/admin/report-filters.ts`: one filter model (course, user, organisation, status) with per-report support table; unsupported or malformed filters are refused, not ignored. Stored in `saved_reports.filters` (migration `20261017100000_report_filters.sql`, applied to modern-lms), applied after each RPC in `generateReportCsv`; manual run and cron both pass them. Saved-reports panel shows only the filters a report supports.
+- Known limit: filters apply after the RPCs' 10,000-row cap. Date range stays `range_days`.
+- Test reliability: `tests/setup.ts` retries sign-in on `AuthRetryableFetchError` and global fetch on `TypeError("fetch failed")`. A gate run is invalid if the machine sleeps.
+- Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 178 files, 1289 tests).
+
+## T-291 — role scoping for report data (F-422)
+- Report RPCs stay gated on `analytics.read` or the service role; `tests/integration/report-role-scoping.test.ts` proves instructor, org admin and learner are refused all seven admin report RPCs, admin is allowed, a learner reads only their own `lesson_progress`, and an org admin cannot call `list_org_assigned_learning` for another org.
+- `src/app/org_admin/loading.tsx` and `error.tsx` added; `tests/unit/report-screen-states.test.ts` checks loading and error boundaries exist for admin analytics, instructor analytics, org_admin and learner progress.
+- Full `npm run check` passed on the task's own commit (CHECK_EXIT=0, 180 files, 1306 tests).
+
+## T-292 — learning-time tracking and User product duration (F-420)
+- Migration `20261018100000_learning_time.sql` (applied to modern-lms): `lesson_time` (enrollment, lesson, UTC day, seconds; RLS on with no policies, so no direct access), `record_lesson_time(lesson, seconds)` and `admin_report_user_product_duration(days)`. One heartbeat credits at most 60s and never more than real time since that lesson's last heartbeat today; refused if not enrolled.
+- Client `TimeTracker` (`src/components/player/time-tracker.tsx`) sends 30s heartbeats only while the tab is visible and the learner was active in the last 2 minutes (a playing video counts as activity). Pure rules in `src/features/player/time.ts`; server action `recordLessonTime` in `player/progress.ts`.
+- `user_product_duration` is now `available`: all nine catalogue reports run on real data. CSV is minutes per learner per course, no email. Filters: course, user, organisation.
+- Known limits: time is not recorded for previews or non-enrolled viewers; SCORM and external content count only while the tab is active. Full `npm run check` passed (CHECK_EXIT=0, 182 files, 1317 tests).
+
+## T-277 — report export hardening (F-423)
+- `src/features/admin/report-export-policy.ts`: `EXPORT_LINK_SECONDS` (300), `EXPORT_RETENTION_DAYS` (30), `purgeExpiredExports` (storage file first, then record; run by the scheduled-reports cron, which now returns `purged`), `logExportDownload`.
+- Every download link handed out (manual run and past exports) writes an `audit_logs` row, action `report.downloaded` (report id, export id, type, row count). T-289 still owns create, delete, run and scheduled-run events.
+- PII minimisation decision: the three user-level CSVs (Idle users, Individual progress, Product duration) dropped the `name` column; they carry `user_id` only, never email. Reversible if admins need names in files.
+- Full `npm run check` passed (CHECK_EXIT=0, 183 files, 1322 tests).
+
+## T-278 — report tests (F-420..F-423)
+- `tests/integration/report-performance.test.ts`: all 8 admin report RPCs answer in under 5s and return at most 10,000 rows (live DB). `EXPLAIN` of the duration query shows an index scan on `lesson_time_day_idx` (checked 2026-10-30, small data; re-check plans if tables grow).
+- `tests/e2e/report-role-isolation.spec.ts` (run with `--project=desktop`): learner, instructor and org admin are redirected away from `/admin/analytics`; platform admin sees nine reports in three categories, none disabled.
+- Filter builders (`admin-report-filters.test.ts`) and report generation/export integration tests already existed from T-274..T-277 and were not duplicated.
+- Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1330 tests).
+
+## T-289 — audit logging for saved reports (F-423)
+- New audit actions `report.created`, `report.deleted`, `report.run`, `report.scheduled_run` (with T-277's `report.downloaded`). `logReportEvent` in `report-export-policy.ts` writes actor, report id, type, range, row count and export id into the append-only `audit_logs`; scheduled runs have no actor. Wired into create/delete/run actions and the scheduled-reports cron.
+- Tests: unit (helper), live (scheduled run writes one row), E2E (create, run, download, delete all leave rows). Full `npm run check` passed (CHECK_EXIT=0, 184 files, 1334 tests).
+- Reporting module (T-274..T-278, T-289..T-292) is complete.
+
+## T-279 — resource library expiry (F-430)
+- Migration `20261019100000_resource_expiry.sql` (applied to modern-lms): `resource_library_items.expires_at` (owner may update only that column), trigger `resource_usage_not_expired` refusing to attach an expired resource, `instructor_resource_library` now returns `expires_at`.
+- Shared rules in `content-server/rules.ts`: `validateExpiry` (UTC end of day, future only), `expiryState` (none/active/expiring/expired), `EXPIRY_WARNING_DAYS` (14), `EXPIRY_LABELS`. T-280 reuses these for licences.
+- Expired items stay in the owner's library (badge, extend or delete) but are not offered for attaching; `getAssetLinks` hides attachments whose library resource expired (checked with the service role, ids only). Audit: `resource.created`, `resource.expiry_changed`, `resource.expired_access_refused` (instructor attach attempts and learner views of hidden attachments).
+- Known limit: a signed download link issued before expiry keeps working for its 10 minutes. Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).
+
+## T-280 — licence expiry standardisation (F-431)
+- No second model: content licences already used `validateExpiry`/`licenceStatus` and the database refuses launches on revoked or expired licences (`register_content_launch`). The licence card now uses the shared `expiryState` from `content-server/rules.ts`: an active licence inside the 14-day window shows an "Expiring soon" badge and a days-left warning, same as library resources.
+- Audit: a launch refused as `expired` or `revoked` writes `content_licence.access_refused` (resource = licence id, metadata reason and dispatch id, no actor: the call comes from the customer's LMS). Creating and changing licences were already audited (`content_licence.*`). Certificates, accounts and enrolments do not expire.
+- Tested in the existing content-server E2E (refused launch leaves an audit row). Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).
+
+## T-281 — expiry tests (F-430, F-431)
+- Unit: `tests/unit/expiry-state.test.ts` (UTC end of day, future-only, today accepted, impossible dates, warning window). Integration: `resource-expiry.test.ts` (trigger refuses expired attach, owner can change only the expiry, learner view hides expired attachments and logs it) and the existing licence launch tests (revoked/expired refused). E2E: `tests/e2e/resource-expiry.spec.ts` (badges, pre-expiry warning, expired item hidden from lesson selection, extending restores it, past date refused) plus the content-server E2E audit assertion.
+- Expiry extension (T-279..T-281) is complete. Full `npm run check` passed (CHECK_EXIT=0, 186 files, 1347 tests).
+
+## T-282 — data-processing register (F-440)
+
+- `docs/PRIVACY_REGISTER.md` covers the 14 categories with all required fields. Every lawful basis, breach-response owner and international-transfer entry is "Requires Legal Decision"; nothing claims GDPR compliance.
+- `tests/unit/privacy-register.test.ts` checks the categories, fields and the no-compliance-claim rule. Full `npm run check` passed (CHECK_EXIT=0).
+- Gaps spotted while writing it, for T-283/T-284/T-288: login_history, enquiries, api_request_log and rate_limit_hits have no retention job; export omits lesson progress, assessments, discussions and login history; storage-object deletion on account removal is unverified.
+
+## T-283 — export and account deletion hardening (F-441)
+
+- Deleting needs identity proof: password re-check (throwaway anon client) for password accounts, typed email for provider accounts. 5 attempts/hour via `account-privacy` rate limit (fail-closed); refusals audited as `account.deletion_refused`.
+- Request and cancel send notice emails; grace stays 30 days. `profiles.deletion_hold_reason` (staff-only) makes `purge_expired_accounts()` skip an account; what must be held is a Requires Legal Decision. Purge writes an `account.deleted` audit row (id and request date only, no PII).
+- Limitation: no completion email is possible, since the address is gone with the account. Full `npm run check` passed.
+
+## T-284 — retention schedule (F-442)
+
+- `docs/RETENTION.md` covers tables, buckets, server logs, exports, backups and vendors; `tests/unit/retention.test.ts` checks that every job and function it cites exists in the migrations.
+- New job `purge-operational-data-daily` (03:30 UTC, `purge_operational_data()`): login_history 12 months, api_request_log 90 days, enquiries 24 months, rate_limit_hits 1 day. Periods are proposals (Requires Legal Decision). Integration test in `tests/integration/retention-jobs.test.ts`.
+- Still open for T-288: storage objects are not deleted on account removal and buckets are not backed up; server-log rotation on the VPS is unrecorded.
+
+## T-285 — consent records (F-443)
+
+- Migration `20261020300000_consent_records.sql` (applied): `consent_records` (user_id or subject_email, purpose, exact purpose_text, policy_version, given_at, withdrawn_at); owners read their own, writes service-role only; visitor rows purged at 24 months by `purge_operational_data()`.
+- `src/features/privacy/consent.ts` (`recordConsent`, `withdrawConsent`) and `consent-purposes.ts` (wording and `POLICY_VERSION`, shared with the contact form). The enquiry checkbox is the only consent-based flow; it now writes a record linked to the enquiry. Export includes `consents`.
+- Withdrawal has no UI; visitor withdrawal requests go through the T-286 workflow. Bump `POLICY_VERSION` when the policy text changes.
+
+## T-286 — subject-rights workflow (F-444)
+
+- Migration `20261020400000_subject_requests.sql` (applied): `privacy.requests` permission (admin, super_admin) and `subject_requests` (kind, status open/in_progress/completed/rejected, `due_at` default now() + 1 month, resolution note, handled_by). RLS: owner files and reads own (email must match JWT), staff read and update.
+- App: `src/features/privacy/request-actions.ts` (file / update, both audited as `privacy_request.created|updated`, late closes flagged), `requests.ts` (`slaState`), Settings → Privacy request form, Admin → Privacy requests queue with days left / overdue. Closing needs a note; closed requests cannot be reopened.
+- Gaps for T-288: visitors without an account have no tracked path; no retention period set for closed requests; no overdue reminder email/job; erasure requests are not linked to the deletion flow.
+
+## T-287 — DPIA decision log (F-445)
+
+- `docs/DPIA.md` records decisions for profiling, learner monitoring, special-category data, AI and analytics. Proposed DPIAs: employer monitoring (before selling to employers) and AI (before T-200 ships); both **Requires Legal Decision**.
+- Analytics were already aggregated (dashboards, usage reports) or id-only (per-learner CSV exports); no code change needed. `tests/unit/dpia.test.ts` fails if any `build*Csv` header gains a name, email or IP column.
+- T-200 must send no name, email or user id to the AI provider.
+- `tools/` (untracked user files) is excluded from eslint.
+
+## T-288 — Privacy & technical gap register (F-446)
+
+- `docs/PRIVACY_GAP_REGISTER.md`: 29 rows in the brief's 8 columns (Category, Item / Feature, Status, Owner, Risk Level, Evidence / Artifact, Implementation Task, Test Coverage) and its 5 statuses. Counts: 11 Implemented, 3 Partially Implemented, 8 Missing, 7 Requires Legal Decision.
+- Missing rows with "New task needed" have no task yet: export coverage, storage cleanup on deletion, bucket retention and backups, visitor requests, overdue reminders, erasure-to-deletion link, breach procedure.
+- `tests/unit/privacy-gap-register.test.ts` checks the columns and statuses, and that every cited test file and task ID exists.
+- Known flake: `course-versioning.test.ts` SCORM copy can time out on slow Supabase storage; passes alone.
