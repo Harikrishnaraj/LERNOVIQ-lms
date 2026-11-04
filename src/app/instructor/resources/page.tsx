@@ -63,11 +63,11 @@ export default async function InstructorResourcesPage() {
           description="Upload a file to start building your reusable library."
         />
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {resourcesWithUrls.map((r) => {
             const state = expiryState(r.expiresAt);
             return (
-            <li key={r.id}>
+            <li key={r.id} className="min-w-0">
               <Card className="flex h-full flex-col gap-3 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
