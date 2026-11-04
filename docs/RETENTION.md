@@ -31,8 +31,9 @@ checked by `tests/unit/retention.test.ts`.
 | --- | --- | --- | --- |
 | `report-exports` (private) | 30 days | scheduled-reports job in the app (T-277) | Implemented |
 | `resource-library` (private) | Optional per-item expiry; expired items are hidden and refused | expiry check in the app (T-279) | Implemented |
-| `assignment-submissions` (private) | Life of the owning account | none: removing storage objects on account deletion is not verified | Proposed |
-| `avatars`, `course-thumbnails` (public) | Life of the owning record | none | Proposed |
+| `assignment-submissions` (private) | Life of the owning account and assignment | storage-cleanup job (`/api/cron/storage-cleanup`, hourly; `orphaned_storage_objects()`, T-294, T-300) | Implemented |
+| `avatars` (public) | Life of the owning account | storage-cleanup job (T-294) | Implemented |
+| `course-thumbnails` (public) | Life of the owning course | none: course files are kept until the owner deletes the course | Proposed |
 | `course-videos`, `lesson-assets`, `assignment-resources`, `scorm-packages`, `scorm-uploads` (private) | Life of the owning course | none | Proposed |
 
 ## 3. Server logs

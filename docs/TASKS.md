@@ -247,3 +247,15 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-286** Subject rights workflow with a one-month SLA tracker and audit trail. — F-444
 - [x] **T-287** DPIA decision log (`docs/DPIA.md`) and pseudonymised or aggregated analytics where identity is unnecessary. — F-445
 - [x] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446
+
+### Phase 17b — GDPR gap closure (from PRIVACY_GAP_REGISTER.md, approved 2026-11-04)
+
+- [~] **T-293** Public `/privacy` and `/terms` pages from the privacy-policy draft, linked from the site footer; bracketed details stay visible until legal sign-off. — F-447
+- [~] **T-294** Remove a person's storage objects (avatars, submissions, uploads they own) when their account is purged. — F-448
+- [~] **T-295** Data export covers every category held: add lesson progress, learning time, assessment attempts, discussion posts, direct messages and login history. — F-441
+- [~] **T-296** Tracked privacy requests from people without an account: public form, rate limited, into the existing request queue. — F-449
+- [~] **T-297** Staff reminders for privacy requests 7 days before the one-month deadline and when overdue. — F-449
+- [~] **T-298** Closing an erasure request starts that person's account deletion (30-day grace) and links the two in the audit trail. — F-449
+- [~] **T-299** Self-service withdrawal of marketing consent in Settings → Privacy. — F-443
+- [~] **T-300** Storage bucket retention jobs for the buckets marked Proposed in `docs/RETENTION.md`. — F-448
+- [~] **T-301** Personal-data breach response procedure in `docs/RUNBOOKS.md` (72-hour authority notice, 48-hour processor notice, record of every breach). — F-450

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/services/supabase/admin";
 
 export async function getMyDeletionStatus(supabase: SupabaseClient, userId: string): Promise<string | null> {
   const { data } = await supabase.from("profiles").select("deletion_requested_at").eq("id", userId).maybeSingle();
@@ -12,11 +13,11 @@ export async function getMyDeletionStatus(supabase: SupabaseClient, userId: stri
  * user (e.g. who reviewed a course submission) -- since SECURITY.md §21 asks for "data export",
  * not a full relational graph dump.
  */
-export async function getMyDataExport(supabase: SupabaseClient, userId: string) {
+export async function getMyDataExport(supabase: SupabaseClient, userId: string, admin?: SupabaseClient) {
   const [profile, roles, enrollments, submissions, certificates, reviews, orgMemberships, consents] = await Promise.all([
     supabase.from("profiles").select("full_name, headline, bio, avatar_url, created_at").eq("id", userId).maybeSingle(),
     supabase.from("user_roles").select("role_id, created_at").eq("user_id", userId),
-    supabase.from("enrollments").select("course_id, status, enrolled_at, completed_at").eq("user_id", userId),
+    supabase.from("enrollments").select("id, course_id, status, enrolled_at, completed_at").eq("user_id", userId),
     supabase
       .from("assignment_submissions")
       .select("assignment_id, text_answer, file_name, status, is_late, submitted_at, grade, feedback")
@@ -25,6 +26,25 @@ export async function getMyDataExport(supabase: SupabaseClient, userId: string) 
     supabase.from("course_ratings").select("course_id, rating, body, instructor_reply, created_at").eq("user_id", userId),
     supabase.from("organization_members").select("organization_id, org_role, created_at").eq("user_id", userId),
     supabase.from("consent_records").select("purpose, purpose_text, policy_version, given_at, withdrawn_at").eq("user_id", userId),
+  ]);
+
+  // T-295 (F-441): learning activity, the person's own posts and sent messages, and sign-in history.
+  // Progress and time hang off enrollments; messages from other people are theirs, so only sent ones go out.
+  const enrollmentIds = (enrollments.data ?? []).map((e) => e.id as string);
+  // lesson_time has no read policy, and discussions hide hidden posts and left courses: read those with the
+  // service client, still filtered to this person (userId comes from the verified session, never input).
+  const svc = admin ?? createAdminClient();
+  const [progress, time, attempts, threads, posts, messages, logins] = await Promise.all([
+    supabase.from("lesson_progress").select("enrollment_id, lesson_id, completed_at, last_position_seconds, updated_at").in("enrollment_id", enrollmentIds),
+    svc.from("lesson_time").select("enrollment_id, lesson_id, day, seconds").in("enrollment_id", enrollmentIds),
+    supabase
+      .from("assessment_attempts")
+      .select("assessment_id, attempt_number, status, started_at, submitted_at, answers, score, max_score, percent, passed, feedback")
+      .eq("user_id", userId),
+    svc.from("discussions").select("course_id, title, body, created_at").eq("author_id", userId),
+    svc.from("discussion_posts").select("discussion_id, body, created_at").eq("author_id", userId),
+    supabase.from("direct_messages").select("thread_id, body, created_at").eq("sender_id", userId),
+    supabase.from("login_history").select("ip_address, user_agent, created_at").eq("user_id", userId),
   ]);
 
   return {
@@ -37,6 +57,13 @@ export async function getMyDataExport(supabase: SupabaseClient, userId: string) 
     courseReviews: reviews.data ?? [],
     organizationMemberships: orgMemberships.data ?? [],
     consents: consents.data ?? [],
+    lessonProgress: progress.data ?? [],
+    learningTime: time.data ?? [],
+    assessmentAttempts: attempts.data ?? [],
+    discussionThreads: threads.data ?? [],
+    discussionPosts: posts.data ?? [],
+    sentMessages: messages.data ?? [],
+    loginHistory: logins.data ?? [],
   };
 }
 

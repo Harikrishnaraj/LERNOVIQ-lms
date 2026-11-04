@@ -210,6 +210,10 @@ Columns: **Source** = where the requirement comes from. **Done when** = the acce
 | F-444 | Subject rights workflow                  | SECURITY §21                        | Access, correction, restriction, objection, portability and deletion requests tracked to completion within one month |
 | F-445 | DPIA decision log & pseudonymised analytics | SECURITY §21, DECISIONS          | DPIA decision recorded for profiling, sensitive data, monitoring and AI; analytics use aggregated or pseudonymised data where identity is unnecessary |
 | F-446 | Privacy & technical gap register         | docs/PRIVACY_GAP_REGISTER.md        | Register with the required columns and statuses; gaps closed or marked Requires Legal Decision |
+| F-447 | Public privacy notice & terms            | GDPR_LEGAL_POSITIONS.md §8          | `/privacy` and `/terms` reachable from every public page; notice covers identity, purposes and bases, recipients, transfers, retention, rights and complaints |
+| F-448 | Storage deletion & retention             | PRIVACY_GAP_REGISTER.md             | A purged account's storage objects are removed; each bucket's retention is enforced by a job |
+| F-449 | Complete subject-request handling        | PRIVACY_GAP_REGISTER.md             | Visitors can file tracked requests; staff are reminded before and after the deadline; an erasure request starts account deletion |
+| F-450 | Breach response procedure                | GDPR_LEGAL_POSITIONS.md §5          | Written procedure with owners, 72-hour authority notice, 48-hour processor notice and a breach record |
 
 ## Descoped
 
