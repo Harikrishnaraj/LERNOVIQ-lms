@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit";
 import { sendEmail } from "@/services/email";
 import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
+import { createAdminClient } from "@/services/supabase/admin";
 import { deletionNotice, usesPassword } from "./account";
+import { withdrawConsent } from "./consent";
+import { CONSENT_PURPOSES, type ConsentPurpose } from "./consent-purposes";
 
 export type PrivacyResult = { ok: true } | { ok: false; error: string };
 
@@ -91,4 +94,36 @@ export async function cancelAccountDeletionAction(): Promise<PrivacyResult> {
   await notify(user.email, deletionNotice("cancelled"));
   for (const path of REVALIDATE_PATHS) revalidatePath(path);
   return { ok: true };
+}
+
+/**
+ * T-299 (F-443): the signed-in person withdraws every consent still open for them, under their account
+ * or their sign-in email. Contract-based processing is unaffected; only consent-based uses stop.
+ */
+export async function withdrawMyConsentsAction(): Promise<{ ok: true; withdrawn: number } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Please log in again." };
+  if (!(await rateLimit("account-privacy", await clientIp(), user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
+
+  const admin = createAdminClient();
+  let withdrawn = 0;
+  for (const purpose of Object.keys(CONSENT_PURPOSES) as ConsentPurpose[]) {
+    for (const who of [{ userId: user.id }, ...(user.email ? [{ email: user.email }] : [])]) {
+      const res = await withdrawConsent(admin, { purpose, ...who });
+      if (res.error) return { ok: false, error: "We could not update your consents. Please try again." };
+      withdrawn += res.count;
+    }
+  }
+  await recordAudit({
+    actorId: user.id,
+    actorEmail: user.email,
+    action: "consent.withdrawn",
+    resourceType: "user",
+    resourceId: user.id,
+    metadata: { withdrawn },
+  });
+  return { ok: true, withdrawn };
 }

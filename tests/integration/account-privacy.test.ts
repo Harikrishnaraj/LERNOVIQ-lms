@@ -59,6 +59,17 @@ describe.skipIf(!hasLiveProject)("account privacy (T-243, live Supabase)", () =>
 
   afterAll(() => cleanup(svc, { userIds }), 120_000);
 
+  it("export includes sign-in history and the learning-activity categories (T-295, F-441)", async () => {
+    await svc.from("login_history").insert({ user_id: learner.id, ip_address: "203.0.113.9", user_agent: "test" });
+    const out = await getMyDataExport(learner.client, learner.id);
+    expect(out.loginHistory.map((r) => r.ip_address)).toContain("203.0.113.9");
+    for (const key of ["lessonProgress", "learningTime", "assessmentAttempts", "discussionPosts", "sentMessages"] as const) {
+      expect(Array.isArray(out[key])).toBe(true);
+    }
+    const otherOut = await getMyDataExport(other.client, other.id);
+    expect(otherOut.loginHistory).toEqual([]);
+  });
+
   it("requests, then cancels, a deletion; only the caller's own row is affected", async () => {
     currentClient = learner.client;
     expect(await getMyDeletionStatus(learner.client, learner.id)).toBeNull();

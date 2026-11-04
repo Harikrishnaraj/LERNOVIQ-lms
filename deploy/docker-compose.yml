@@ -35,7 +35,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
-  # Hourly trigger for scheduled report exports (src/app/api/cron/scheduled-reports).
+  # Hourly trigger for scheduled report exports and orphaned-file cleanup (src/app/api/cron/*).
   cron:
     image: curlimages/curl:8.10.1
     restart: unless-stopped
@@ -50,6 +50,8 @@ services:
         while true; do
           sleep 3600
           curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/scheduled-reports || true
+          curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/storage-cleanup || true
+          curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/privacy-reminders || true
           echo
         done
 

@@ -85,3 +85,48 @@ using `rclone` or the Supabase CLI (`supabase storage cp -r ...`) to mirror each
 separate object store (an S3-compatible bucket, or another Supabase Storage project). This needs
 its own credentials/decision from whoever operates the project and was out of scope for this pass
 — recorded here rather than silently left undocumented.
+
+## Personal-data breach response (T-301, F-450, GDPR Art. 33–34, DPDP Act s.8(6))
+
+A breach is any security incident that leads to personal data being lost, destroyed, changed, disclosed
+or accessed without authority, including by mistake (a report sent to the wrong customer, a leaked key).
+The legal positions behind these steps are in `docs/GDPR_LEGAL_POSITIONS.md` §5 and still need legal sign-off.
+
+### Owners
+
+| Role | Person | Contact |
+| --- | --- | --- |
+| Breach owner | **Requires Legal Decision** (not yet named) | |
+| Deputy | **Requires Legal Decision** (not yet named) | |
+| EU / UK representative | **Requires Legal Decision** | |
+
+### Clock
+
+| Deadline | From | To whom |
+| --- | --- | --- |
+| Same day | Anyone suspects a breach | Breach owner |
+| 48 hours | We become aware, as a processor for an employer or content-server customer | That customer (the controller) |
+| 72 hours | We become aware, as controller | Lead EU supervisory authority (through the EU representative) and the ICO for UK data, unless the breach is unlikely to risk people's rights |
+| Without delay | We become aware | Data Protection Board of India and affected people (DPDP Rules) |
+| Without undue delay | High risk to people | Affected people directly |
+
+### Steps
+
+1. **Report.** Tell the breach owner the same day, with what you saw and when. Do not delete evidence.
+2. **Open a record.** Add a row to the breach record below: what data, whose, how many people, when it
+   started, when we became aware, how it was found.
+3. **Contain.** As needed: rotate the exposed keys (`docs/DEPLOY.md` secrets), suspend affected accounts in
+   Admin → Users, revoke content-server licences, take a fresh backup before restoring
+   (see "Restoring data from a backup" above).
+4. **Assess the risk.** Note the data categories (`docs/PRIVACY_REGISTER.md`), whether it was encrypted,
+   and the likely effect on people. Decide whether each notice in the clock table is required, and why.
+5. **Notify.** Send the notices that apply, inside their deadlines. If facts are still missing at 72 hours,
+   notify with what is known and follow up.
+6. **Review.** Within two weeks, record the cause and what changed so it does not recur.
+
+### Breach record
+
+Every breach goes here, including ones not reported to an authority, with the reason.
+
+| Date aware | Summary | Data and people affected | Notified (who, when) | Reason if not notified | Closed |
+| --- | --- | --- | --- | --- | --- |

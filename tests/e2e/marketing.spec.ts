@@ -24,6 +24,10 @@ const PAGES = [
   ["/faqs", "Questions, answered clearly."],
   ["/contact", "Let’s Build Better Learning Together."],
   ["/cart", "Your cart"],
+  // T-293 (F-447): legal pages, reachable from the footer.
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Use"],
+  ["/privacy/request", "Make a privacy request"],
 ] as const;
 
 async function noHorizontalScroll(page: Page) {
