@@ -11,7 +11,9 @@ vi.mock("@/services/rate-limit", async (orig) => ({
   rateLimit: async () => true,
 }));
 
-import { submitSubjectRequestAction, updateSubjectRequestAction } from "@/features/privacy/request-actions";
+import { submitSubjectRequestAction, submitVisitorRequestAction, updateSubjectRequestAction } from "@/features/privacy/request-actions";
+import { withdrawMyConsentsAction } from "@/features/privacy/actions";
+import { recordConsent } from "@/features/privacy/consent";
 import { listSubjectRequests } from "@/features/privacy/request-queries";
 
 const hasLiveProject = Boolean(
@@ -84,5 +86,44 @@ describe.skipIf(!hasLiveProject)("subject-rights requests (T-286, live Supabase)
 
     const audit = await svc.from("audit_logs").select("action, actor_id").eq("resource_id", row.id).order("created_at");
     expect(audit.data?.map((a) => a.action)).toEqual(["privacy_request.created", "privacy_request.updated", "privacy_request.updated"]);
+  });
+  it("records a visitor's request in the queue without an account (T-296, F-449)", async () => {
+    const email = `${tag}-visitor@example.com`;
+    expect(await submitVisitorRequestAction("not-an-email", "access", "")).toMatchObject({ ok: false });
+    expect(await submitVisitorRequestAction(email, "access", "", "bot")).toEqual({ ok: true });
+    expect((await svc.from("subject_requests").select("id").eq("requester_email", email)).data).toHaveLength(0);
+    const res = await submitVisitorRequestAction(email.toUpperCase(), "access", "Copy of my data");
+    expect(res.ok).toBe(true);
+    const row = (await svc.from("subject_requests").select("*").eq("requester_email", email).single()).data!;
+    expect(row).toMatchObject({ user_id: null, kind: "access", status: "open" });
+    await svc.from("subject_requests").delete().eq("id", row.id);
+  });
+
+  it("completing an erasure request starts the account deletion (T-298, F-449)", async () => {
+    const learner = await createUserWithRole(svc, `${tag}-er`, "learner");
+    const admin = await createUserWithRole(svc, `${tag}-ea`, "admin");
+    userIds.push(learner.id, admin.id);
+    currentClient = await signIn(learner);
+    expect((await submitSubjectRequestAction("erasure", "")).ok).toBe(true);
+    const req = (await svc.from("subject_requests").select("id").eq("user_id", learner.id).single()).data!;
+
+    currentClient = await signIn(admin);
+    expect(await updateSubjectRequestAction(req.id, "completed", "Account deletion started")).toEqual({ ok: true });
+    const profile = (await svc.from("profiles").select("deletion_requested_at").eq("id", learner.id).single()).data!;
+    expect(profile.deletion_requested_at).not.toBeNull();
+    const after = (await svc.from("subject_requests").select("deletion_started_at").eq("id", req.id).single()).data!;
+    expect(after.deletion_started_at).not.toBeNull();
+  });
+
+  it("a signed-in person withdraws their consents (T-299, F-443)", async () => {
+    const learner = await createUserWithRole(svc, `${tag}-cw`, "learner");
+    userIds.push(learner.id);
+    await recordConsent(svc, { purpose: "enquiry_contact", email: learner.email });
+    currentClient = await signIn(learner);
+    expect(await withdrawMyConsentsAction()).toEqual({ ok: true, withdrawn: 1 });
+    const open = await svc.from("consent_records").select("id").eq("subject_email", learner.email.toLowerCase()).is("withdrawn_at", null);
+    expect(open.data).toHaveLength(0);
+    expect(await withdrawMyConsentsAction()).toEqual({ ok: true, withdrawn: 0 });
+    await svc.from("consent_records").delete().eq("subject_email", learner.email.toLowerCase());
   });
 });

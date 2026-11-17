@@ -73,6 +73,9 @@ export function SiteFooter() {
           <Link prefetch={false} href="/privacy" className="hover:text-primary-dark">
             Privacy
           </Link>
+          <Link prefetch={false} href="/terms" className="hover:text-primary-dark">
+            Terms
+          </Link>
         </span>
       </div>
     </footer>

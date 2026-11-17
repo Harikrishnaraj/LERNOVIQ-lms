@@ -138,3 +138,18 @@ On the VPS, as `deploy`, run these from `~/lernoviq-lms`:
 | Roll back | Set `APP_IMAGE` in `.env` to an older `ghcr.io/...:<commit sha>`, then `docker compose up -d` |
 
 `.env` is rewritten on every deploy. Change secrets in GitHub, not on the server.
+
+## Preview deployments per pull request (T-248, not yet enabled)
+
+CI (check + E2E on a local Supabase stack per job) is done. Per-PR previews are **not** set up, on purpose:
+a preview pointed at the production database would write test data into it (this happened with local runs,
+see `docs/MEMORY.md`). Before building them, decide:
+
+1. **A separate staging Supabase project** for previews (recommended), with its own keys as GitHub secrets.
+2. **A wildcard DNS record** such as `*.preview.lernoviq.com` pointing at the VPS, so Caddy can serve
+   `pr-<number>.preview.lernoviq.com`.
+3. **VPS capacity**: each preview is one more app container (~300 MB RAM).
+
+With those in place the workflow is: on `pull_request`, build the image as the production job does, run it
+as compose project `pr-<number>` with the staging keys, add a Caddy site block for its host, and remove both
+when the PR closes.

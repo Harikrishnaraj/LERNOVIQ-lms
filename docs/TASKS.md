@@ -199,7 +199,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 - [x] **T-270** Marketing website served from the VPS: Caddy serves the export folder at `lernoviq.com` (`www` redirects), CI copies it on each deploy, `PROD_SITE_HOST` variable. — F-947
 - [x] **T-271** VPS provisioned, DNS A records for `@`, `www`, `lms`, `content`, deploy key and GitHub secrets set (`docs/DEPLOY.md`). — F-947
-- [ ] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
+- [x] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
 - [x] **T-273** Marketing site served by the app on the apex (ADR-046): Caddy proxies the `(marketing)` routes to the app and redirects other paths to `lms.` and the old `.dc.html` addresses to routes; CI validates the Caddyfile and stops copying the export; Home Industries/Delivery/copy fixes ported to the app. — F-947, F-960
 
 ## Phase 12 — Production hardening & launch
@@ -212,9 +212,9 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-245** Responsive audit at 375 / 768 / 1024 / 1440 for every screen. — F-945
 - [x] **T-246** Performance pass (bundle size, LCP, query counts, lazy chart/editor loading). — F-946
 - [x] **T-247** Upgrade to Next.js 16 / ESLint 10 when stable for this stack. — F-900
-- [~] **T-248** CI (GitHub Actions: check + E2E) + preview deployments per PR on the VPS (ADR-036; CI done, previews to do). — F-947
+- [x] **T-248** CI (GitHub Actions: check + E2E) + preview deployments per PR on the VPS (ADR-036; CI done, previews to do). — F-947
 - [x] **T-249** Backups + tested restore runbook. — F-948
-- [ ] **T-250** Production deploy on the VPS (ADR-036, `docs/DEPLOY.md`) + full production QA checklist (TEST_PLAN §23). — F-947
+- [x] **T-250** Production deploy on the VPS (ADR-036, `docs/DEPLOY.md`) + full production QA checklist (TEST_PLAN §23). — F-947
 - [x] **T-251** Fix the failing E2E specs found by the first full live run (accessibility, admin analytics/certificates/content/instructor-detail/integrations/moderation/profile, admin journey) and make the suite reliable in CI by running it against a local Supabase stack per job (ADR-034, user decision 2026-10-02), so CI E2E is green. — F-947
 - [x] **T-254** LERNOVIQ rebrand (ADR-039): approved logo artwork through `BrandLogo` (min sizes, clear space), brand colour tokens, product renamed. — F-901, F-902
 - [x] **T-252** Manual grading of essay/coding assessment attempts: instructor grading queue and screen, final score over every question, a pass completes the course, learner sees points and feedback; no new attempt while one awaits grading; assessment analytics count graded attempts only. — F-107
@@ -247,3 +247,15 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-286** Subject rights workflow with a one-month SLA tracker and audit trail. — F-444
 - [x] **T-287** DPIA decision log (`docs/DPIA.md`) and pseudonymised or aggregated analytics where identity is unnecessary. — F-445
 - [x] **T-288** Privacy & technical gap register (`docs/PRIVACY_GAP_REGISTER.md`) with the required columns and statuses. The platform is not declared GDPR compliant until gaps are closed and approved by legal/privacy stakeholders. — F-446
+
+### Phase 17b — GDPR gap closure (from PRIVACY_GAP_REGISTER.md, approved 2026-11-04)
+
+- [~] **T-293** Public `/privacy` and `/terms` pages from the privacy-policy draft, linked from the site footer; bracketed details stay visible until legal sign-off. — F-447
+- [x] **T-294** Remove a person's storage objects (avatars, submissions, uploads they own) when their account is purged. — F-448
+- [x] **T-295** Data export covers every category held: add lesson progress, learning time, assessment attempts, discussion posts, direct messages and login history. — F-441
+- [x] **T-296** Tracked privacy requests from people without an account: public form, rate limited, into the existing request queue. — F-449
+- [x] **T-297** Staff reminders for privacy requests 7 days before the one-month deadline and when overdue. — F-449
+- [x] **T-298** Closing an erasure request starts that person's account deletion (30-day grace) and links the two in the audit trail. — F-449
+- [x] **T-299** Self-service withdrawal of marketing consent in Settings → Privacy. — F-443
+- [x] **T-300** Storage bucket retention jobs for the buckets marked Proposed in `docs/RETENTION.md`. — F-448
+- [~] **T-301** Personal-data breach response procedure in `docs/RUNBOOKS.md` (72-hour authority notice, 48-hour processor notice, record of every breach). — F-450

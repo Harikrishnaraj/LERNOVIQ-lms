@@ -22,6 +22,8 @@ const LIMITS = {
   "account-privacy": { limit: 5, windowSeconds: 60 * 60 },
   // Public marketing contact form (SECURITY §28): per IP and per email.
   "contact-enquiry": { limit: 5, windowSeconds: 60 * 60 },
+  // Public privacy request form for people without an account (T-296): per IP and per email.
+  "privacy-request": { limit: 3, windowSeconds: 60 * 60 },
   // Per dispatch (subject) and per IP: one customer's whole LMS shares a dispatch, so it is generous.
   "content-launch": { limit: 600, windowSeconds: 10 * 60 },
 } as const;

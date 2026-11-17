@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { Button, buttonClasses } from "@/components/ui/button";
-import { cancelAccountDeletionAction, requestAccountDeletionAction } from "@/features/privacy/actions";
+import { cancelAccountDeletionAction, requestAccountDeletionAction, withdrawMyConsentsAction } from "@/features/privacy/actions";
 import { submitSubjectRequestAction } from "@/features/privacy/request-actions";
 import { REQUEST_KINDS, type RequestKind } from "@/features/privacy/requests";
 
@@ -15,6 +15,7 @@ export function PrivacyPanel({ deletionRequestedAt }: { deletionRequestedAt: str
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [requestMsg, setRequestMsg] = useState<string | null>(null);
+  const [consentMsg, setConsentMsg] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function onDelete(e: React.FormEvent<HTMLFormElement>) {
@@ -41,6 +42,16 @@ export function PrivacyPanel({ deletionRequestedAt }: { deletionRequestedAt: str
         form.reset();
         setRequestMsg(`Request received. We will reply by ${res.dueAt ? dateFormat.format(new Date(res.dueAt)) : "one month from today"}.`);
       }
+    });
+  }
+
+  function onWithdraw() {
+    setErrorMsg(null);
+    setConsentMsg(null);
+    startTransition(async () => {
+      const res = await withdrawMyConsentsAction();
+      if (!res.ok) setErrorMsg(res.error);
+      else setConsentMsg(res.withdrawn === 0 ? "You have no consents to withdraw." : "Your consents have been withdrawn.");
     });
   }
 
@@ -133,6 +144,21 @@ export function PrivacyPanel({ deletionRequestedAt }: { deletionRequestedAt: str
         {requestMsg && (
           <p role="status" className="text-sm text-text-secondary">
             {requestMsg}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2 border-t border-border-subtle pt-4">
+        <p className="text-sm font-medium">Withdraw consent</p>
+        <p className="text-sm text-text-secondary">
+          Stop any use of your data that relies on your consent, such as replying to a website enquiry. Your account and courses are not affected.
+        </p>
+        <Button type="button" variant="secondary" size="sm" disabled={isPending} onClick={onWithdraw}>
+          Withdraw my consents
+        </Button>
+        {consentMsg && (
+          <p role="status" className="text-sm text-text-secondary">
+            {consentMsg}
           </p>
         )}
       </div>
