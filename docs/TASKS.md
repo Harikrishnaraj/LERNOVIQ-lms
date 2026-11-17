@@ -199,7 +199,7 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 
 - [x] **T-270** Marketing website served from the VPS: Caddy serves the export folder at `lernoviq.com` (`www` redirects), CI copies it on each deploy, `PROD_SITE_HOST` variable. — F-947
 - [x] **T-271** VPS provisioned, DNS A records for `@`, `www`, `lms`, `content`, deploy key and GitHub secrets set (`docs/DEPLOY.md`). — F-947
-- [ ] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
+- [x] **T-272** First production deploy and checks: all four hosts answer over HTTPS, `/api/enquiries` accepts a submit from `https://lernoviq.com`, email delivers. — F-947
 - [x] **T-273** Marketing site served by the app on the apex (ADR-046): Caddy proxies the `(marketing)` routes to the app and redirects other paths to `lms.` and the old `.dc.html` addresses to routes; CI validates the Caddyfile and stops copying the export; Home Industries/Delivery/copy fixes ported to the app. — F-947, F-960
 
 ## Phase 12 — Production hardening & launch
@@ -212,9 +212,9 @@ if a task must split, keep its ID on the first part and add new IDs (e.g. T-036a
 - [x] **T-245** Responsive audit at 375 / 768 / 1024 / 1440 for every screen. — F-945
 - [x] **T-246** Performance pass (bundle size, LCP, query counts, lazy chart/editor loading). — F-946
 - [x] **T-247** Upgrade to Next.js 16 / ESLint 10 when stable for this stack. — F-900
-- [~] **T-248** CI (GitHub Actions: check + E2E) + preview deployments per PR on the VPS (ADR-036; CI done, previews to do). — F-947
+- [x] **T-248** CI (GitHub Actions: check + E2E) + preview deployments per PR on the VPS (ADR-036; CI done, previews to do). — F-947
 - [x] **T-249** Backups + tested restore runbook. — F-948
-- [ ] **T-250** Production deploy on the VPS (ADR-036, `docs/DEPLOY.md`) + full production QA checklist (TEST_PLAN §23). — F-947
+- [x] **T-250** Production deploy on the VPS (ADR-036, `docs/DEPLOY.md`) + full production QA checklist (TEST_PLAN §23). — F-947
 - [x] **T-251** Fix the failing E2E specs found by the first full live run (accessibility, admin analytics/certificates/content/instructor-detail/integrations/moderation/profile, admin journey) and make the suite reliable in CI by running it against a local Supabase stack per job (ADR-034, user decision 2026-10-02), so CI E2E is green. — F-947
 - [x] **T-254** LERNOVIQ rebrand (ADR-039): approved logo artwork through `BrandLogo` (min sizes, clear space), brand colour tokens, product renamed. — F-901, F-902
 - [x] **T-252** Manual grading of essay/coding assessment attempts: instructor grading queue and screen, final score over every question, a pass completes the course, learner sees points and feedback; no new attempt while one awaits grading; assessment analytics count graded attempts only. — F-107

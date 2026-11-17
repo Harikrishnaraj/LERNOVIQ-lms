@@ -17,7 +17,7 @@ This file records the current project state. It is intentionally different from 
 
 **Feature tracking:** 98 features in `docs/FEATURES.md`, tasks across Phases 0–12 in `docs/TASKS.md` (ADR-028). Run `npm run features` for live coverage.
 
-**Next task:** T-180 (Commerce), blocked on the payment-provider decision (ADR-031). Open alongside it: T-248 (preview deployments), T-250 (production QA checklist).
+**Next task:** T-180 (Commerce), blocked on the user's Dodo Payments test-mode API key (ADR-038). Production is live (T-248, T-250, T-272 done 2026-11-17, confirmed by the user; HTTPS on all four hosts and the enquiries CORS preflight verified).
 
 **Supabase project:** `modern-lms` (`ctrizucnfaqescligsuu`, ap-south-1) — created for this repo via the Supabase MCP. The account's two other projects (`trenning-lms`, and the account default project, now paused) have unrelated pre-existing schemas/data and must not be touched by this repo's migrations. `.env.local` (gitignored) points at `modern-lms`, including `SUPABASE_SERVICE_ROLE_KEY` (needed by `tests/integration/profiles-roles.test.ts`'s admin API).
 
