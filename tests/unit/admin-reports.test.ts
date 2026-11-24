@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReportCsv, computeNextRunAt, validateReportName } from "@/features/admin/reports";
+import { buildReportCsv, computeNextRunAt, reportFileName, validateReportName } from "@/features/admin/reports";
 
 describe("computeNextRunAt", () => {
   const from = new Date("2026-01-15T10:00:00Z");
@@ -53,5 +53,21 @@ describe("buildReportCsv", () => {
 
   it("returns just the header for no points", () => {
     expect(buildReportCsv([])).toBe("day,enrollments,completions,signups");
+  });
+});
+
+describe("reportFileName", () => {
+  const when = new Date("2026-11-24T09:54:00Z");
+
+  it("names the export after the report and the date", () => {
+    expect(reportFileName("Manual QA daily", when)).toBe("manual-qa-daily-2026-11-24.csv");
+  });
+
+  it("strips characters that are unsafe in a filename", () => {
+    expect(reportFileName('  Q4 / "Idle" users: EMEA  ', when)).toBe("q4-idle-users-emea-2026-11-24.csv");
+  });
+
+  it("falls back to 'report' when nothing usable is left", () => {
+    expect(reportFileName("***", when)).toBe("report-2026-11-24.csv");
   });
 });

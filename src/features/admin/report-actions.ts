@@ -5,7 +5,7 @@ import type { Range } from "./analytics";
 import { generateReportCsv } from "./report-generation";
 import { EXPORT_LINK_SECONDS, logExportDownload, logReportEvent } from "./report-export-policy";
 import { parseStoredFilters, validateFilters } from "./report-filters";
-import { computeNextRunAt, getReportDefinition, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
+import { computeNextRunAt, getReportDefinition, reportFileName, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
@@ -83,7 +83,7 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
 
   const { data: report } = await ctx.supabase
     .from("saved_reports")
-    .select("id, report_type, range_days, filters")
+    .select("id, name, report_type, range_days, filters")
     .eq("id", reportId)
     .eq("owner_id", ctx.user.id)
     .maybeSingle();
@@ -109,7 +109,9 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
     .single();
   if (error || !exportRow) return { ok: false, error: "We could not record that export. Please try again." };
 
-  const url = await supabaseStorage.createSignedUrl(REPORT_EXPORT_BUCKET, path, EXPORT_LINK_SECONDS);
+  const url = await supabaseStorage.createSignedUrl(
+    REPORT_EXPORT_BUCKET, path, EXPORT_LINK_SECONDS, reportFileName(report.name as string, new Date()),
+  );
   await logReportEvent({
     action: "report.run",
     actorId: ctx.user.id,
@@ -130,24 +132,30 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
   return { ok: true, url };
 }
 
+type SavedRef = { name: string; report_type: string };
+
 /** A fresh short-lived download link for a past export. */
 export async function getExportDownloadUrlAction(exportId: string): Promise<RunReportResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
   const { data } = await ctx.supabase
     .from("report_exports")
-    .select("storage_path, saved_report_id, row_count, saved_reports!inner(owner_id, report_type)")
+    .select("storage_path, saved_report_id, row_count, created_at, saved_reports!inner(owner_id, name, report_type)")
     .eq("id", exportId)
     .eq("saved_reports.owner_id", ctx.user.id)
     .maybeSingle();
   if (!data) return { ok: false, error: "That export is not available." };
-  const url = await supabaseStorage.createSignedUrl(REPORT_EXPORT_BUCKET, data.storage_path as string, EXPORT_LINK_SECONDS);
-  const saved = data.saved_reports as unknown as { report_type: string } | { report_type: string }[];
+  const saved = data.saved_reports as unknown as SavedRef | SavedRef[];
+  const report = Array.isArray(saved) ? saved[0] : saved;
+  const url = await supabaseStorage.createSignedUrl(
+    REPORT_EXPORT_BUCKET, data.storage_path as string, EXPORT_LINK_SECONDS,
+    reportFileName(report.name, new Date(data.created_at as string)),
+  );
   await logExportDownload({
     actorId: ctx.user.id,
     reportId: data.saved_report_id as string,
     exportId,
-    reportType: (Array.isArray(saved) ? saved[0] : saved).report_type,
+    reportType: report.report_type,
     rowCount: data.row_count as number,
   });
   return { ok: true, url };

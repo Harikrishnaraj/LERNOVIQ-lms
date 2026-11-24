@@ -20,6 +20,9 @@ describe("startPosition", () => {
   it("restarts when the learner had essentially finished", () => {
     expect(startPosition(97, 100)).toBe(0);
   });
+  it("restarts when the video was watched to the end (the ended position is kept for analytics)", () => {
+    expect(startPosition(100, 100)).toBe(0);
+  });
   it("trusts the saved position when duration is unknown", () => {
     expect(startPosition(30, NaN)).toBe(30);
   });

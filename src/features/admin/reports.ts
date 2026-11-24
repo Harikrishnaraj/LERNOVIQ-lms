@@ -175,6 +175,17 @@ export function buildCsv(header: string[], rows: (string | number | null)[][]): 
   return [header.join(","), ...rows.map((r) => r.map((c) => escapeCsv(safeCell(c))).join(","))].join("\n");
 }
 
+/** Download filename for a saved report's export: "<report-name-slug>-<YYYY-MM-DD>.csv". */
+export function reportFileName(reportName: string, when: Date): string {
+  const slug = reportName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/, "");
+  return `${slug || "report"}-${when.toISOString().slice(0, 10)}.csv`;
+}
+
 /** CSV of the daily analytics points behind a saved report (matches what /admin/analytics shows). */
 export function buildReportCsv(points: DailyPoint[]): string {
   const header = "day,enrollments,completions,signups";
