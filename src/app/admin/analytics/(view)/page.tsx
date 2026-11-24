@@ -37,10 +37,20 @@ export default async function AdminAnalyticsPage({
   }
 
   const [courseRows, orgRows] = await Promise.all([
-    supabase.from("course_versions").select("course_id, title").eq("status", "published").order("title").limit(500),
+    // One option per course, titled by its current published version (older published versions are not listed).
+    supabase
+      .from("courses")
+      .select("id, published:course_versions!courses_published_version_fk(title)")
+      .not("published_version_id", "is", null)
+      .limit(500),
     supabase.from("organizations").select("id, name").order("name").limit(500),
   ]);
-  const courseOptions = (courseRows.data ?? []).map((c) => ({ id: c.course_id as string, label: c.title as string }));
+  const courseOptions = (courseRows.data ?? [])
+    .map((c) => {
+      const v = c.published as unknown as { title: string } | { title: string }[] | null;
+      return { id: c.id as string, label: (Array.isArray(v) ? v[0]?.title : v?.title) ?? "" };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
   const organizationOptions = (orgRows.data ?? []).map((o) => ({ id: o.id as string, label: o.name as string }));
 
   const [points, top, savedReports] = await Promise.all([

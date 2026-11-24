@@ -11,8 +11,8 @@ export interface StorageAdapter {
   remove(bucket: string, paths: string[]): Promise<void>;
   /** One-time token for the browser to upload straight to storage (bypasses the Next server). */
   createSignedUpload(bucket: string, path: string): Promise<{ path: string; token: string }>;
-  /** Short-lived download URL for a private object. */
-  createSignedUrl(bucket: string, path: string, expiresInSeconds: number): Promise<string>;
+  /** Short-lived download URL for a private object; `downloadName` makes the browser save it under that name. */
+  createSignedUrl(bucket: string, path: string, expiresInSeconds: number, downloadName?: string): Promise<string>;
   /** Whether an object exists at `path` (used to verify a completed direct upload). */
   exists(bucket: string, path: string): Promise<boolean>;
   /** Copies an object, optionally into a different bucket, without a client round-trip. */
@@ -60,8 +60,10 @@ export const supabaseStorage: StorageAdapter = {
     return { path: data.path, token: data.token };
   },
 
-  async createSignedUrl(bucket, path, expiresInSeconds) {
-    const { data, error } = await createAdminClient().storage.from(bucket).createSignedUrl(path, expiresInSeconds);
+  async createSignedUrl(bucket, path, expiresInSeconds, downloadName) {
+    const { data, error } = await createAdminClient()
+      .storage.from(bucket)
+      .createSignedUrl(path, expiresInSeconds, downloadName ? { download: downloadName } : undefined);
     if (error || !data) throw new Error(`signed url failed: ${error?.message}`);
     return data.signedUrl;
   },

@@ -41,12 +41,9 @@ export function ResumableVideo({
         if (shouldPersist(lastSavedAt.current, Date.now())) persist(e.currentTarget);
       }}
       onPause={(e) => persist(e.currentTarget)}
-      onEnded={(e) => {
-        if (!onSavePosition) return;
-        lastSavedAt.current = Date.now();
-        void onSavePosition(0).catch(() => {});
-        e.currentTarget.currentTime = 0;
-      }}
+      // Keep the end position: analytics read it as watch time, and startPosition() already
+      // restarts a finished video from the beginning on the next visit.
+      onEnded={(e) => persist(e.currentTarget)}
     >
       Your browser does not support video playback.
     </video>
