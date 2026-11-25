@@ -39,6 +39,8 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
   let hardAssessmentId: string;
   let easyAssessmentId: string;
   let resettableAttemptId: string;
+  /** A sixth failing attempt, put back after the reset test deletes one, so the question keeps 5 answers. */
+  let refillAttempt: Record<string, unknown>;
 
   async function user(name: string, role: string, fullName?: string) {
     const u = await createUserWithRole(svc, `${tag}-${name}`, role, fullName ? { fullName } : undefined);
@@ -111,23 +113,25 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
     // Five failing attempts on the hard assessment, from the same enrollment (distinct attempt numbers).
     const failLearner = await user("fail", "learner", `${tag} Fail Learner`);
     const failEnrollmentId = await enroll(failLearner.id);
+    const failingAttempt = (attemptNumber: number) => ({
+      assessment_id: hardAssessmentId,
+      enrollment_id: failEnrollmentId,
+      user_id: failLearner.id,
+      attempt_number: attemptNumber,
+      status: "graded",
+      percent: 20,
+      score: 20,
+      max_score: 100,
+      passed: false,
+      answers: { [hardQ!.id]: hardOptions.wrong },
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+    });
+    refillAttempt = failingAttempt(6);
     for (let i = 1; i <= 5; i++) {
       const { data: att } = await svc
         .from("assessment_attempts")
-        .insert({
-          assessment_id: hardAssessmentId,
-          enrollment_id: failEnrollmentId,
-          user_id: failLearner.id,
-          attempt_number: i,
-          status: "graded",
-          percent: 20,
-          score: 20,
-          max_score: 100,
-          passed: false,
-          answers: { [hardQ!.id]: hardOptions.wrong },
-          started_at: new Date().toISOString(),
-          submitted_at: new Date().toISOString(),
-        })
+        .insert(failingAttempt(i))
         .select("id")
         .single();
       if (i === 1) resettableAttemptId = att!.id;
@@ -249,6 +253,9 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
       .single();
     if (error) throw error;
     await svc.from("courses").update({ published_version_id: v2.id }).eq("id", course.courseId);
+    // The reset test deleted one of the five failing attempts; flags need at least 5 answers.
+    const { error: refillError } = await svc.from("assessment_attempts").insert({ ...refillAttempt, started_at: new Date().toISOString(), submitted_at: new Date().toISOString() });
+    if (refillError) throw refillError;
 
     const rows = await getAdminQuestionAnalytics(admin.client, course.courseId);
     const hardQ = rows.find((r) => r.assessmentId === hardAssessmentId)!;
