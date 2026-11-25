@@ -25,7 +25,7 @@ export function TrendChart({ points }: { points: DailyPoint[] }) {
               <title>{`${p.day}: ${p.enrollments} enrollments`}</title>
             </rect>
             <rect x={i * w + w * 0.5} y={40 - comp[i] * 0.38} width={w * 0.4} height={comp[i] * 0.38} className="fill-success">
-              <title>{`${p.day}: ${p.completions} completions`}</title>
+              <title>{`${p.day}: ${p.completions} courses completed (any enrollment)`}</title>
             </rect>
           </g>
         ))}
@@ -35,7 +35,7 @@ export function TrendChart({ points }: { points: DailyPoint[] }) {
           <span className="size-3 rounded-sm bg-primary" aria-hidden="true" /> Enrollments
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-success" aria-hidden="true" /> Completions
+          <span className="size-3 rounded-sm bg-success" aria-hidden="true" /> Courses completed that day
         </span>
         <span className="ml-auto">
           {first} to {last}
@@ -50,7 +50,7 @@ export function TrendChart({ points }: { points: DailyPoint[] }) {
               <tr>
                 <th scope="col" className="p-2">Day</th>
                 <th scope="col" className="p-2">Enrollments</th>
-                <th scope="col" className="p-2">Completions</th>
+                <th scope="col" className="p-2">Courses completed that day</th>
                 <th scope="col" className="p-2">Sign-ups</th>
               </tr>
             </thead>

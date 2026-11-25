@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { dueDateToTimestamp } from "@/features/admin/assigned-learning";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
 
 const hasLiveProject = Boolean(
@@ -102,5 +103,17 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
 
     const mineA = (await memberA.client.rpc("my_assigned_learning")).data as unknown[];
     expect(mineA).toHaveLength(1); // still just the org-wide assignment.
+  });
+
+  it("an assignment due today is not overdue until the day is over (report audit C10, C40)", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const dueAt = dueDateToTimestamp(today);
+    const created = await orgAdmin.client.from("assigned_learning").insert({ organization_id: orgId, scope: "user", user_id: memberB.id, content_type: "course", course_id: courseId, due_at: dueAt }).select("id").single();
+    expect(created.error).toBeNull();
+
+    const mineB = (await memberB.client.rpc("my_assigned_learning")).data as { id: string; due_at: string; is_overdue: boolean }[];
+    const dueToday = mineB.find((a) => a.id === created.data!.id)!;
+    expect(new Date(dueToday.due_at).toISOString()).toBe(`${today}T23:59:59.999Z`);
+    expect(dueToday.is_overdue).toBe(false);
   });
 });

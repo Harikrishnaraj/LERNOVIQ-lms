@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  difficultyLabel,
   escapeCsv,
   exportToCsv,
   formatCurrency,
   formatDuration,
+  instructorExportUrl,
   parseAnalyticsRange,
   parseCourseFilter,
   scaleBars,
@@ -73,7 +75,7 @@ describe("instructor analytics feature", () => {
         { day: "2026-09-21", enrollments: 0, completions: 0, activeLearners: 0, revenueCents: 0 },
       ];
       const breakdown: InstructorCourseBreakdown[] = [];
-      const summary = summarizeInstructorAnalytics(points, breakdown);
+      const summary = summarizeInstructorAnalytics(points, breakdown, 0);
 
       expect(summary.totalEnrollments).toBe(0);
       expect(summary.totalCompletions).toBe(0);
@@ -110,14 +112,61 @@ describe("instructor analytics feature", () => {
           revenueCents: 4000,
         },
       ];
-      const summary = summarizeInstructorAnalytics(points, breakdown);
+      // 6 distinct learners overall: some are active in both courses (4 + 3 = 7 per-course).
+      const summary = summarizeInstructorAnalytics(points, breakdown, 6);
 
       expect(summary.totalEnrollments).toBe(5);
       expect(summary.totalCompletions).toBe(3);
       expect(summary.completionRate).toBe(60); // 3/5 = 60%
       expect(summary.totalRevenueCents).toBe(10000);
       expect(summary.avgRevenuePerLearnerCents).toBe(2000);
-      expect(summary.activeLearners).toBeGreaterThanOrEqual(5);
+      expect(summary.activeLearners).toBe(6);
+    });
+
+    it("takes the completion cohort from the breakdown, not the daily completion events", () => {
+      // 1 new enrollment in range; 4 learners who enrolled earlier also completed in range.
+      const points: InstructorDailyPoint[] = [
+        { day: "2026-09-20", enrollments: 1, completions: 5, activeLearners: 5, revenueCents: 0 },
+      ];
+      const breakdown: InstructorCourseBreakdown[] = [
+        { courseId: "c1", title: "C1", slug: "c1", enrollments: 1, completions: 1, completionRate: 100, activeLearners: 5, revenueCents: 0 },
+      ];
+      const summary = summarizeInstructorAnalytics(points, breakdown, 5);
+      expect(summary.totalCompletions).toBe(1);
+      expect(summary.completionRate).toBe(100);
+    });
+
+    it("never reports more than 100% because completions are a subset of the enrollments", () => {
+      const breakdown: InstructorCourseBreakdown[] = [
+        { courseId: "c1", title: "C1", slug: "c1", enrollments: 3, completions: 3, completionRate: 100, activeLearners: 0, revenueCents: 0 },
+        { courseId: "c2", title: "C2", slug: "c2", enrollments: 4, completions: 1, completionRate: 25, activeLearners: 0, revenueCents: 0 },
+      ];
+      expect(summarizeInstructorAnalytics([], breakdown, 0).completionRate).toBe(57); // 4/7
+    });
+
+    it("uses the distinct active-learner count as given, not a sum across courses", () => {
+      const breakdown: InstructorCourseBreakdown[] = [
+        { courseId: "c1", title: "C1", slug: "c1", enrollments: 0, completions: 0, completionRate: 0, activeLearners: 1, revenueCents: 0 },
+        { courseId: "c2", title: "C2", slug: "c2", enrollments: 0, completions: 0, completionRate: 0, activeLearners: 1, revenueCents: 0 },
+      ];
+      // The same learner studied both courses.
+      expect(summarizeInstructorAnalytics([], breakdown, 1).activeLearners).toBe(1);
+    });
+  });
+
+  describe("question difficulty", () => {
+    it("labels an unrated question as not enough data", () => {
+      expect(difficultyLabel(null)).toBe("Not enough data");
+      expect(difficultyLabel("hard")).toBe("hard");
+    });
+  });
+
+  describe("instructorExportUrl", () => {
+    it("carries the selected range and course", () => {
+      expect(instructorExportUrl(90, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")).toBe(
+        "/instructor/analytics/export?range=90&course=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+      );
+      expect(instructorExportUrl(7, null)).toBe("/instructor/analytics/export?range=7");
     });
   });
 
@@ -174,7 +223,7 @@ describe("instructor analytics feature", () => {
           progressPercent: 45,
           completedLessons: 4,
           totalLessons: 10,
-          watchTimeMinutes: 72,
+          learningTimeMinutes: 72,
           assessmentsPassed: 1,
           lastActivityAt: "2026-09-20T12:00:00Z",
         },
@@ -183,6 +232,8 @@ describe("instructor analytics feature", () => {
       expect(csv).toContain("Learner Name,Course Title,Status");
       expect(csv).toContain('Jane Doe,"AI, ML & Deep Learning",active');
       expect(csv).toContain("45,4,10,72,1");
+      expect(csv).toContain("Learning Time (min),Assessments Passed");
+      expect(csv).not.toContain("Watch Time");
     });
   });
 });

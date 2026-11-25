@@ -15,7 +15,7 @@ export interface PathOption {
   title: string;
 }
 
-const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }); // due dates are end-of-day UTC
 
 function AssignmentRow({ item, revalidateHref }: { item: OrgAssignedLearning; revalidateHref: string }) {
   const router = useRouter();

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   exportToCsv,
   getInstructorExportRows,
+  parseAnalyticsRange,
   parseCourseFilter,
 } from "@/features/instructor/analytics";
 import { log } from "@/lib/log";
@@ -23,14 +24,15 @@ export async function GET(request: NextRequest) {
 
   const courseParam = request.nextUrl.searchParams.get("course");
   const courseId = parseCourseFilter(courseParam);
+  const range = parseAnalyticsRange(request.nextUrl.searchParams.get("range") ?? undefined);
 
   try {
-    const rows = await getInstructorExportRows(supabase, courseId);
+    const rows = await getInstructorExportRows(supabase, range, courseId);
     const csvData = exportToCsv(rows);
     const today = new Date().toISOString().slice(0, 10);
     const filename = courseId
-      ? `analytics-course-${courseId}-${today}.csv`
-      : `analytics-all-courses-${today}.csv`;
+      ? `analytics-course-${courseId}-last-${range}-days-${today}.csv`
+      : `analytics-all-courses-last-${range}-days-${today}.csv`;
 
     return new NextResponse(csvData, {
       headers: {

@@ -218,7 +218,8 @@ test.describe("instructor analytics", () => {
     // Verify question difficulty
     await expect(page.getByText("Question Difficulty & Quality")).toBeVisible();
     await expect(page.getByText(`${tag} Question: What is 2 + 2?`)).toBeVisible();
-    await expect(page.getByText("easy").first()).toBeVisible();
+    // One answer is below the 5-answer minimum, so the question is not rated (report audit C35).
+    await expect(page.getByText("Not enough data").first()).toBeVisible();
   });
 
   test("csv export downloads scoped course analytics (T-108, TEST_PLAN §12)", async ({

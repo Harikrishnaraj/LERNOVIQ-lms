@@ -47,21 +47,37 @@ export async function getTopCourses(supabase: SupabaseClient, days: number, limi
 
 export interface Totals {
   enrollments: number;
+  /** Of those enrollments, how many have completed. */
   completions: number;
   signups: number;
-  /** Completions as a share of enrollments in the range, 0-100, or null with no enrollments. */
+  /** completions / enrollments as 0-100, or null with no enrollments. Cannot exceed 100. */
   completionRate: number | null;
 }
 
-export function summarize(points: DailyPoint[]): Totals {
-  const sum = (k: "enrollments" | "completions" | "signups") => points.reduce((n, p) => n + p[k], 0);
-  const enrollments = sum("enrollments");
-  const completions = sum("completions");
+/** Non-cancelled enrollments that started in the range, and how many of them have completed. */
+export interface CompletionCohort {
+  enrollments: number;
+  completed: number;
+}
+
+/** Needs analytics.read. */
+export async function getCompletionCohort(supabase: SupabaseClient, days: number): Promise<CompletionCohort> {
+  const { data, error } = await supabase.rpc("admin_analytics_cohort", { p_days: days });
+  if (error) throw new Error(`admin_analytics_cohort failed: ${error.message}`);
+  const row = ((data ?? []) as { enrollments: number; completed: number }[])[0];
+  return { enrollments: row?.enrollments ?? 0, completed: row?.completed ?? 0 };
+}
+
+/**
+ * KPI totals. Enrollments, completions and the rate describe one cohort (enrollments that started
+ * in the range), so the rate cannot exceed 100%. The daily chart still shows completion events.
+ */
+export function summarize(points: DailyPoint[], cohort: CompletionCohort): Totals {
   return {
-    enrollments,
-    completions,
-    signups: sum("signups"),
-    completionRate: enrollments === 0 ? null : Math.min(100, Math.round((completions / enrollments) * 100)),
+    enrollments: cohort.enrollments,
+    completions: cohort.completed,
+    signups: points.reduce((n, p) => n + p.signups, 0),
+    completionRate: cohort.enrollments === 0 ? null : Math.round((cohort.completed / cohort.enrollments) * 100),
   };
 }
 
