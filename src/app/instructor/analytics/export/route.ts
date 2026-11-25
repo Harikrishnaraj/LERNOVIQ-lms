@@ -7,6 +7,7 @@ import {
 } from "@/features/instructor/analytics";
 import { log } from "@/lib/log";
 import { createClient } from "@/lib/supabase/server";
+import { recordAudit } from "@/services/audit";
 import { clientIp, rateLimit } from "@/services/rate-limit";
 
 export async function GET(request: NextRequest) {
@@ -29,6 +30,16 @@ export async function GET(request: NextRequest) {
   try {
     const rows = await getInstructorExportRows(supabase, range, courseId);
     const csvData = exportToCsv(rows);
+    // Learner roster leaving the platform (report audit C21). recordAudit never throws, so a failed
+    // audit write does not block the download.
+    await recordAudit({
+      actorId: user.id,
+      actorEmail: user.email ?? null,
+      action: "instructor.analytics_exported",
+      resourceType: "course",
+      resourceId: courseId,
+      metadata: { courseId: courseId ?? "all", rangeDays: range, exported: rows.length },
+    });
     const today = new Date().toISOString().slice(0, 10);
     const filename = courseId
       ? `analytics-course-${courseId}-last-${range}-days-${today}.csv`

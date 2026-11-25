@@ -86,6 +86,19 @@ describe("scheduled reports cron", () => {
     expect(removed[0][0]).toMatch(/^scheduled\/r2\//);
   });
 
+  it("refuses a report whose stored filters are no longer valid, without widening it (report audit C19)", async () => {
+    generate.mockResolvedValue({ ok: true, csv: "a\n1", rowCount: 1, truncated: false });
+    due[1] = { ...due[1], filters: { userId: "not-a-uuid" } };
+    try {
+      const body = await (await GET(request())).json();
+      expect(body).toMatchObject({ processed: 2, failed: 1 });
+      expect(advanced).toEqual(["r1", "r3"]);
+      expect(generate).toHaveBeenCalledTimes(2);
+    } finally {
+      due[1] = { ...due[1], filters: {} };
+    }
+  });
+
   it("does not advance a report that failed to generate", async () => {
     generate.mockResolvedValueOnce({ ok: false, error: "nope" }).mockResolvedValue({ ok: true, csv: "", rowCount: 0, truncated: false });
     const body = await (await GET(request())).json();

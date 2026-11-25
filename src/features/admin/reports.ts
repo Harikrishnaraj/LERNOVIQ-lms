@@ -69,6 +69,8 @@ export interface SavedReport {
   reportLabel: string;
   rangeDays: Range;
   filters: ReportFilters;
+  /** Stored filters no longer pass validation; runs of this report fail until it is recreated. */
+  filtersInvalid: boolean;
   schedule: ReportSchedule;
   nextRunAt: string | null;
   createdAt: string;
@@ -108,13 +110,16 @@ export async function getSavedReports(supabase: SupabaseClient): Promise<SavedRe
   if (error) throw new Error(`saved_reports failed: ${error.message}`);
   return ((data ?? []) as Row[]).map((r) => {
     const def = getReportDefinition(r.report_type) ?? getReportDefinition(DEFAULT_REPORT_TYPE)!;
+    const filters = parseStoredFilters(def.type, r.filters);
     return {
       id: r.id,
       name: r.name,
       reportType: def.type,
       reportLabel: def.label,
       rangeDays: r.range_days,
-      filters: parseStoredFilters(def.type, r.filters),
+      // Display only: generation refuses invalid stored filters (report-actions, cron), so flag them.
+      filters: filters ?? {},
+      filtersInvalid: filters === null,
       schedule: r.schedule,
       nextRunAt: r.next_run_at,
       createdAt: r.created_at,
@@ -182,12 +187,12 @@ export function computeNextRunAt(schedule: ReportSchedule, from: Date): Date | n
 function escapeCsv(value: string | number | null): string {
   if (value === null) return "";
   const str = String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replaceAll('"', '""')}"`;
+  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) return `"${str.replaceAll('"', '""')}"`;
   return str;
 }
 
 /** A text cell that starts with a formula character would run as a formula in Excel; prefix it so it stays text. */
-function safeCell(value: string | number | null): string | number | null {
+export function safeCell(value: string | number | null): string | number | null {
   return typeof value === "string" && /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 

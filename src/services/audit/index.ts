@@ -20,6 +20,7 @@ export const AUDIT_ACTIONS = [
   "user.created",
   "instructor.application_approved",
   "instructor.application_rejected",
+  "instructor.analytics_exported",
   "role_permission_changed",
   "category.created",
   "category.updated",

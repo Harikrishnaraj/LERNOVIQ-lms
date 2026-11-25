@@ -140,6 +140,25 @@ describe.skipIf(!hasLiveProject)("admin saved reports (T-140, live Supabase)", (
     expect(await getExportDownloadUrlAction(found.recentExports[0].id)).toEqual({ ok: false, error: "That export is not available." });
   });
 
+  it("only lets an owner record an export under their own folder, stamped now (report audit C17)", async () => {
+    const found = (await getSavedReports(admin.client)).find((r) => r.name === `${tag} Weekly`)!;
+    const insert = (row: Record<string, unknown>) =>
+      admin.client.from("report_exports").insert({ saved_report_id: found.id, row_count: 0, triggered_by: "manual", ...row });
+
+    const foreign = await insert({ storage_path: `scheduled/${found.id}/1.csv` });
+    expect(foreign.error).not.toBeNull();
+    const otherUser = await insert({ storage_path: `00000000-0000-0000-0000-000000000000/${found.id}/1.csv` });
+    expect(otherUser.error).not.toBeNull();
+    const backdated = await insert({ storage_path: `${admin.id}/${found.id}/1.csv`, generated_at: "2000-01-01T00:00:00Z" });
+    expect(backdated.error).not.toBeNull();
+    const scheduled = await insert({ storage_path: `${admin.id}/${found.id}/1.csv`, triggered_by: "scheduled" });
+    expect(scheduled.error).not.toBeNull();
+
+    const own = await insert({ storage_path: `${admin.id}/${found.id}/c17.csv` });
+    expect(own.error).toBeNull();
+    await svc.from("report_exports").delete().eq("storage_path", `${admin.id}/${found.id}/c17.csv`);
+  });
+
   it("does not let one admin read another admin's saved reports", async () => {
     const other = await user("other", "admin");
     const reports = await getSavedReports(other.client);

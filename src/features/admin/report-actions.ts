@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import type { Range } from "./analytics";
 import { generateReportCsv } from "./report-generation";
 import { EXPORT_LINK_SECONDS, logExportDownload, logReportEvent } from "./report-export-policy";
-import { parseStoredFilters, validateFilters } from "./report-filters";
+import { INVALID_STORED_FILTERS_ERROR, parseStoredFilters, validateFilters } from "./report-filters";
 import { computeNextRunAt, getReportDefinition, reportFileName, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
 import { log } from "@/lib/log";
+import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
 
 export type ReportActionResult = { ok: true } | { ok: false; error: string };
@@ -82,6 +83,7 @@ export async function deleteSavedReportAction(reportId: string): Promise<ReportA
 export async function runReportNowAction(reportId: string): Promise<RunReportResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
+  if (!(await rateLimit("report-run", await clientIp(), ctx.user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
 
   const { data: report } = await ctx.supabase
     .from("saved_reports")
@@ -90,10 +92,11 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
     .eq("owner_id", ctx.user.id)
     .maybeSingle();
   if (!report) return { ok: false, error: "That report is not available." };
+  const filters = parseStoredFilters(report.report_type as ReportType, report.filters);
+  if (!filters) return { ok: false, error: INVALID_STORED_FILTERS_ERROR };
 
   const generated = await generateReportCsv(ctx.supabase, {
-    type: report.report_type as ReportType, rangeDays: report.range_days as Range,
-    filters: parseStoredFilters(report.report_type as ReportType, report.filters),
+    type: report.report_type as ReportType, rangeDays: report.range_days as Range, filters,
   });
   if (!generated.ok) return generated;
   const path = `${ctx.user.id}/${reportId}/${Date.now()}.csv`;
@@ -151,6 +154,7 @@ type SavedRef = { name: string; report_type: string };
 export async function getExportDownloadUrlAction(exportId: string): Promise<RunReportResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
+  if (!(await rateLimit("report-run", await clientIp(), ctx.user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
   const { data, error } = await ctx.supabase
     .from("report_exports")
     .select("storage_path, saved_report_id, row_count, generated_at, saved_reports!inner(owner_id, name, report_type)")

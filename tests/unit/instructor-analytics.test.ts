@@ -212,6 +212,15 @@ describe("instructor analytics feature", () => {
       expect(escapeCsv(undefined)).toBe("");
     });
 
+    it("neutralises spreadsheet formulas in text cells (report audit C16)", () => {
+      expect(escapeCsv("=HYPERLINK(1)")).toBe("'=HYPERLINK(1)");
+      expect(escapeCsv("+1")).toBe("'+1");
+      expect(escapeCsv("-x")).toBe("'-x");
+      expect(escapeCsv("@SUM(A1)")).toBe("'@SUM(A1)");
+      expect(escapeCsv('=A1,"x"')).toBe(`"'=A1,""x"""`);
+      expect(escapeCsv(-5)).toBe("-5");
+    });
+
     it("formats rows to CSV RFC 4180 format", () => {
       const csv = exportToCsv([
         {

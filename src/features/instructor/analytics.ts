@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { rpcAllRows } from "@/features/admin/report-rpc";
+import { safeCell } from "@/features/admin/reports";
 
 export const ANALYTICS_RANGES = [7, 30, 90, 365] as const;
 export type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
@@ -185,7 +186,8 @@ export function scaleBars(series: number[][]): number[][] {
 
 export function escapeCsv(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
+  // Learner names are user-controlled: neutralise leading = + - @ tab CR so Excel keeps them as text.
+  const str = String(safeCell(value));
   if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
     return `"${str.replaceAll('"', '""')}"`;
   }

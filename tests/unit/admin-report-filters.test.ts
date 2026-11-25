@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateReportCsv } from "@/features/admin/report-generation";
 import { describeFilters, matchRows, parseStoredFilters, statusOptions, supportedFilters, validateFilters } from "@/features/admin/report-filters";
-import { REPORT_CATALOGUE } from "@/features/admin/reports";
+import { REPORT_CATALOGUE, getSavedReports } from "@/features/admin/reports";
 
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
@@ -32,8 +32,16 @@ describe("validateFilters", () => {
     expect(validateFilters("idle_users", { userId: 5 }).ok).toBe(false);
   });
 
-  it("falls back to no filters for unreadable stored data", () => {
-    expect(parseStoredFilters("idle_users", { userId: "bad" })).toEqual({});
+  it("refuses unreadable stored data instead of dropping the filters (report audit C19)", () => {
+    expect(parseStoredFilters("idle_users", { userId: "bad" })).toBeNull();
+    expect(parseStoredFilters("idle_users", { drop: "x" })).toBeNull();
+    expect(parseStoredFilters("idle_users", "nope")).toBeNull();
+  });
+
+  it("keeps valid stored filters", () => {
+    expect(parseStoredFilters("idle_users", { userId: A })).toEqual({ userId: A });
+    expect(parseStoredFilters("idle_users", {})).toEqual({});
+    expect(parseStoredFilters("idle_users", null)).toEqual({});
   });
 });
 
@@ -91,5 +99,20 @@ describe("generateReportCsv with filters", () => {
   it("returns an empty report when nothing matches", async () => {
     const r = await generateReportCsv(client(), { type: "individual_user_progress", rangeDays: 30, filters: { status: "cancelled" } });
     expect(r).toMatchObject({ ok: true, rowCount: 0 });
+  });
+});
+
+describe("getSavedReports", () => {
+  it("flags a saved report whose stored filters no longer validate", async () => {
+    const base = { name: "R", report_type: "individual_user_progress", range_days: 30, schedule: "none", next_run_at: null, created_at: "2026-11-01T00:00:00Z", report_exports: [] };
+    const rows = [
+      { ...base, id: "ok", filters: { courseId: A } },
+      { ...base, id: "bad", filters: { userId: "not-a-uuid" } },
+    ];
+    const chain = { select: () => chain, order: () => chain, limit: async () => ({ data: rows, error: null }) };
+    const supabase = { from: () => chain } as unknown as SupabaseClient;
+    const [ok, bad] = await getSavedReports(supabase);
+    expect(ok).toMatchObject({ filters: { courseId: A }, filtersInvalid: false });
+    expect(bad).toMatchObject({ filters: {}, filtersInvalid: true });
   });
 });

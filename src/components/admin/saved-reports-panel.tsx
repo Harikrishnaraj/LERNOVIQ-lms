@@ -69,6 +69,9 @@ function ReportRow({ report }: { report: SavedReport }) {
             {report.reportLabel} &middot; Last {report.rangeDays} days &middot; {describeFilters(report.filters) && `${describeFilters(report.filters)} · `} {report.schedule === "none" ? "Manual only" : `Auto-runs ${report.schedule}`}
             {report.nextRunAt && ` · next ${dateFormat.format(new Date(report.nextRunAt))}`}
           </p>
+          {report.filtersInvalid && (
+            <p className="text-xs text-warning-text">This report&apos;s filters are no longer valid, so it can&apos;t run. Delete it and save it again.</p>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <Button type="button" size="sm" variant="secondary" onClick={() => act("run", () => runReportNowAction(report.id), true)} disabled={busy !== null}>

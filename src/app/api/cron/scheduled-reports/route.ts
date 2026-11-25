@@ -59,9 +59,14 @@ type DueReport = { id: string; report_type: string; range_days: number; filters:
 
 /** Generates, stores and records one due report. Returns false (leaving next_run_at alone) when it could not. */
 async function runScheduledReport(admin: SupabaseClient, report: DueReport, now: Date): Promise<boolean> {
+  const filters = parseStoredFilters(report.report_type as ReportType, report.filters);
+  if (!filters) {
+    // Fail closed: never widen a filtered report to everyone (report audit C19).
+    log.error("report.scheduled_invalid_filters", { reportId: report.id });
+    return false;
+  }
   const generated = await generateReportCsv(admin, {
-    type: report.report_type as ReportType, rangeDays: report.range_days as Range,
-    filters: parseStoredFilters(report.report_type as ReportType, report.filters),
+    type: report.report_type as ReportType, rangeDays: report.range_days as Range, filters,
   });
   if (!generated.ok) return false;
   const path = `scheduled/${report.id}/${Date.now()}.csv`;

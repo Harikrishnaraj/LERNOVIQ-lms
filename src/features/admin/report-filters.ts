@@ -78,10 +78,15 @@ export function validateFilters(type: ReportType, raw: unknown): ParsedFilters {
   return { ok: true, value };
 }
 
-/** Reads filters stored in saved_reports.filters; an unreadable value means no filters. */
-export function parseStoredFilters(type: ReportType, stored: unknown): ReportFilters {
+export const INVALID_STORED_FILTERS_ERROR = "This report's filters are no longer valid. Delete it and save it again.";
+
+/**
+ * Reads filters stored in saved_reports.filters. Returns null when they are unreadable: callers that
+ * generate a report must refuse to run rather than run it unfiltered (report audit C19).
+ */
+export function parseStoredFilters(type: ReportType, stored: unknown): ReportFilters | null {
   const parsed = validateFilters(type, stored);
-  return parsed.ok ? parsed.value : {};
+  return parsed.ok ? parsed.value : null;
 }
 
 /** Keeps rows where every set field of `want` equals the row's value (rows lacking the field are dropped). */
