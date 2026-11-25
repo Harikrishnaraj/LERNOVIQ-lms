@@ -147,7 +147,8 @@ test.describe("instructor analytics", () => {
 
     // Verify KPI cards
     const kpiCards = page.getByLabel("Key performance indicators");
-    await expect(kpiCards.getByText("Enrollments")).toBeVisible();
+    // exact: the completion caption also says "new enrollments".
+    await expect(kpiCards.getByText("Enrollments", { exact: true })).toBeVisible();
     await expect(kpiCards.getByText("Completion Rate")).toBeVisible();
     await expect(kpiCards.getByText("Active Learners")).toBeVisible();
     // Revenue belongs to the platform, not the instructor (ADR-037).
