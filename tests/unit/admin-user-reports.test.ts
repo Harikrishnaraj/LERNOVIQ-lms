@@ -70,7 +70,8 @@ describe("user report CSVs", () => {
 });
 
 function fakeRpc(data: unknown, error: { message: string } | null = null) {
-  const rpc = vi.fn(async () => ({ data, error }));
+// Report RPCs are read in pages: rpc(fn, args).range(from, to).
+  const rpc = vi.fn(() => ({ range: async () => ({ data, error }) }));
   return { client: { rpc } as unknown as SupabaseClient, rpc };
 }
 

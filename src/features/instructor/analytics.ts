@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { rpcAllRows } from "@/features/admin/report-rpc";
 
 export const ANALYTICS_RANGES = [7, 30, 90, 365] as const;
 export type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
@@ -379,11 +380,8 @@ export async function getInstructorExportRows(
   supabase: SupabaseClient,
   courseId?: string | null,
 ): Promise<InstructorExportRow[]> {
-  const { data, error } = await supabase.rpc("instructor_analytics_export_rows", {
-    p_course_id: courseId ?? null,
-  });
-  if (error) throw new Error(`instructor_analytics_export_rows failed: ${error.message}`);
-  return ((data ?? []) as {
+  // Paged: a single call stops at PostgREST's 1000-row cap.
+  const data = await rpcAllRows<{
     learner_name: string;
     course_title: string;
     status: string;
@@ -395,7 +393,8 @@ export async function getInstructorExportRows(
     watch_time_minutes: number;
     assessments_passed: number;
     last_activity_at: string | null;
-  }[]).map((r) => ({
+  }>(supabase, "instructor_analytics_export_rows", { p_course_id: courseId ?? null });
+  return data.map((r) => ({
     learnerName: r.learner_name,
     courseTitle: r.course_title,
     status: r.status,

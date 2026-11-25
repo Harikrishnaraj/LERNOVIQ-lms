@@ -72,7 +72,19 @@ export interface SavedReport {
   schedule: ReportSchedule;
   nextRunAt: string | null;
   createdAt: string;
+  /** The newest exports (manual and scheduled), newest first. Files are kept for EXPORT_RETENTION_DAYS. */
+  recentExports: ExportSummary[];
 }
+
+export interface ExportSummary {
+  id: string;
+  generatedAt: string;
+  rowCount: number;
+  triggeredBy: "manual" | "scheduled";
+}
+
+/** How many past exports each saved report lists. */
+export const RECENT_EXPORTS = 5;
 
 interface Row {
   id: string;
@@ -83,13 +95,16 @@ interface Row {
   schedule: ReportSchedule;
   next_run_at: string | null;
   created_at: string;
+  report_exports: { id: string; generated_at: string; row_count: number; triggered_by: "manual" | "scheduled" }[] | null;
 }
 
 export async function getSavedReports(supabase: SupabaseClient): Promise<SavedReport[]> {
   const { data, error } = await supabase
     .from("saved_reports")
-    .select("id, name, report_type, range_days, filters, schedule, next_run_at, created_at")
-    .order("created_at", { ascending: false });
+    .select("id, name, report_type, range_days, filters, schedule, next_run_at, created_at, report_exports(id, generated_at, row_count, triggered_by)")
+    .order("created_at", { ascending: false })
+    .order("generated_at", { referencedTable: "report_exports", ascending: false })
+    .limit(RECENT_EXPORTS, { referencedTable: "report_exports" });
   if (error) throw new Error(`saved_reports failed: ${error.message}`);
   return ((data ?? []) as Row[]).map((r) => {
     const def = getReportDefinition(r.report_type) ?? getReportDefinition(DEFAULT_REPORT_TYPE)!;
@@ -103,6 +118,12 @@ export async function getSavedReports(supabase: SupabaseClient): Promise<SavedRe
       schedule: r.schedule,
       nextRunAt: r.next_run_at,
       createdAt: r.created_at,
+      recentExports: (r.report_exports ?? []).map((x) => ({
+        id: x.id,
+        generatedAt: x.generated_at,
+        rowCount: x.row_count,
+        triggeredBy: x.triggered_by,
+      })),
     };
   });
 }

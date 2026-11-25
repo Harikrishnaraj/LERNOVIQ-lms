@@ -68,8 +68,8 @@ describe("generateReportCsv with filters", () => {
   });
 
   function client(members?: string[]) {
-    const rpc = vi.fn(async () => ({ data: [progress(A, A, "active"), progress(B, B, "completed"), progress(B, A, "active")], error: null }));
-    const from = vi.fn(() => ({ select: () => ({ eq: async () => ({ data: (members ?? []).map((user_id) => ({ user_id })), error: null }) }) }));
+    const rpc = vi.fn(() => ({ range: async () => ({ data: [progress(A, A, "active"), progress(B, B, "completed"), progress(B, A, "active")], error: null }) }));
+    const from = vi.fn(() => ({ select: () => ({ eq: () => ({ order: () => ({ range: async () => ({ data: (members ?? []).map((user_id) => ({ user_id })), error: null }) }) }) }) }));
     return { rpc, from } as unknown as SupabaseClient;
   }
 

@@ -6,7 +6,7 @@ let currentClient: SupabaseClient;
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => currentClient }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { createSavedReportAction, deleteSavedReportAction, runReportNowAction } from "@/features/admin/report-actions";
+import { createSavedReportAction, deleteSavedReportAction, getExportDownloadUrlAction, runReportNowAction } from "@/features/admin/report-actions";
 import { getReportExports, getSavedReports } from "@/features/admin/reports";
 import { REPORT_EXPORT_BUCKET } from "@/services/storage";
 
@@ -120,6 +120,24 @@ describe.skipIf(!hasLiveProject)("admin saved reports (T-140, live Supabase)", (
     const { data } = await svc.storage.from(REPORT_EXPORT_BUCKET).download(exportsList[0].storagePath);
     const text = await data!.text();
     expect(text.split("\n")[0]).toBe("day,enrollments,completions,signups");
+  });
+
+  it("lists past exports on the saved report and hands out a download link for one", async () => {
+    currentClient = admin.client;
+    const found = (await getSavedReports(admin.client)).find((r) => r.name === `${tag} Weekly`)!;
+    expect(found.recentExports.length).toBeGreaterThanOrEqual(1);
+    expect(found.recentExports[0]).toMatchObject({ triggeredBy: "manual" });
+
+    const result = await getExportDownloadUrlAction(found.recentExports[0].id);
+    expect(result).toMatchObject({ ok: true });
+    if (result.ok) expect(decodeURIComponent(result.url)).toMatch(/download=[^&]*weekly-\d{4}-\d{2}-\d{2}\.csv/);
+  });
+
+  it("does not hand out another admin's export", async () => {
+    const found = (await getSavedReports(admin.client)).find((r) => r.name === `${tag} Weekly`)!;
+    const other = await user("thief", "admin");
+    currentClient = other.client;
+    expect(await getExportDownloadUrlAction(found.recentExports[0].id)).toEqual({ ok: false, error: "That export is not available." });
   });
 
   it("does not let one admin read another admin's saved reports", async () => {

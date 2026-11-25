@@ -1,16 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { licenceStatus } from "@/features/content-server/rules";
 import { buildCsv } from "./reports";
+import { rpcAllRows as rpcRows } from "./report-rpc";
 
 // T-276 (F-420): consolidated usage and product reports. Each is a security-definer RPC gated on
 // analytics.read (or the service role for the cron), see 20261016200000_usage_reports.sql.
 // "Module" is a lesson; "library" is a content-server licence. No email or learner key is returned.
 
-async function rpcRows<T>(supabase: SupabaseClient, fn: string, args?: Record<string, unknown>): Promise<T[]> {
-  const { data, error } = await supabase.rpc(fn, args);
-  if (error) throw new Error(`${fn} failed: ${error.message}`);
-  return (data ?? []) as T[];
-}
 
 // ------------------------------------------------------------------ module usage
 

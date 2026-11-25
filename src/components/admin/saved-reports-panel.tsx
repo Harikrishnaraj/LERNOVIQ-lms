@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Loader2, Trash2 } from "lucide-react";
-import { createSavedReportAction, deleteSavedReportAction, runReportNowAction } from "@/features/admin/report-actions";
+import { createSavedReportAction, deleteSavedReportAction, getExportDownloadUrlAction, runReportNowAction, type RunReportResult } from "@/features/admin/report-actions";
 import { DEFAULT_REPORT_TYPE, REPORT_CATALOGUE, REPORT_CATEGORIES, type ReportType, type SavedReport } from "@/features/admin/reports";
 import { describeFilters, statusOptions, supportedFilters } from "@/features/admin/report-filters";
 import { Button } from "@/components/ui/button";
@@ -11,37 +11,57 @@ import { Input } from "@/components/ui/input";
 
 const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
 
+/** The signed link answers with Content-Disposition: attachment, so the page stays put while the file downloads.
+ * Navigating (rather than window.open after an await) is not caught by popup blockers. */
+function startDownload(url: string) {
+  window.location.assign(url);
+}
+
 function ReportRow({ report }: { report: SavedReport }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  async function run() {
-    setBusy("run");
+  async function act(key: string, call: () => Promise<RunReportResult>, refresh: boolean) {
+    setBusy(key);
     setError(null);
-    const res = await runReportNowAction(report.id);
-    setBusy(null);
-    if (!res.ok) {
-      setError(res.error);
-      return;
+    setNotice(null);
+    try {
+      const res = await call();
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      if (res.notice) setNotice(res.notice);
+      startDownload(res.url);
+      if (refresh) router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setBusy(null);
     }
-    window.open(res.url, "_blank", "noopener,noreferrer");
   }
 
   async function remove() {
     setBusy("delete");
     setError(null);
-    const res = await deleteSavedReportAction(report.id);
-    setBusy(null);
-    if (!res.ok) {
-      setError(res.error);
-      return;
+    try {
+      const res = await deleteSavedReportAction(report.id);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setBusy(null);
     }
-    router.refresh();
   }
 
   return (
-    <li className="space-y-1 py-3">
+    <li className="space-y-2 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-medium">{report.name}</p>
@@ -51,7 +71,7 @@ function ReportRow({ report }: { report: SavedReport }) {
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button type="button" size="sm" variant="secondary" onClick={run} disabled={busy !== null}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => act("run", () => runReportNowAction(report.id), true)} disabled={busy !== null}>
             {busy === "run" ? <Loader2 className="mr-1.5 size-3.5 animate-spin" aria-hidden="true" /> : <Download className="mr-1.5 size-3.5" aria-hidden="true" />}
             Run now
           </Button>
@@ -66,6 +86,28 @@ function ReportRow({ report }: { report: SavedReport }) {
           </button>
         </div>
       </div>
+      {report.recentExports.length > 0 && (
+        <ul aria-label={`Recent exports of ${report.name}`} className="space-y-1 border-l-2 border-border-subtle pl-3">
+          {report.recentExports.map((x) => (
+            <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-secondary">
+              <span>
+                {dateFormat.format(new Date(x.generatedAt))} UTC &middot; {x.rowCount.toLocaleString("en-US")} {x.rowCount === 1 ? "row" : "rows"} &middot; {x.triggeredBy === "scheduled" ? "Scheduled" : "Manual"}
+              </span>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => act(x.id, () => getExportDownloadUrlAction(x.id), false)}
+                aria-label={`Download the ${report.name} export from ${dateFormat.format(new Date(x.generatedAt))} UTC`}
+                className="inline-flex items-center gap-1 rounded-control px-2 py-1 font-medium text-primary-dark hover:bg-border-subtle disabled:opacity-40"
+              >
+                {busy === x.id ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : <Download className="size-3.5" aria-hidden="true" />}
+                Download
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {notice && <p role="status" className="text-xs text-warning-text">{notice}</p>}
       {error && (
         <p role="alert" className="text-xs text-danger-text">
           {error}

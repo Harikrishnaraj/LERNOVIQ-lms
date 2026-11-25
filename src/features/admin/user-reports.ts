@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { rpcAllRows } from "./report-rpc";
 import { buildCsv } from "./reports";
 
 export interface IdleUserRow {
@@ -19,9 +20,8 @@ interface IdleDbRow {
 
 /** Active users with no login, lesson or assessment activity for at least `days` days. Needs analytics.read. */
 export async function getIdleUsers(supabase: SupabaseClient, days: number): Promise<IdleUserRow[]> {
-  const { data, error } = await supabase.rpc("admin_report_idle_users", { p_days: days });
-  if (error) throw new Error(`admin_report_idle_users failed: ${error.message}`);
-  return ((data ?? []) as IdleDbRow[]).map((r) => ({
+  const data = await rpcAllRows<IdleDbRow>(supabase, "admin_report_idle_users", { p_days: days });
+  return data.map((r) => ({
     userId: r.user_id,
     fullName: r.full_name,
     lastActivityAt: r.last_activity_at,
@@ -73,9 +73,8 @@ interface ProgressDbRow {
 
 /** One row per enrolment with activity in the last `days` days. Needs analytics.read. */
 export async function getUserProgress(supabase: SupabaseClient, days: number): Promise<UserProgressRow[]> {
-  const { data, error } = await supabase.rpc("admin_report_user_progress", { p_days: days });
-  if (error) throw new Error(`admin_report_user_progress failed: ${error.message}`);
-  return ((data ?? []) as ProgressDbRow[]).map((r) => ({
+  const data = await rpcAllRows<ProgressDbRow>(supabase, "admin_report_user_progress", { p_days: days });
+  return data.map((r) => ({
     userId: r.user_id,
     fullName: r.full_name,
     courseId: r.course_id,
@@ -160,9 +159,8 @@ interface DurationDbRow {
 
 /** Time spent per learner per course over the last `days` UTC days, from recorded heartbeats. Needs analytics.read. */
 export async function getUserProductDuration(supabase: SupabaseClient, days: number): Promise<UserDurationRow[]> {
-  const { data, error } = await supabase.rpc("admin_report_user_product_duration", { p_days: days });
-  if (error) throw new Error(`admin_report_user_product_duration failed: ${error.message}`);
-  return ((data ?? []) as DurationDbRow[]).map((r) => ({
+  const data = await rpcAllRows<DurationDbRow>(supabase, "admin_report_user_product_duration", { p_days: days });
+  return data.map((r) => ({
     userId: r.user_id,
     fullName: r.full_name,
     courseId: r.course_id,
