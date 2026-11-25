@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
 import { recordAudit } from "@/services/audit";
+import { getReportDefinition } from "./reports";
 
 // T-277 (F-423): how long a report export link lives and how long the files are kept.
 
@@ -26,7 +27,8 @@ export async function purgeExpiredExports(admin: SupabaseClient, now: Date): Pro
   return deleteError ? 0 : data.length;
 }
 
-/** T-289: one audit row per saved-report event (actor, report, type, range, row count). */
+/** T-289: one audit row per saved-report event (actor, report, type, range, row count). Snapshot
+ * reports ignore the range, so it is recorded as null for them (report audit C32). */
 export async function logReportEvent(args: {
   action: "report.created" | "report.deleted" | "report.run" | "report.scheduled_run";
   actorId: string | null;
@@ -41,7 +43,12 @@ export async function logReportEvent(args: {
     action: args.action,
     resourceType: "saved_report",
     resourceId: args.reportId,
-    metadata: { reportType: args.reportType, rangeDays: args.rangeDays, rowCount: args.rowCount ?? null, exportId: args.exportId ?? null },
+    metadata: {
+      reportType: args.reportType,
+      rangeDays: getReportDefinition(args.reportType)?.usesRange === false ? null : args.rangeDays,
+      rowCount: args.rowCount ?? null,
+      exportId: args.exportId ?? null,
+    },
   });
 }
 

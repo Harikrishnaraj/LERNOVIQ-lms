@@ -1,17 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-// The cron isolates each due report: one that throws or fails to record is skipped (and keeps its
-// next_run_at), the rest still run, and the retention purge always runs.
+// The cron claims each due report (moves next_run_at on, only if nobody else did), isolates it: one
+// that throws or fails to record gets its old next_run_at back, the rest still run, and the
+// retention purge always runs.
 
+const DUE_AT = "2026-11-25T09:00:00+00:00";
+const base = { report_type: "idle_users", range_days: 30, filters: {}, schedule: "daily", next_run_at: DUE_AT, created_at: "2026-11-01T09:00:00+00:00" };
 const due = [
-  { id: "r1", report_type: "idle_users", range_days: 30, filters: {}, schedule: "daily" },
-  { id: "r2", report_type: "idle_users", range_days: 30, filters: {}, schedule: "daily" },
-  { id: "r3", report_type: "idle_users", range_days: 30, filters: {}, schedule: "daily" },
+  { id: "r1", ...base },
+  { id: "r2", ...base },
+  { id: "r3", ...base },
 ];
-const advanced: string[] = [];
+// Every conditional next_run_at update: the claims, then any restores.
+const updates: { id: string; from: string; to: string }[] = [];
 const removed: string[][] = [];
 let insertFails = new Set<string>();
+let lostClaims = new Set<string>();
+/** Reports whose next_run_at ended up moved on: claimed and not restored. */
+const advanced = () => {
+  const restored = new Set(updates.filter((u) => u.to === DUE_AT).map((u) => u.id));
+  return updates.filter((u) => u.from === DUE_AT && !restored.has(u.id)).map((u) => u.id);
+};
 
 vi.mock("@/services/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -19,7 +29,18 @@ vi.mock("@/services/supabase/admin", () => ({
       if (table === "saved_reports") {
         return {
           select: () => ({ neq: () => ({ lte: async () => ({ data: due, error: null }) }) }),
-          update: () => ({ eq: async (_c: string, id: string) => { advanced.push(id); return { error: null }; } }),
+          update: (row: { next_run_at: string }) => ({
+            eq: (_c: string, id: string) => ({
+              eq: (_c2: string, from: string) => ({
+                select: async () => {
+                  // Another run already moved this report on: the conditional update matches nothing.
+                  if (from === DUE_AT && lostClaims.has(id)) return { data: [], error: null };
+                  updates.push({ id, from, to: row.next_run_at });
+                  return { data: [{ id }], error: null };
+                },
+              }),
+            }),
+          }),
         };
       }
       // report_exports insert
@@ -59,7 +80,8 @@ const request = () => new NextRequest("http://localhost/api/cron/scheduled-repor
 describe("scheduled reports cron", () => {
   beforeEach(() => {
     process.env.CRON_SECRET = "s3cret";
-    advanced.length = 0;
+    updates.length = 0;
+    lostClaims = new Set();
     removed.length = 0;
     insertFails = new Set();
     generate.mockReset();
@@ -71,8 +93,8 @@ describe("scheduled reports cron", () => {
       .mockRejectedValueOnce(new Error("subquery returned more than one row"))
       .mockResolvedValue({ ok: true, csv: "a\n1", rowCount: 1, truncated: false });
     const body = await (await GET(request())).json();
-    expect(body).toEqual({ processed: 2, failed: 1, purged: 2 });
-    expect(advanced).toEqual(["r2", "r3"]);
+    expect(body).toEqual({ processed: 2, failed: 1, skipped: 0, purged: 2 });
+    expect(advanced()).toEqual(["r2", "r3"]);
     expect(purge).toHaveBeenCalledTimes(1);
   });
 
@@ -81,7 +103,7 @@ describe("scheduled reports cron", () => {
     insertFails = new Set(["r2"]);
     const body = await (await GET(request())).json();
     expect(body).toMatchObject({ processed: 2, failed: 1 });
-    expect(advanced).toEqual(["r1", "r3"]);
+    expect(advanced()).toEqual(["r1", "r3"]);
     expect(removed).toHaveLength(1);
     expect(removed[0][0]).toMatch(/^scheduled\/r2\//);
   });
@@ -92,7 +114,7 @@ describe("scheduled reports cron", () => {
     try {
       const body = await (await GET(request())).json();
       expect(body).toMatchObject({ processed: 2, failed: 1 });
-      expect(advanced).toEqual(["r1", "r3"]);
+      expect(advanced()).toEqual(["r1", "r3"]);
       expect(generate).toHaveBeenCalledTimes(2);
     } finally {
       due[1] = { ...due[1], filters: {} };
@@ -103,6 +125,23 @@ describe("scheduled reports cron", () => {
     generate.mockResolvedValueOnce({ ok: false, error: "nope" }).mockResolvedValue({ ok: true, csv: "", rowCount: 0, truncated: false });
     const body = await (await GET(request())).json();
     expect(body).toMatchObject({ processed: 2, failed: 1 });
-    expect(advanced).toEqual(["r2", "r3"]);
+    expect(advanced()).toEqual(["r2", "r3"]);
+  });
+
+  it("claims each report before generating it, keeping the time of day (report audit C28, C29)", async () => {
+    generate.mockResolvedValue({ ok: true, csv: "a\n1", rowCount: 1, truncated: false });
+    await GET(request());
+    expect(updates.filter((u) => u.from === DUE_AT)).toHaveLength(3);
+    // Advanced from the stored next_run_at (09:00), not from when the cron ran.
+    for (const u of updates) expect(u.to).toMatch(/T09:00:00\.000Z$/);
+  });
+
+  it("skips a report another run has already claimed (report audit C29)", async () => {
+    generate.mockResolvedValue({ ok: true, csv: "a\n1", rowCount: 1, truncated: false });
+    lostClaims = new Set(["r2"]);
+    const body = await (await GET(request())).json();
+    expect(body).toEqual({ processed: 2, failed: 0, skipped: 1, purged: 2 });
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(advanced()).toEqual(["r1", "r3"]);
   });
 });

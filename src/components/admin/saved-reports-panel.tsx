@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Loader2, Trash2 } from "lucide-react";
 import { createSavedReportAction, deleteSavedReportAction, getExportDownloadUrlAction, runReportNowAction, type RunReportResult } from "@/features/admin/report-actions";
-import { DEFAULT_REPORT_TYPE, REPORT_CATALOGUE, REPORT_CATEGORIES, type ReportType, type SavedReport } from "@/features/admin/reports";
+import { DEFAULT_REPORT_TYPE, REPORT_CATALOGUE, REPORT_CATEGORIES, describeReportRange, getReportDefinition, type ReportType, type SavedReport } from "@/features/admin/reports";
 import { describeFilters, statusOptions, supportedFilters } from "@/features/admin/report-filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,8 +66,8 @@ function ReportRow({ report }: { report: SavedReport }) {
         <div>
           <p className="font-medium">{report.name}</p>
           <p className="text-xs text-text-secondary">
-            {report.reportLabel} &middot; Last {report.rangeDays} days &middot; {describeFilters(report.filters) && `${describeFilters(report.filters)} · `} {report.schedule === "none" ? "Manual only" : `Auto-runs ${report.schedule}`}
-            {report.nextRunAt && ` · next ${dateFormat.format(new Date(report.nextRunAt))}`}
+            {report.reportLabel} &middot; {describeReportRange(report.reportType, report.rangeDays)} &middot; {describeFilters(report.filters) && `${describeFilters(report.filters)} · `} {report.schedule === "none" ? "Manual only" : `Auto-runs ${report.schedule}`}
+            {report.nextRunAt && ` · next ${dateFormat.format(new Date(report.nextRunAt))} UTC`}
           </p>
           {report.filtersInvalid && (
             <p className="text-xs text-warning-text">This report&apos;s filters are no longer valid, so it can&apos;t run. Delete it and save it again.</p>
@@ -146,6 +146,7 @@ export function SavedReportsPanel({
   const [error, setError] = useState<string | null>(null);
   const supported = supportedFilters(reportType as ReportType);
   const statuses = statusOptions(reportType as ReportType);
+  const usesRange = getReportDefinition(reportType)?.usesRange !== false;
   const setFilter = (key: keyof typeof filters, value: string) => setFilters((f) => ({ ...f, [key]: value }));
 
   async function create() {
@@ -189,14 +190,22 @@ export function SavedReportsPanel({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Range
-          <select value={rangeDays} onChange={(e) => setRangeDays(e.target.value)} disabled={busy} className="h-10 rounded-input border border-border bg-surface px-3 text-sm font-normal">
-            <option value="7">7 days</option>
-            <option value="30">30 days</option>
-            <option value="90">90 days</option>
-          </select>
-        </label>
+        {usesRange ? (
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Range
+            <select value={rangeDays} onChange={(e) => setRangeDays(e.target.value)} disabled={busy} className="h-10 rounded-input border border-border bg-surface px-3 text-sm font-normal">
+              <option value="7">7 days</option>
+              <option value="30">30 days</option>
+              <option value="90">90 days</option>
+            </select>
+          </label>
+        ) : (
+          // Snapshot reports cover all time, so there is no range to pick (report audit C32, C50).
+          <div className="flex flex-col gap-1.5 text-sm font-medium">
+            Range
+            <p className="flex h-10 items-center font-normal text-text-secondary">Current snapshot</p>
+          </div>
+        )}
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Schedule
           <select value={schedule} onChange={(e) => setSchedule(e.target.value)} disabled={busy} className="h-10 rounded-input border border-border bg-surface px-3 text-sm font-normal">

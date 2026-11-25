@@ -43,6 +43,13 @@ describe("validateFilters", () => {
     expect(parseStoredFilters("idle_users", {})).toEqual({});
     expect(parseStoredFilters("idle_users", null)).toEqual({});
   });
+
+  it("stores ids in lower case, as Postgres returns them (report audit C33)", () => {
+    expect(validateFilters("individual_user_progress", { userId: A.toUpperCase(), status: "active" })).toEqual({
+      ok: true,
+      value: { userId: A, status: "active" },
+    });
+  });
 });
 
 describe("filter support", () => {
@@ -65,6 +72,9 @@ describe("matchRows", () => {
     expect(matchRows(rows, {}, get)).toHaveLength(2);
     expect(matchRows(rows, { courseId: A }, get)).toEqual([{ c: A }]);
     expect(matchRows(rows, { courseId: undefined }, get)).toHaveLength(2);
+  });
+  it("matches ids whatever their case (report audit C33)", () => {
+    expect(matchRows(rows, { courseId: A.toUpperCase() }, get)).toEqual([{ c: A }]);
   });
 });
 

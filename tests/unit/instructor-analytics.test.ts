@@ -6,6 +6,7 @@ import {
   formatCurrency,
   formatDuration,
   instructorExportUrl,
+  lessonTypeLabel,
   parseAnalyticsRange,
   parseCourseFilter,
   scaleBars,
@@ -244,5 +245,13 @@ describe("instructor analytics feature", () => {
       expect(csv).toContain("Learning Time (min),Assessments Passed");
       expect(csv).not.toContain("Watch Time");
     });
+  });
+});
+
+describe("lessonTypeLabel", () => {
+  it("writes SCORM as an acronym and capitalises the other types", () => {
+    expect(lessonTypeLabel("scorm")).toBe("SCORM");
+    expect(lessonTypeLabel("video")).toBe("Video");
+    expect(lessonTypeLabel("text")).toBe("Text");
   });
 });

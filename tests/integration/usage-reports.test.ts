@@ -172,4 +172,21 @@ describe.skipIf(!hasLiveProject)("usage and product reports (T-276, live Supabas
     await expect(getProductLibraryUsage(learnerClient)).rejects.toThrow(/not allowed/);
     await expect(getLicenceStatusReport(learnerClient)).rejects.toThrow(/not allowed/);
   });
+
+  // These two change the fixture data, so they run last.
+  it("titles courses by the published version, not a newer draft (report audit C15)", async () => {
+    const { error } = await svc.from("course_versions").insert({ course_id: courseId, version_number: 2, title: `${tag} WIP draft` });
+    expect(error).toBeNull();
+    const library = (await getLibraryUsage(admin, 7)).find((r) => r.clientName === `${tag} Client`);
+    expect(library?.courseTitle).toBe(`${tag} Course`);
+    const product = (await getProductLibraryUsage(admin)).find((r) => r.licenceName === `${tag}-active` && r.courseId === courseId);
+    expect(product?.courseTitle).toBe(`${tag} Course`);
+  });
+
+  it("does not count a cancelled enrolment as started, so started never exceeds enrolled (report audit C11, C57)", async () => {
+    await svc.from("enrollments").update({ status: "cancelled" }).eq("user_id", learnerIds[0]).eq("course_id", courseId);
+    const l1 = (await getProductModuleUsage(admin)).find((r) => r.lessonId === lessonIds[0]);
+    // Learner A (who completed L1) is cancelled; learner B opened it and is still enrolled.
+    expect(l1).toMatchObject({ learnersEnrolled: 1, learnersStarted: 1, learnersCompleted: 0 });
+  });
 });

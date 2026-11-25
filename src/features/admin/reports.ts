@@ -32,6 +32,8 @@ export interface ReportDefinition {
   label: string;
   /** False until the report's data query exists. Unavailable reports are listed, but cannot be saved or run. */
   available: boolean;
+  /** False for snapshot reports that ignore the date range (report audit C12, C32, C50). */
+  usesRange: boolean;
 }
 
 /**
@@ -39,21 +41,28 @@ export interface ReportDefinition {
  * (enrollments, completions and signups per day) and is the only report with real data today.
  */
 export const REPORT_CATALOGUE: readonly ReportDefinition[] = [
-  { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true },
-  { type: "idle_users", category: "user", label: "Idle users", available: true },
-  { type: "user_product_duration", category: "user", label: "User product duration", available: true },
-  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true },
-  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true },
-  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true },
-  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: true },
-  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: true },
-  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: true },
+  { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true, usesRange: true },
+  { type: "idle_users", category: "user", label: "Idle users", available: true, usesRange: true },
+  { type: "user_product_duration", category: "user", label: "User product duration", available: true, usesRange: true },
+  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true, usesRange: true },
+  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true, usesRange: true },
+  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true, usesRange: true },
+  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: true, usesRange: false },
+  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: true, usesRange: false },
+  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: true, usesRange: false },
 ];
 
 export const DEFAULT_REPORT_TYPE: ReportType = "daily_analytics";
 
 export function getReportDefinition(type: string): ReportDefinition | null {
   return REPORT_CATALOGUE.find((r) => r.type === type) ?? null;
+}
+
+/** How a saved report row describes its range: a snapshot, an idle threshold or a look-back window. */
+export function describeReportRange(type: ReportType, rangeDays: number): string {
+  if (getReportDefinition(type)?.usesRange === false) return "Current snapshot";
+  if (type === "idle_users") return `Idle for ${rangeDays}+ days`;
+  return `Last ${rangeDays} days`;
 }
 
 export function validateReportType(input: unknown): { ok: true; value: ReportType } | { ok: false; error: string } {
@@ -174,14 +183,30 @@ export function validateReportName(input: unknown): { ok: true; value: string } 
   return { ok: true, value };
 }
 
-/** Next run time for a schedule, from a given moment. `null` for "none". */
-export function computeNextRunAt(schedule: ReportSchedule, from: Date): Date | null {
+/**
+ * Next run time for a schedule (report audit C28). `previous` is the run that just fell due
+ * (saved_reports.next_run_at); whole periods are added to it until the result is after `now`, so a
+ * report keeps its time of day and catches up after downtime with a single run. Without `previous`
+ * (a new report) it counts from `now`. Monthly runs keep `anchorDay` (the day of month the report was
+ * created; defaults to the base date's day), clamped to the last day of shorter months: Jan 31,
+ * Feb 28 (29 in a leap year), Mar 31. `null` for "none".
+ */
+export function computeNextRunAt(schedule: ReportSchedule, now: Date, previous?: Date | null, anchorDay?: number): Date | null {
   if (schedule === "none") return null;
-  const next = new Date(from);
-  if (schedule === "daily") next.setUTCDate(next.getUTCDate() + 1);
-  else if (schedule === "weekly") next.setUTCDate(next.getUTCDate() + 7);
-  else next.setUTCMonth(next.getUTCMonth() + 1);
-  return next;
+  const base = previous ?? now;
+  const day = anchorDay ?? base.getUTCDate();
+  for (let k = 1; ; k++) {
+    const next = new Date(base);
+    if (schedule === "monthly") {
+      next.setUTCDate(1);
+      next.setUTCMonth(base.getUTCMonth() + k);
+      const lastDay = new Date(Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)).getUTCDate();
+      next.setUTCDate(Math.min(day, lastDay));
+    } else {
+      next.setUTCDate(base.getUTCDate() + k * (schedule === "daily" ? 1 : 7));
+    }
+    if (next > now) return next;
+  }
 }
 
 function escapeCsv(value: string | number | null): string {

@@ -27,6 +27,7 @@ import {
   getInstructorDailyAnalytics,
   getInstructorLessonAnalytics,
   getInstructorQuestionAnalytics,
+  lessonTypeLabel,
   parseAnalyticsRange,
   parseCourseFilter,
   QUESTION_MIN_ANSWERS,
@@ -287,7 +288,7 @@ export default async function InstructorAnalyticsPage({
               <Card>
                 <CardHeader
                   title="Lesson & Video Engagement"
-                  description={`Lessons learners worked on in the last ${range} days, by course version`}
+                  description={`Lessons learners worked on in the last ${range} days, by course version. Drop-off rate: learners who started a lesson, have not completed it and have had no activity on it for 14 days, out of all who have ever started it (not limited to the range).`}
                 />
                 <CardContent className="p-0">
                   {lessonStats.length === 0 ? (
@@ -316,8 +317,8 @@ export default async function InstructorAnalyticsPage({
                               <td className="px-6 py-4 font-medium text-text">
                                 {l.lessonTitle}
                               </td>
-                              <td className="px-6 py-4 capitalize text-xs text-text-secondary">
-                                {l.lessonType}
+                              <td className="px-6 py-4 text-xs text-text-secondary">
+                                {lessonTypeLabel(l.lessonType)}
                               </td>
                               <td className="px-6 py-4 text-xs text-text-secondary">
                                 {l.sectionTitle}
@@ -335,7 +336,7 @@ export default async function InstructorAnalyticsPage({
                                 {l.starts === 0 ? "—" : `${l.completionRate}%`}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs font-semibold text-danger">
-                                {l.starts === 0 ? "—" : `${l.dropOffRate}%`}
+                                {l.starts === 0 && l.dropOffRate === 0 ? "—" : `${l.dropOffRate}%`}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs text-text">
                                 {formatDuration(l.avgWatchSeconds)}

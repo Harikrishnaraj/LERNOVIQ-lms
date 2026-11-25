@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildReportCsv, computeNextRunAt, reportFileName, validateReportName } from "@/features/admin/reports";
+import { buildReportCsv, computeNextRunAt, describeReportRange, reportFileName, validateReportName } from "@/features/admin/reports";
 
 describe("computeNextRunAt", () => {
   const from = new Date("2026-01-15T10:00:00Z");
@@ -23,6 +23,61 @@ describe("computeNextRunAt", () => {
   it("rolls over the year boundary for 'monthly' in December", () => {
     const dec = new Date("2026-12-20T00:00:00Z");
     expect(computeNextRunAt("monthly", dec)!.toISOString()).toBe("2027-01-20T00:00:00.000Z");
+  });
+});
+
+// Report audit C28: advance from the previous run, keep the time of day and the day of month.
+describe("computeNextRunAt from the previous run", () => {
+  const iso = (d: Date | null) => d!.toISOString();
+
+  it("keeps the scheduled time of day instead of drifting to when the cron ran", () => {
+    const previous = new Date("2026-03-10T09:00:00Z");
+    const ranAt = new Date("2026-03-10T10:00:05Z");
+    expect(iso(computeNextRunAt("daily", ranAt, previous))).toBe("2026-03-11T09:00:00.000Z");
+    expect(iso(computeNextRunAt("weekly", ranAt, previous))).toBe("2026-03-17T09:00:00.000Z");
+  });
+
+  it("clamps a month-end anchor to shorter months and goes back to it after", () => {
+    const now = new Date("2027-01-31T10:30:00Z");
+    const feb = computeNextRunAt("monthly", now, new Date("2027-01-31T10:00:00Z"), 31);
+    expect(iso(feb)).toBe("2027-02-28T10:00:00.000Z");
+    const mar = computeNextRunAt("monthly", new Date("2027-02-28T10:30:00Z"), feb, 31);
+    expect(iso(mar)).toBe("2027-03-31T10:00:00.000Z");
+    const apr = computeNextRunAt("monthly", new Date("2027-03-31T10:30:00Z"), mar, 31);
+    expect(iso(apr)).toBe("2027-04-30T10:00:00.000Z");
+  });
+
+  it("uses 29 February in a leap year", () => {
+    const next = computeNextRunAt("monthly", new Date("2028-01-31T11:00:00Z"), new Date("2028-01-31T10:00:00Z"), 31);
+    expect(iso(next)).toBe("2028-02-29T10:00:00.000Z");
+  });
+
+  it("never skips a month for a report created on the 31st", () => {
+    expect(iso(computeNextRunAt("monthly", new Date("2026-01-31T08:00:00Z")))).toBe("2026-02-28T08:00:00.000Z");
+  });
+
+  it("catches up after downtime with one run, on the schedule's own grid", () => {
+    const previous = new Date("2026-03-01T09:00:00Z");
+    const now = new Date("2026-03-05T12:00:00Z");
+    expect(iso(computeNextRunAt("daily", now, previous))).toBe("2026-03-06T09:00:00.000Z");
+    expect(iso(computeNextRunAt("weekly", now, previous))).toBe("2026-03-08T09:00:00.000Z");
+    const monthly = computeNextRunAt("monthly", new Date("2026-06-15T00:00:00Z"), new Date("2026-01-31T09:00:00Z"), 31);
+    expect(iso(monthly)).toBe("2026-06-30T09:00:00.000Z");
+  });
+
+  it("moves to the next period when the previous run is exactly now", () => {
+    const at = new Date("2026-03-10T09:00:00Z");
+    expect(iso(computeNextRunAt("daily", at, at))).toBe("2026-03-11T09:00:00.000Z");
+  });
+});
+
+describe("describeReportRange", () => {
+  it("describes a look-back window, an idle threshold and a snapshot (report audit C12, C50)", () => {
+    expect(describeReportRange("daily_analytics", 7)).toBe("Last 7 days");
+    expect(describeReportRange("idle_users", 30)).toBe("Idle for 30+ days");
+    expect(describeReportRange("product_course_library_licence_status", 30)).toBe("Current snapshot");
+    expect(describeReportRange("product_course_library_usage", 90)).toBe("Current snapshot");
+    expect(describeReportRange("product_course_module_usage", 7)).toBe("Current snapshot");
   });
 });
 

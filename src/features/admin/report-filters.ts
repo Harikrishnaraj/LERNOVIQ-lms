@@ -73,7 +73,9 @@ export function validateFilters(type: ReportType, raw: unknown): ParsedFilters {
     } else if (!UUID.test(s)) {
       return { ok: false, error: `${LABELS[k]} filter is not valid.` };
     }
-    value[k] = s;
+    // Ids are stored lower-case: Postgres returns uuids that way, and a pasted upper-case id would
+    // otherwise never match (report audit C33).
+    value[k] = k === "status" ? s : s.toLowerCase();
   }
   return { ok: true, value };
 }
@@ -89,11 +91,11 @@ export function parseStoredFilters(type: ReportType, stored: unknown): ReportFil
   return parsed.ok ? parsed.value : null;
 }
 
-/** Keeps rows where every set field of `want` equals the row's value (rows lacking the field are dropped). */
+/** Keeps rows where every set field of `want` equals the row's value, ignoring case (rows lacking the field are dropped). */
 export function matchRows<T>(rows: T[], want: Partial<Record<string, string | undefined>>, get: (row: T, key: string) => string | null | undefined): T[] {
   const entries = Object.entries(want).filter(([, v]) => v !== undefined);
   if (entries.length === 0) return rows;
-  return rows.filter((row) => entries.every(([k, v]) => get(row, k) === v));
+  return rows.filter((row) => entries.every(([k, v]) => get(row, k)?.toLowerCase() === v?.toLowerCase()));
 }
 
 export function describeFilters(filters: ReportFilters): string {

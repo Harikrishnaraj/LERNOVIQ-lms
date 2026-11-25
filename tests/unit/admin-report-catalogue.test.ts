@@ -22,6 +22,14 @@ describe("report catalogue", () => {
     expect(REPORT_CATALOGUE.filter((r) => !r.available)).toEqual([]);
   });
 
+  it("marks only the three product snapshot reports as ignoring the date range (report audit C32)", () => {
+    expect(REPORT_CATALOGUE.filter((r) => !r.usesRange).map((r) => r.type).sort()).toEqual([
+      "product_course_library_licence_status",
+      "product_course_library_usage",
+      "product_course_module_usage",
+    ]);
+  });
+
   it("defaults new reports to the available daily analytics type", () => {
     expect(getReportDefinition(DEFAULT_REPORT_TYPE)?.available).toBe(true);
   });

@@ -105,6 +105,12 @@ export type QuestionDifficulty = "easy" | "medium" | "hard";
 /** Below this many answers a question gets no difficulty rating (matches the SQL). */
 export const QUESTION_MIN_ANSWERS = 5;
 
+/** Display label for a lesson type: "scorm" is an acronym, the rest are capitalised words. */
+export function lessonTypeLabel(type: string): string {
+  if (type === "scorm") return "SCORM";
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
 export function difficultyLabel(difficulty: QuestionDifficulty | null): string {
   return difficulty ?? "Not enough data";
 }

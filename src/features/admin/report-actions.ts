@@ -65,6 +65,22 @@ export async function createSavedReportAction(input: { name: string; reportType:
 export async function deleteSavedReportAction(reportId: string): Promise<ReportActionResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
+  // The export records cascade with the report, after which the retention purge can no longer find
+  // their files: remove the files first (report audit C26). RLS limits this to the caller's own report.
+  // A failed removal is logged and does not block the delete.
+  const { data: exports, error: exportsError } = await ctx.supabase
+    .from("report_exports")
+    .select("storage_path")
+    .eq("saved_report_id", reportId);
+  if (exportsError) log.error("report.delete_exports_lookup_failed", { reportId, message: exportsError.message });
+  const paths = (exports ?? []).map((x) => x.storage_path as string);
+  if (paths.length > 0) {
+    try {
+      await supabaseStorage.remove(REPORT_EXPORT_BUCKET, paths);
+    } catch (err) {
+      log.error("report.delete_files_failed", { reportId, count: paths.length, message: err instanceof Error ? err.message : String(err) });
+    }
+  }
   const { data: deleted, error } = await ctx.supabase
     .from("saved_reports")
     .delete()

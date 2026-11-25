@@ -331,6 +331,17 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, T-108, live Supab
     expect(week.find((l) => l.lessonId === courseA.lessonIds[0])!.starts).toBe(1);
   });
 
+  it("counts only learners idle on a lesson for 14 days as dropped off, not those still on it (report audit C44)", async () => {
+    // 30 days: two starts, neither completed. The one touched today is still in progress; the one
+    // last touched 20 days ago has dropped off.
+    const month = await getInstructorLessonAnalytics(teacherA.client, 30, courseA.courseId);
+    expect(month.find((l) => l.lessonId === courseA.lessonIds[0])).toMatchObject({ starts: 2, completions: 0, dropOffRate: 50 });
+    // 7 days: starts only count the learner active this week, but drop-off still covers everyone
+    // who ever started the lesson, so the 20-day-idle learner keeps it at 50%, not 0%.
+    const week = await getInstructorLessonAnalytics(teacherA.client, 7, courseA.courseId);
+    expect(week.find((l) => l.lessonId === courseA.lessonIds[0])).toMatchObject({ starts: 1, dropOffRate: 50 });
+  });
+
   it("returns assessment analytics with pass rate and avg attempts (T-108)", async () => {
     const assessments = await getInstructorAssessmentAnalytics(teacherA.client, 7, courseA.courseId);
     expect(assessments.length).toBeGreaterThan(0);
@@ -393,6 +404,24 @@ describe.skipIf(!hasLiveProject)("instructor analytics (T-107, T-108, live Supab
     // l1: 600 tracked seconds = 10 minutes.
     expect(week.some((r) => r.status === "completed" && r.learningTimeMinutes === 10)).toBe(true);
     expect(month.every((r) => r.assessmentsPassed <= 1)).toBe(true);
+  });
+
+  it("counts only the current version's lessons in the export after a re-enrolment (report audit C8)", async () => {
+    // A learner completes the v1 lesson, then is moved onto version 2 (one lesson, not started).
+    const mover = await user("mover", "learner");
+    const enrolledAt = daysAgo(3);
+    const { data: enr } = await svc
+      .from("enrollments")
+      .insert({ user_id: mover.id, course_id: courseA.courseId, version_id: courseA.versionId, status: "active", enrolled_at: enrolledAt })
+      .select("id")
+      .single();
+    await svc.from("lesson_progress").insert({ enrollment_id: enr!.id, lesson_id: courseA.lessonIds[0], completed_at: new Date().toISOString() });
+    const { data: v2 } = await svc.from("course_versions").select("id").eq("course_id", courseA.courseId).eq("version_number", 2).single();
+    await svc.from("enrollments").update({ version_id: v2!.id }).eq("id", enr!.id);
+
+    const rows = await getInstructorExportRows(teacherA.client, 30, courseA.courseId);
+    const row = rows.find((r) => new Date(r.enrolledAt).getTime() === new Date(enrolledAt).getTime());
+    expect(row).toMatchObject({ completedLessons: 0, totalLessons: 1, progressPercent: 0 });
   });
 
   it("rejects anonymous callers", async () => {

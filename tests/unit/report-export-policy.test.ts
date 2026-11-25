@@ -45,6 +45,12 @@ describe("export policy", () => {
     });
     expect(AUDIT_ACTIONS).toContain(action);
   });
+
+  it("records no range for a snapshot report that ignores it (report audit C32)", async () => {
+    recordAudit.mockClear();
+    await logReportEvent({ action: "report.run", actorId: "u", reportId: "r", reportType: "product_course_module_usage", rangeDays: 30, rowCount: 2 });
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ metadata: expect.objectContaining({ rangeDays: null }) }));
+  });
 });
 
 describe("user report exports minimise personal data", () => {

@@ -47,10 +47,12 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
     const { data: org } = await svc.from("organizations").insert({ name: `${tag} Org`, slug: `${tag}-org` }).select("id").single();
     orgId = org!.id;
     orgIds.push(orgId);
+    // Members since before the past-due dates used below (overdue needs membership by the due date).
+    const joined = new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString();
     await svc.from("organization_members").insert([
-      { organization_id: orgId, user_id: orgAdmin.id, org_role: "org_admin" },
-      { organization_id: orgId, user_id: memberA.id, org_role: "member" },
-      { organization_id: orgId, user_id: memberB.id, org_role: "member" },
+      { organization_id: orgId, user_id: orgAdmin.id, org_role: "org_admin", created_at: joined },
+      { organization_id: orgId, user_id: memberA.id, org_role: "member", created_at: joined },
+      { organization_id: orgId, user_id: memberB.id, org_role: "member", created_at: joined },
     ]);
 
     const instructor = await createUserWithRole(svc, `${tag}-ins`, "instructor");
@@ -92,6 +94,15 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
     expect(rollup).toHaveLength(1);
     // 3 org members (org admin + memberA + memberB); memberA is complete, the other two are overdue.
     expect(rollup[0]).toMatchObject({ total_assigned: 3, completed_count: 1, overdue_count: 2 });
+
+    // Someone who joins after the due date is assigned, but not overdue (report audit C41).
+    const late = await signedIn("late", "learner");
+    await svc.from("organization_members").insert({ organization_id: orgId, user_id: late.id, org_role: "member" });
+    const after = (await orgAdmin.client.rpc("list_org_assigned_learning", { p_org_id: orgId })).data as { total_assigned: number; overdue_count: number }[];
+    expect(after[0]).toMatchObject({ total_assigned: 4, overdue_count: 2 });
+    // The learner's own view agrees: assigned, but not overdue.
+    const mineLate = (await late.client.rpc("my_assigned_learning")).data as { id: string; is_overdue: boolean }[];
+    expect(mineLate.find((a) => a.id === created.data!.id)).toMatchObject({ is_overdue: false });
   });
 
   it("a user-scoped assignment only reaches that one member", async () => {
