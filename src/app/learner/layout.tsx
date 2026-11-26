@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/permissions/can";
 import { getUnreadCount } from "@/features/notifications/notifications";
 import { hasCompletedOnboarding } from "@/features/onboarding/status";
+import { AI_TUTOR_HREF, aiTutorHiddenFor } from "@/config/feature-access";
 
 export const metadata: Metadata = {
   title: { default: "Learner", template: "%s · Learner · LERNOVIQ" },
@@ -24,7 +25,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
   if (!(await hasCompletedOnboarding(supabase, user.id))) redirect("/onboarding");
 
   return (
-    <PortalShell portal="learner" user={user && { email: user.email! }} onLogout={logout} unreadNotifications={await getUnreadCount(supabase)}>
+    <PortalShell portal="learner" user={user && { email: user.email! }} onLogout={logout} unreadNotifications={await getUnreadCount(supabase)} hiddenNavHrefs={aiTutorHiddenFor(user.email) ? [AI_TUTOR_HREF] : []}>
       {children}
     </PortalShell>
   );

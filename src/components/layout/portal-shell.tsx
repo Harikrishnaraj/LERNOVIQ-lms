@@ -93,7 +93,15 @@ function NavLink({
   );
 }
 
-function NavTree({ portal, onNavigate }: { portal: Portal; onNavigate?: () => void }) {
+function NavTree({
+  portal,
+  onNavigate,
+  hidden = [],
+}: {
+  portal: Portal;
+  onNavigate?: () => void;
+  hidden?: readonly string[];
+}) {
   const pathname = usePathname();
   const active = activeNavHref(portal, pathname);
   const nav = NAVIGATION[portal];
@@ -113,16 +121,18 @@ function NavTree({ portal, onNavigate }: { portal: Portal; onNavigate?: () => vo
             </p>
           )}
           <ul className="space-y-0.5">
-            {group.items.map((item) => (
-              <li key={item.href}>
-                <NavLink
-                  item={item}
-                  portal={portal}
-                  active={item.href === active}
-                  onNavigate={onNavigate}
-                />
-              </li>
-            ))}
+            {group.items
+              .filter((item) => !hidden.includes(item.href))
+              .map((item) => (
+                <li key={item.href}>
+                  <NavLink
+                    item={item}
+                    portal={portal}
+                    active={item.href === active}
+                    onNavigate={onNavigate}
+                  />
+                </li>
+              ))}
           </ul>
         </div>
       ))}
@@ -134,9 +144,11 @@ function NavTree({ portal, onNavigate }: { portal: Portal; onNavigate?: () => vo
 function NavDrawer({
   portal,
   dialogRef,
+  hidden,
 }: {
   portal: Portal;
   dialogRef: RefObject<HTMLDialogElement | null>;
+  hidden?: readonly string[];
 }) {
   const pathname = usePathname();
   const close = () => dialogRef.current?.close();
@@ -171,7 +183,7 @@ function NavDrawer({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pt-4 pb-6">
-          <NavTree portal={portal} onNavigate={close} />
+          <NavTree portal={portal} onNavigate={close} hidden={hidden} />
         </div>
       </div>
     </dialog>
@@ -179,11 +191,19 @@ function NavDrawer({
 }
 
 /** Learner mobile bottom bar (DESIGN.md §24 keeps it). */
-function LearnerBottomBar({ onOpenMore }: { onOpenMore: () => void }) {
+function LearnerBottomBar({
+  onOpenMore,
+  hidden = [],
+}: {
+  onOpenMore: () => void;
+  hidden?: readonly string[];
+}) {
   const pathname = usePathname();
   const nav = NAVIGATION.learner;
   const active = activeNavHref("learner", pathname);
-  const items = allNavItems("learner").filter((i) => nav.mobileBar?.includes(i.href));
+  const items = allNavItems("learner").filter(
+    (i) => nav.mobileBar?.includes(i.href) && !hidden.includes(i.href),
+  );
   const moreActive = !!active && !nav.mobileBar?.includes(active);
 
   return (
@@ -191,7 +211,11 @@ function LearnerBottomBar({ onOpenMore }: { onOpenMore: () => void }) {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul
+        className="grid"
+        // One column per item plus "More", so hiding an item leaves no gap.
+        style={{ gridTemplateColumns: `repeat(${items.length + 1}, minmax(0, 1fr))` }}
+      >
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = item.href === active;
@@ -231,14 +255,26 @@ function LearnerBottomBar({ onOpenMore }: { onOpenMore: () => void }) {
   );
 }
 
-function UserMenu({ email, profileHref, onLogout }: { email: string; profileHref?: string; onLogout: () => Promise<void> }) {
+function UserMenu({
+  email,
+  profileHref,
+  onLogout,
+}: {
+  email: string;
+  profileHref?: string;
+  onLogout: () => Promise<void>;
+}) {
   return (
     <div className="flex items-center gap-2">
       <span className="hidden max-w-[180px] truncate text-sm text-text-secondary sm:inline">
         {email}
       </span>
       {profileHref && (
-        <Link href={profileHref} className="rounded-control p-2 text-text-secondary hover:bg-border-subtle hover:text-text" aria-label="My profile">
+        <Link
+          href={profileHref}
+          className="rounded-control p-2 text-text-secondary hover:bg-border-subtle hover:text-text"
+          aria-label="My profile"
+        >
           <UserCircle className="size-4" aria-hidden="true" />
         </Link>
       )}
@@ -281,6 +317,7 @@ export function PortalShell({
   onLogout,
   unreadNotifications,
   profileHref,
+  hiddenNavHrefs,
   children,
 }: {
   portal: Portal;
@@ -290,6 +327,8 @@ export function PortalShell({
   unreadNotifications?: number;
   /** When set, a profile icon linking here is shown next to the user's email. */
   profileHref?: string;
+  /** Nav items this user should not see (e.g. features switched off for their account). */
+  hiddenNavHrefs?: readonly string[];
   children: ReactNode;
 }) {
   const t = THEME[portal];
@@ -316,7 +355,7 @@ export function PortalShell({
           <Brand portal={portal} />
         </div>
         <div className="flex-1 overflow-y-auto px-3 pt-4 pb-6">
-          <NavTree portal={portal} />
+          <NavTree portal={portal} hidden={hiddenNavHrefs} />
         </div>
       </aside>
 
@@ -333,9 +372,13 @@ export function PortalShell({
             <Menu className="size-5" aria-hidden="true" />
           </button>
           {/* Too short for the logo's minimum size (brand §3.2), so the logo lives in the drawer. */}
-          <span className="font-display text-[15px] font-bold lg:hidden">{NAVIGATION[portal].label}</span>
+          <span className="font-display text-[15px] font-bold lg:hidden">
+            {NAVIGATION[portal].label}
+          </span>
           <div className="ml-auto flex items-center gap-2">
-            {unreadNotifications !== undefined && <NotificationBell href={`/${portal}/notifications`} unread={unreadNotifications} />}
+            {unreadNotifications !== undefined && (
+              <NotificationBell href={`/${portal}/notifications`} unread={unreadNotifications} />
+            )}
             {user && <UserMenu email={user.email} profileHref={profileHref} onLogout={onLogout} />}
           </div>
         </header>
@@ -352,8 +395,8 @@ export function PortalShell({
         </main>
       </div>
 
-      <NavDrawer portal={portal} dialogRef={drawerRef} />
-      {portal === "learner" && <LearnerBottomBar onOpenMore={openDrawer} />}
+      <NavDrawer portal={portal} dialogRef={drawerRef} hidden={hiddenNavHrefs} />
+      {portal === "learner" && <LearnerBottomBar onOpenMore={openDrawer} hidden={hiddenNavHrefs} />}
     </div>
   );
 }
