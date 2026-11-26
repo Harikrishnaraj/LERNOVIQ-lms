@@ -4,14 +4,17 @@ import { revalidatePath } from "next/cache";
 import type { Range } from "./analytics";
 import { generateReportCsv } from "./report-generation";
 import { EXPORT_LINK_SECONDS, logExportDownload, logReportEvent } from "./report-export-policy";
-import { parseStoredFilters, validateFilters } from "./report-filters";
+import { INVALID_STORED_FILTERS_ERROR, parseStoredFilters, validateFilters } from "./report-filters";
 import { computeNextRunAt, getReportDefinition, reportFileName, validateReportName, validateReportType, type ReportSchedule, type ReportType } from "./reports";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
+import { log } from "@/lib/log";
+import { clientIp, rateLimit, RATE_LIMITED_MESSAGE } from "@/services/rate-limit";
 import { REPORT_EXPORT_BUCKET, supabaseStorage } from "@/services/storage";
 
 export type ReportActionResult = { ok: true } | { ok: false; error: string };
-export type RunReportResult = { ok: true; url: string } | { ok: false; error: string };
+/** `notice`: something the admin should know about an otherwise good file (e.g. it may be missing rows). */
+export type RunReportResult = { ok: true; url: string; notice?: string } | { ok: false; error: string };
 
 const RANGE_VALUES = [7, 30, 90];
 const SCHEDULE_VALUES: ReportSchedule[] = ["none", "daily", "weekly", "monthly"];
@@ -62,6 +65,22 @@ export async function createSavedReportAction(input: { name: string; reportType:
 export async function deleteSavedReportAction(reportId: string): Promise<ReportActionResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
+  // The export records cascade with the report, after which the retention purge can no longer find
+  // their files: remove the files first (report audit C26). RLS limits this to the caller's own report.
+  // A failed removal is logged and does not block the delete.
+  const { data: exports, error: exportsError } = await ctx.supabase
+    .from("report_exports")
+    .select("storage_path")
+    .eq("saved_report_id", reportId);
+  if (exportsError) log.error("report.delete_exports_lookup_failed", { reportId, message: exportsError.message });
+  const paths = (exports ?? []).map((x) => x.storage_path as string);
+  if (paths.length > 0) {
+    try {
+      await supabaseStorage.remove(REPORT_EXPORT_BUCKET, paths);
+    } catch (err) {
+      log.error("report.delete_files_failed", { reportId, count: paths.length, message: err instanceof Error ? err.message : String(err) });
+    }
+  }
   const { data: deleted, error } = await ctx.supabase
     .from("saved_reports")
     .delete()
@@ -80,6 +99,7 @@ export async function deleteSavedReportAction(reportId: string): Promise<ReportA
 export async function runReportNowAction(reportId: string): Promise<RunReportResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
+  if (!(await rateLimit("report-run", await clientIp(), ctx.user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
 
   const { data: report } = await ctx.supabase
     .from("saved_reports")
@@ -88,14 +108,20 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
     .eq("owner_id", ctx.user.id)
     .maybeSingle();
   if (!report) return { ok: false, error: "That report is not available." };
+  const filters = parseStoredFilters(report.report_type as ReportType, report.filters);
+  if (!filters) return { ok: false, error: INVALID_STORED_FILTERS_ERROR };
 
   const generated = await generateReportCsv(ctx.supabase, {
-    type: report.report_type as ReportType, rangeDays: report.range_days as Range,
-    filters: parseStoredFilters(report.report_type as ReportType, report.filters),
+    type: report.report_type as ReportType, rangeDays: report.range_days as Range, filters,
   });
   if (!generated.ok) return generated;
   const path = `${ctx.user.id}/${reportId}/${Date.now()}.csv`;
-  await supabaseStorage.upload(REPORT_EXPORT_BUCKET, path, new TextEncoder().encode(generated.csv), "text/csv");
+  try {
+    await supabaseStorage.upload(REPORT_EXPORT_BUCKET, path, new TextEncoder().encode(generated.csv), "text/csv");
+  } catch (err) {
+    log.error("report.upload_failed", { reportId, message: err instanceof Error ? err.message : String(err) });
+    return { ok: false, error: "We could not save that export. Please try again." };
+  }
 
   const { data: exportRow, error } = await ctx.supabase
     .from("report_exports")
@@ -107,7 +133,11 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
     })
     .select("id")
     .single();
-  if (error || !exportRow) return { ok: false, error: "We could not record that export. Please try again." };
+  if (error || !exportRow) {
+    // No record means the purge job would never find the file: remove it now.
+    await supabaseStorage.remove(REPORT_EXPORT_BUCKET, [path]).catch(() => {});
+    return { ok: false, error: "We could not record that export. Please try again." };
+  }
 
   const url = await supabaseStorage.createSignedUrl(
     REPORT_EXPORT_BUCKET, path, EXPORT_LINK_SECONDS, reportFileName(report.name as string, new Date()),
@@ -129,7 +159,9 @@ export async function runReportNowAction(reportId: string): Promise<RunReportRes
     rowCount: generated.rowCount,
   });
   revalidatePath("/admin/analytics");
-  return { ok: true, url };
+  return generated.truncated
+    ? { ok: true, url, notice: "This report reached its 10,000-row limit, so the file may be missing rows. Add a filter to narrow it." }
+    : { ok: true, url };
 }
 
 type SavedRef = { name: string; report_type: string };
@@ -138,18 +170,20 @@ type SavedRef = { name: string; report_type: string };
 export async function getExportDownloadUrlAction(exportId: string): Promise<RunReportResult> {
   const ctx = await actor();
   if (!ctx) return { ok: false, error: "Please log in again." };
-  const { data } = await ctx.supabase
+  if (!(await rateLimit("report-run", await clientIp(), ctx.user.id))) return { ok: false, error: RATE_LIMITED_MESSAGE };
+  const { data, error } = await ctx.supabase
     .from("report_exports")
-    .select("storage_path, saved_report_id, row_count, created_at, saved_reports!inner(owner_id, name, report_type)")
+    .select("storage_path, saved_report_id, row_count, generated_at, saved_reports!inner(owner_id, name, report_type)")
     .eq("id", exportId)
     .eq("saved_reports.owner_id", ctx.user.id)
     .maybeSingle();
+  if (error) log.error("report.export_lookup_failed", { exportId, message: error.message });
   if (!data) return { ok: false, error: "That export is not available." };
   const saved = data.saved_reports as unknown as SavedRef | SavedRef[];
   const report = Array.isArray(saved) ? saved[0] : saved;
   const url = await supabaseStorage.createSignedUrl(
     REPORT_EXPORT_BUCKET, data.storage_path as string, EXPORT_LINK_SECONDS,
-    reportFileName(report.name, new Date(data.created_at as string)),
+    reportFileName(report.name, new Date(data.generated_at as string)),
   );
   await logExportDownload({
     actorId: ctx.user.id,

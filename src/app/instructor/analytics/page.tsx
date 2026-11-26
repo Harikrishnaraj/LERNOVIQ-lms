@@ -18,16 +18,21 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
+  difficultyLabel,
   formatDuration,
+  getInstructorActiveLearners,
   getInstructorAssessmentAnalytics,
   getInstructorCourses,
   getInstructorCoursesBreakdown,
   getInstructorDailyAnalytics,
   getInstructorLessonAnalytics,
   getInstructorQuestionAnalytics,
+  lessonTypeLabel,
   parseAnalyticsRange,
   parseCourseFilter,
+  QUESTION_MIN_ANSWERS,
   summarizeInstructorAnalytics,
+  type QuestionDifficulty,
 } from "@/features/instructor/analytics";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils/cn";
@@ -42,7 +47,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-const DIFFICULTY_TONE: Record<string, BadgeTone> = {
+const DIFFICULTY_TONE: Record<QuestionDifficulty, BadgeTone> = {
   easy: "success",
   medium: "warning",
   hard: "danger",
@@ -73,15 +78,16 @@ export default async function InstructorAnalyticsPage({
   const validCourseId = activeCourse ? activeCourse.id : null;
 
   // Fetch data based on active tab
-  const [points, breakdown, lessonStats, assessmentStats, questionStats] = await Promise.all([
+  const [points, breakdown, activeLearners, lessonStats, assessmentStats, questionStats] = await Promise.all([
     getInstructorDailyAnalytics(supabase, range, validCourseId),
     getInstructorCoursesBreakdown(supabase, range, validCourseId),
-    activeTab === "lessons" ? getInstructorLessonAnalytics(supabase, validCourseId) : Promise.resolve([]),
-    activeTab === "assessments" ? getInstructorAssessmentAnalytics(supabase, validCourseId) : Promise.resolve([]),
-    activeTab === "assessments" ? getInstructorQuestionAnalytics(supabase, validCourseId) : Promise.resolve([]),
+    getInstructorActiveLearners(supabase, range, validCourseId),
+    activeTab === "lessons" ? getInstructorLessonAnalytics(supabase, range, validCourseId) : Promise.resolve([]),
+    activeTab === "assessments" ? getInstructorAssessmentAnalytics(supabase, range, validCourseId) : Promise.resolve([]),
+    activeTab === "assessments" ? getInstructorQuestionAnalytics(supabase, range, validCourseId) : Promise.resolve([]),
   ]);
 
-  const totals = summarizeInstructorAnalytics(points, breakdown);
+  const totals = summarizeInstructorAnalytics(points, breakdown, activeLearners);
   const hasNoCourses = courses.length === 0;
   const hasNoActivity = totals.totalEnrollments === 0 && totals.activeLearners === 0;
 
@@ -184,7 +190,7 @@ export default async function InstructorAnalyticsPage({
                     {totals.completionRate === null ? "—" : `${totals.completionRate}%`}
                   </dd>
                   <p className="mt-1 text-xs text-text-secondary">
-                    {totals.totalCompletions} completed
+                    {totals.totalCompletions} of {totals.totalEnrollments} new enrollments completed
                   </p>
                 </Card>
 
@@ -199,7 +205,7 @@ export default async function InstructorAnalyticsPage({
                     {totals.activeLearners.toLocaleString("en-US")}
                   </dd>
                   <p className="mt-1 text-xs text-text-secondary">
-                    Studied or submitted work
+                    Studied, spent time learning or started an assessment
                   </p>
                 </Card>
               </dl>
@@ -227,7 +233,7 @@ export default async function InstructorAnalyticsPage({
                   <Card>
                     <CardHeader
                       title="Course Breakdown"
-                      description="Performance breakdown across courses in this time range"
+                      description="Enrollments that started in this range, how many of them have completed, and learners who were active"
                     />
                     <CardContent className="p-0">
                       <div className="overflow-x-auto">
@@ -236,7 +242,7 @@ export default async function InstructorAnalyticsPage({
                             <tr>
                               <th scope="col" className="px-6 py-3.5">Course</th>
                               <th scope="col" className="px-6 py-3.5 text-right">Enrollments</th>
-                              <th scope="col" className="px-6 py-3.5 text-right">Completions</th>
+                              <th scope="col" className="px-6 py-3.5 text-right">Completed</th>
                               <th scope="col" className="px-6 py-3.5 text-right">Completion Rate</th>
                               <th scope="col" className="px-6 py-3.5 text-right">Active Learners</th>
                             </tr>
@@ -282,7 +288,7 @@ export default async function InstructorAnalyticsPage({
               <Card>
                 <CardHeader
                   title="Lesson & Video Engagement"
-                  description="Watch time, completion rates, and drop-off by lesson"
+                  description={`Lessons learners worked on in the last ${range} days, by course version. Drop-off rate: learners who started a lesson, have not completed it and have had no activity on it for 14 days, out of all who have ever started it (not limited to the range).`}
                 />
                 <CardContent className="p-0">
                   {lessonStats.length === 0 ? (
@@ -311,14 +317,14 @@ export default async function InstructorAnalyticsPage({
                               <td className="px-6 py-4 font-medium text-text">
                                 {l.lessonTitle}
                               </td>
-                              <td className="px-6 py-4 capitalize text-xs text-text-secondary">
-                                {l.lessonType}
+                              <td className="px-6 py-4 text-xs text-text-secondary">
+                                {lessonTypeLabel(l.lessonType)}
                               </td>
                               <td className="px-6 py-4 text-xs text-text-secondary">
                                 {l.sectionTitle}
                               </td>
                               <td className="px-6 py-4 text-xs text-text-secondary">
-                                {l.courseTitle}
+                                {l.courseTitle} · Version {l.versionNumber}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs text-text">
                                 {l.starts.toLocaleString("en-US")}
@@ -330,7 +336,7 @@ export default async function InstructorAnalyticsPage({
                                 {l.starts === 0 ? "—" : `${l.completionRate}%`}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs font-semibold text-danger">
-                                {l.starts === 0 ? "—" : `${l.dropOffRate}%`}
+                                {l.starts === 0 && l.dropOffRate === 0 ? "—" : `${l.dropOffRate}%`}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs text-text">
                                 {formatDuration(l.avgWatchSeconds)}
@@ -353,7 +359,7 @@ export default async function InstructorAnalyticsPage({
               <Card>
                 <CardHeader
                   title="Assessment Performance"
-                  description="Pass rates, average scores, and attempt counts across quizzes and exams"
+                  description={`Graded attempts started in the last ${range} days, by course version`}
                 />
                 <CardContent className="p-0">
                   {assessmentStats.length === 0 ? (
@@ -382,7 +388,7 @@ export default async function InstructorAnalyticsPage({
                                 {a.assessmentTitle}
                               </td>
                               <td className="px-6 py-4 text-xs text-text-secondary">
-                                {a.courseTitle}
+                                {a.courseTitle} · Version {a.versionNumber}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs text-text">
                                 {a.passMark}%
@@ -415,7 +421,7 @@ export default async function InstructorAnalyticsPage({
               <Card>
                 <CardHeader
                   title="Question Difficulty & Quality"
-                  description="Difficulty ratings based on student success rates across attempts"
+                  description={`How often each question was answered correctly in the last ${range} days. Questions with fewer than ${QUESTION_MIN_ANSWERS} answers are not rated.`}
                 />
                 <CardContent className="p-0">
                   {questionStats.length === 0 ? (
@@ -431,7 +437,7 @@ export default async function InstructorAnalyticsPage({
                             <th scope="col" className="px-6 py-3.5">Assessment</th>
                             <th scope="col" className="px-6 py-3.5">Type</th>
                             <th scope="col" className="px-6 py-3.5 text-right">Points</th>
-                            <th scope="col" className="px-6 py-3.5 text-right">Attempts</th>
+                            <th scope="col" className="px-6 py-3.5 text-right">Answers</th>
                             <th scope="col" className="px-6 py-3.5 text-right">Success Rate</th>
                             <th scope="col" className="px-6 py-3.5 text-center">Difficulty</th>
                           </tr>
@@ -443,7 +449,7 @@ export default async function InstructorAnalyticsPage({
                                 {q.prompt}
                               </td>
                               <td className="px-6 py-4 text-xs text-text-secondary">
-                                {q.assessmentTitle}
+                                {q.assessmentTitle} · Version {q.versionNumber}
                               </td>
                               <td className="px-6 py-4 text-xs uppercase text-text-secondary">
                                 {q.questionType}
@@ -455,11 +461,11 @@ export default async function InstructorAnalyticsPage({
                                 {q.totalAttempts.toLocaleString("en-US")}
                               </td>
                               <td className="px-6 py-4 text-right font-mono text-xs text-text">
-                                {q.passRate}%
+                                {q.passRate === null ? "—" : `${q.passRate}%`}
                               </td>
                               <td className="px-6 py-4 text-center">
-                                <Badge tone={DIFFICULTY_TONE[q.difficulty] ?? "neutral"}>
-                                  {q.difficulty}
+                                <Badge tone={q.difficulty ? DIFFICULTY_TONE[q.difficulty] : "neutral"}>
+                                  {difficultyLabel(q.difficulty)}
                                 </Badge>
                               </td>
                             </tr>

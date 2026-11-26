@@ -108,4 +108,17 @@ describe.skipIf(!hasLiveProject)("user reports (T-275, live Supabase)", () => {
     await expect(getIdleUsers(learnerClient, 30)).rejects.toThrow(/not allowed/);
     await expect(getUserProgress(learnerClient, 30)).rejects.toThrow(/not allowed/);
   });
+
+  // Changes the fixture enrolment, so it runs last.
+  it("counts only the current version's lessons after a re-enrolment onto a new version (report audit C8)", async () => {
+    const { data: v2, error } = await svc.from("course_versions").insert({ course_id: courseId, version_number: 2, title: `${tag} Course` }).select("id").single();
+    expect(error).toBeNull();
+    const { data: section } = await svc.from("course_sections").insert({ version_id: v2!.id, title: "S1", position: 0 }).select("id").single();
+    await svc.from("lessons").insert({ section_id: section!.id, title: "New L1", type: "text", position: 0 });
+    await svc.from("enrollments").update({ version_id: v2!.id }).eq("user_id", activeLearnerId).eq("course_id", courseId);
+
+    const row = (await getUserProgress(admin, 30)).find((r) => r.userId === activeLearnerId && r.courseId === courseId);
+    // The v1 lesson completed earlier no longer counts towards the v2 enrolment.
+    expect(row).toMatchObject({ lessonsCompleted: 0, lessonsTotal: 1 });
+  });
 });

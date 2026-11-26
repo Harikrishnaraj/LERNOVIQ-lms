@@ -76,7 +76,7 @@ describe.skipIf(!hasLiveProject)("admin organizations (T-161, live Supabase)", (
     const added = await addOrganizationMemberAction(orgId, learnerId, "member");
     expect(added).toEqual({ ok: true });
 
-    // Give the learner some watch time to sum into "learning hours".
+    // Learning hours come from tracked learning time (lesson_time), not video positions (C9, C49).
     const course = await createCourse(svc, admin.id, { slug: `${tag}-course`, title: `${tag} Course`, publish: true });
     courseIds.push(course.courseId);
     const { data: enrollment } = await svc
@@ -84,7 +84,13 @@ describe.skipIf(!hasLiveProject)("admin organizations (T-161, live Supabase)", (
       .insert({ user_id: learnerId, course_id: course.courseId, version_id: course.versionId, status: "active" })
       .select("id")
       .single();
-    await svc.from("lesson_progress").insert({ enrollment_id: enrollment!.id, lesson_id: course.lessonIds[0], last_position_seconds: 7200 });
+    await svc.from("lesson_progress").insert({ enrollment_id: enrollment!.id, lesson_id: course.lessonIds[0], last_position_seconds: 99_999 });
+    await svc.from("lesson_time").insert({
+      enrollment_id: enrollment!.id,
+      lesson_id: course.lessonIds[0],
+      day: new Date().toISOString().slice(0, 10),
+      seconds: 7200,
+    });
 
     const detail = await getOrganizationDetail(admin.client, orgId);
     expect(detail).toMatchObject({ name: `${tag} Org Renamed`, memberCount: 1, learningHours: 2 });

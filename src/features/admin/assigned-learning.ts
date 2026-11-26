@@ -74,6 +74,21 @@ export interface AssignedLearningInput {
   dueAt: string | null;
 }
 
+/**
+ * A due date picked as a calendar day ("YYYY-MM-DD") means the END of that day: 23:59:59.999 UTC,
+ * so nobody is overdue while the due day is still running. Show it with `timeZone: "UTC"` so the
+ * chosen day is displayed unchanged. A full timestamp is kept as given. Null when invalid.
+ */
+export function dueDateToTimestamp(input: string): string | null {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+    const parsed = new Date(`${input}T23:59:59.999Z`);
+    // Date rolls 2026-02-30 over to March; reject a day that does not exist.
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === input ? parsed.toISOString() : null;
+  }
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
 export function validateAssignedLearningInput(input: {
   scope: unknown;
   userId: unknown;
@@ -95,9 +110,8 @@ export function validateAssignedLearningInput(input: {
   }
   let dueAt: string | null = null;
   if (typeof input.dueAt === "string" && input.dueAt.trim() !== "") {
-    const parsed = new Date(input.dueAt);
-    if (Number.isNaN(parsed.getTime())) return { ok: false, error: "Enter a valid due date." };
-    dueAt = parsed.toISOString();
+    dueAt = dueDateToTimestamp(input.dueAt.trim());
+    if (dueAt === null) return { ok: false, error: "Enter a valid due date." };
   }
   return {
     ok: true,

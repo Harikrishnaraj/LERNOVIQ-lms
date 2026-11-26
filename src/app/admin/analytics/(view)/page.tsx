@@ -7,7 +7,7 @@ import { TrendChart } from "@/components/admin/trend-chart";
 import { EmptyState, PermissionDeniedState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { RANGES, getDailyAnalytics, getTopCourses, parseRange, summarize } from "@/features/admin/analytics";
+import { RANGES, getCompletionCohort, getDailyAnalytics, getTopCourses, parseRange, summarize } from "@/features/admin/analytics";
 import { getSavedReports } from "@/features/admin/reports";
 import { can } from "@/lib/permissions/can";
 import { createClient } from "@/lib/supabase/server";
@@ -53,13 +53,14 @@ export default async function AdminAnalyticsPage({
     .sort((a, b) => a.label.localeCompare(b.label));
   const organizationOptions = (orgRows.data ?? []).map((o) => ({ id: o.id as string, label: o.name as string }));
 
-  const [points, top, savedReports] = await Promise.all([
+  const [points, cohort, top, savedReports] = await Promise.all([
     getDailyAnalytics(supabase, range),
+    getCompletionCohort(supabase, range),
     getTopCourses(supabase, range),
     getSavedReports(supabase),
   ]);
-  const totals = summarize(points);
-  const empty = totals.enrollments === 0 && totals.completions === 0 && totals.signups === 0;
+  const totals = summarize(points, cohort);
+  const empty = points.every((p) => p.enrollments === 0 && p.completions === 0 && p.signups === 0);
 
   return (
     <>
@@ -85,13 +86,14 @@ export default async function AdminAnalyticsPage({
       <dl aria-label="Totals for the range" className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { label: "Enrollments", value: totals.enrollments.toLocaleString("en-US") },
-          { label: "Completions", value: totals.completions.toLocaleString("en-US") },
-          { label: "Completion rate", value: totals.completionRate === null ? "No enrollments" : `${totals.completionRate}%` },
+          { label: "Completions", value: totals.completions.toLocaleString("en-US"), hint: "Of the enrollments above" },
+          { label: "Completion rate", value: totals.completionRate === null ? "No enrollments" : `${totals.completionRate}%`, hint: "Share of new enrollments completed" },
           { label: "New sign-ups", value: totals.signups.toLocaleString("en-US") },
         ].map((k) => (
           <Card key={k.label} className="p-4">
             <dt className="text-sm text-text-secondary">{k.label}</dt>
             <dd className="mt-1 text-2xl font-bold">{k.value}</dd>
+            {"hint" in k && k.hint ? <p className="mt-1 text-xs text-text-secondary">{k.hint}</p> : null}
           </Card>
         ))}
       </dl>

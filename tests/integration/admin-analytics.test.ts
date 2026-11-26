@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { getDailyAnalytics, getTopCourses } from "@/features/admin/analytics";
+import { getCompletionCohort, getDailyAnalytics, getTopCourses } from "@/features/admin/analytics";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
 
 const hasLiveProject = Boolean(
@@ -75,8 +75,18 @@ describe.skipIf(!hasLiveProject)("admin analytics (T-077, live Supabase)", () =>
     expect([...counts].sort((x, y) => y - x)).toEqual(counts);
   });
 
+  it("returns a cohort completion rate that cannot exceed 100% (C53)", async () => {
+    const cohort = await getCompletionCohort(admin.client, 7);
+    // Other suites run concurrently, so only lower bounds and the invariant are stable.
+    expect(cohort.enrollments).toBeGreaterThanOrEqual(2);
+    expect(cohort.completed).toBeGreaterThanOrEqual(1);
+    expect(cohort.completed).toBeLessThanOrEqual(cohort.enrollments);
+  });
+
   it("is refused to support agents, learners and anonymous callers", async () => {
     await expect(getDailyAnalytics(support.client, 7)).rejects.toThrow();
+    await expect(getCompletionCohort(support.client, 7)).rejects.toThrow();
+    await expect(getCompletionCohort(anon(), 7)).rejects.toThrow();
     await expect(getTopCourses(support.client, 7)).rejects.toThrow();
     await expect(getDailyAnalytics(anon(), 7)).rejects.toThrow();
   });

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { dueDateToTimestamp } from "@/features/admin/assigned-learning";
 import { cleanup, createCourse, createUserWithRole, serviceClient, uniqueTag } from "../support/course-fixtures";
 
 const hasLiveProject = Boolean(
@@ -46,10 +47,12 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
     const { data: org } = await svc.from("organizations").insert({ name: `${tag} Org`, slug: `${tag}-org` }).select("id").single();
     orgId = org!.id;
     orgIds.push(orgId);
+    // Members since before the past-due dates used below (overdue needs membership by the due date).
+    const joined = new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString();
     await svc.from("organization_members").insert([
-      { organization_id: orgId, user_id: orgAdmin.id, org_role: "org_admin" },
-      { organization_id: orgId, user_id: memberA.id, org_role: "member" },
-      { organization_id: orgId, user_id: memberB.id, org_role: "member" },
+      { organization_id: orgId, user_id: orgAdmin.id, org_role: "org_admin", created_at: joined },
+      { organization_id: orgId, user_id: memberA.id, org_role: "member", created_at: joined },
+      { organization_id: orgId, user_id: memberB.id, org_role: "member", created_at: joined },
     ]);
 
     const instructor = await createUserWithRole(svc, `${tag}-ins`, "instructor");
@@ -91,6 +94,15 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
     expect(rollup).toHaveLength(1);
     // 3 org members (org admin + memberA + memberB); memberA is complete, the other two are overdue.
     expect(rollup[0]).toMatchObject({ total_assigned: 3, completed_count: 1, overdue_count: 2 });
+
+    // Someone who joins after the due date is assigned, but not overdue (report audit C41).
+    const late = await signedIn("late", "learner");
+    await svc.from("organization_members").insert({ organization_id: orgId, user_id: late.id, org_role: "member" });
+    const after = (await orgAdmin.client.rpc("list_org_assigned_learning", { p_org_id: orgId })).data as { total_assigned: number; overdue_count: number }[];
+    expect(after[0]).toMatchObject({ total_assigned: 4, overdue_count: 2 });
+    // The learner's own view agrees: assigned, but not overdue.
+    const mineLate = (await late.client.rpc("my_assigned_learning")).data as { id: string; is_overdue: boolean }[];
+    expect(mineLate.find((a) => a.id === created.data!.id)).toMatchObject({ is_overdue: false });
   });
 
   it("a user-scoped assignment only reaches that one member", async () => {
@@ -102,5 +114,17 @@ describe.skipIf(!hasLiveProject)("assigned learning (T-163, live Supabase)", () 
 
     const mineA = (await memberA.client.rpc("my_assigned_learning")).data as unknown[];
     expect(mineA).toHaveLength(1); // still just the org-wide assignment.
+  });
+
+  it("an assignment due today is not overdue until the day is over (report audit C10, C40)", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const dueAt = dueDateToTimestamp(today);
+    const created = await orgAdmin.client.from("assigned_learning").insert({ organization_id: orgId, scope: "user", user_id: memberB.id, content_type: "course", course_id: courseId, due_at: dueAt }).select("id").single();
+    expect(created.error).toBeNull();
+
+    const mineB = (await memberB.client.rpc("my_assigned_learning")).data as { id: string; due_at: string; is_overdue: boolean }[];
+    const dueToday = mineB.find((a) => a.id === created.data!.id)!;
+    expect(new Date(dueToday.due_at).toISOString()).toBe(`${today}T23:59:59.999Z`);
+    expect(dueToday.is_overdue).toBe(false);
   });
 });

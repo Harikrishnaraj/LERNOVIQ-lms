@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { rpcAllRows } from "@/features/admin/report-rpc";
+import { safeCell } from "@/features/admin/reports";
 
 export const ANALYTICS_RANGES = [7, 30, 90, 365] as const;
 export type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
@@ -56,6 +58,7 @@ export interface InstructorLessonAnalytics {
   sectionTitle: string;
   courseId: string;
   courseTitle: string;
+  versionNumber: number;
   lessonPosition: number;
   durationMinutes: number;
   starts: number;
@@ -70,6 +73,7 @@ export interface InstructorAssessmentAnalytics {
   assessmentTitle: string;
   courseId: string;
   courseTitle: string;
+  versionNumber: number;
   passMark: number;
   totalAttempts: number;
   totalLearners: number;
@@ -85,11 +89,30 @@ export interface InstructorQuestionAnalytics {
   assessmentId: string;
   assessmentTitle: string;
   courseId: string;
+  versionNumber: number;
   questionType: string;
   points: number;
+  /** Answers to this question that could be scored (unscored essay/coding answers excluded). */
   totalAttempts: number;
-  passRate: number;
-  difficulty: "easy" | "medium" | "hard";
+  /** Share of those answers that were correct; null with no answers. */
+  passRate: number | null;
+  /** null = fewer than QUESTION_MIN_ANSWERS answers ("Not enough data"). */
+  difficulty: QuestionDifficulty | null;
+}
+
+export type QuestionDifficulty = "easy" | "medium" | "hard";
+
+/** Below this many answers a question gets no difficulty rating (matches the SQL). */
+export const QUESTION_MIN_ANSWERS = 5;
+
+/** Display label for a lesson type: "scorm" is an acronym, the rest are capitalised words. */
+export function lessonTypeLabel(type: string): string {
+  if (type === "scorm") return "SCORM";
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+export function difficultyLabel(difficulty: QuestionDifficulty | null): string {
+  return difficulty ?? "Not enough data";
 }
 
 export interface InstructorExportRow {
@@ -101,9 +124,16 @@ export interface InstructorExportRow {
   progressPercent: number;
   completedLessons: number;
   totalLessons: number;
-  watchTimeMinutes: number;
+  learningTimeMinutes: number;
   assessmentsPassed: number;
   lastActivityAt: string | null;
+}
+
+/** The learner-roster CSV link for the selected range and course. */
+export function instructorExportUrl(range: AnalyticsRange, courseId: string | null): string {
+  const params = new URLSearchParams({ range: String(range) });
+  if (courseId) params.set("course", courseId);
+  return `/instructor/analytics/export?${params.toString()}`;
 }
 
 export function formatCurrency(cents: number, currency = "USD"): string {
@@ -123,22 +153,24 @@ export function formatDuration(seconds: number): string {
   return `${mins}m ${remSecs}s`;
 }
 
+/**
+ * Overview totals. Enrollments and completions are the cohort from the course breakdown
+ * (enrollments that started in the range, and how many of those have completed), so the rate
+ * cannot exceed 100%. activeLearners is the distinct count across courses from
+ * instructor_analytics_active_learners: summing per-course counts would count a learner once per
+ * course.
+ */
 export function summarizeInstructorAnalytics(
   points: InstructorDailyPoint[],
   breakdown: InstructorCourseBreakdown[],
+  activeLearners: number,
 ): InstructorAnalyticsTotals {
-  const totalEnrollments = points.reduce((sum, p) => sum + p.enrollments, 0);
-  const totalCompletions = points.reduce((sum, p) => sum + p.completions, 0);
+  const totalEnrollments = breakdown.reduce((sum, c) => sum + c.enrollments, 0);
+  const totalCompletions = breakdown.reduce((sum, c) => sum + c.completions, 0);
   const totalRevenueCents = points.reduce((sum, p) => sum + p.revenueCents, 0);
 
-  const maxDailyActive = Math.max(0, ...points.map((p) => p.activeLearners));
-  const sumCourseActive = breakdown.reduce((sum, c) => sum + c.activeLearners, 0);
-  const activeLearners = Math.max(maxDailyActive, sumCourseActive);
-
   const completionRate =
-    totalEnrollments === 0
-      ? null
-      : Math.min(100, Math.round((totalCompletions / totalEnrollments) * 100));
+    totalEnrollments === 0 ? null : Math.round((totalCompletions / totalEnrollments) * 100);
 
   const avgRevenuePerLearnerCents =
     totalEnrollments === 0 ? 0 : Math.round(totalRevenueCents / totalEnrollments);
@@ -160,7 +192,8 @@ export function scaleBars(series: number[][]): number[][] {
 
 export function escapeCsv(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
+  // Learner names are user-controlled: neutralise leading = + - @ tab CR so Excel keeps them as text.
+  const str = String(safeCell(value));
   if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
     return `"${str.replaceAll('"', '""')}"`;
   }
@@ -177,7 +210,7 @@ export function exportToCsv(rows: InstructorExportRow[]): string {
     "Progress %",
     "Completed Lessons",
     "Total Lessons",
-    "Watch Time (min)",
+    "Learning Time (min)",
     "Assessments Passed",
     "Last Activity",
   ];
@@ -193,7 +226,7 @@ export function exportToCsv(rows: InstructorExportRow[]): string {
         escapeCsv(r.progressPercent),
         escapeCsv(r.completedLessons),
         escapeCsv(r.totalLessons),
-        escapeCsv(r.watchTimeMinutes),
+        escapeCsv(r.learningTimeMinutes),
         escapeCsv(r.assessmentsPassed),
         escapeCsv(r.lastActivityAt),
       ].join(","),
@@ -268,11 +301,27 @@ export async function getInstructorCoursesBreakdown(
   }));
 }
 
+/** Distinct learners active in the range across the caller's courses (or the one given). */
+export async function getInstructorActiveLearners(
+  supabase: SupabaseClient,
+  days: number,
+  courseId?: string | null,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("instructor_analytics_active_learners", {
+    p_days: days,
+    p_course_id: courseId ?? null,
+  });
+  if (error) throw new Error(`instructor_analytics_active_learners failed: ${error.message}`);
+  return Number(data ?? 0);
+}
+
 export async function getInstructorLessonAnalytics(
   supabase: SupabaseClient,
+  days: number,
   courseId?: string | null,
 ): Promise<InstructorLessonAnalytics[]> {
   const { data, error } = await supabase.rpc("instructor_lesson_analytics", {
+    p_days: days,
     p_course_id: courseId ?? null,
   });
   if (error) throw new Error(`instructor_lesson_analytics failed: ${error.message}`);
@@ -283,6 +332,7 @@ export async function getInstructorLessonAnalytics(
     section_title: string;
     course_id: string;
     course_title: string;
+    version_number: number;
     lesson_position: number;
     duration_minutes: number;
     starts: number;
@@ -297,6 +347,7 @@ export async function getInstructorLessonAnalytics(
     sectionTitle: r.section_title,
     courseId: r.course_id,
     courseTitle: r.course_title,
+    versionNumber: r.version_number,
     lessonPosition: r.lesson_position,
     durationMinutes: r.duration_minutes,
     starts: r.starts,
@@ -309,9 +360,11 @@ export async function getInstructorLessonAnalytics(
 
 export async function getInstructorAssessmentAnalytics(
   supabase: SupabaseClient,
+  days: number,
   courseId?: string | null,
 ): Promise<InstructorAssessmentAnalytics[]> {
   const { data, error } = await supabase.rpc("instructor_assessment_analytics", {
+    p_days: days,
     p_course_id: courseId ?? null,
   });
   if (error) throw new Error(`instructor_assessment_analytics failed: ${error.message}`);
@@ -320,6 +373,7 @@ export async function getInstructorAssessmentAnalytics(
     assessment_title: string;
     course_id: string;
     course_title: string;
+    version_number: number;
     pass_mark: number;
     total_attempts: number;
     total_learners: number;
@@ -332,6 +386,7 @@ export async function getInstructorAssessmentAnalytics(
     assessmentTitle: r.assessment_title,
     courseId: r.course_id,
     courseTitle: r.course_title,
+    versionNumber: r.version_number,
     passMark: r.pass_mark,
     totalAttempts: r.total_attempts,
     totalLearners: r.total_learners,
@@ -344,9 +399,11 @@ export async function getInstructorAssessmentAnalytics(
 
 export async function getInstructorQuestionAnalytics(
   supabase: SupabaseClient,
+  days: number,
   courseId?: string | null,
 ): Promise<InstructorQuestionAnalytics[]> {
   const { data, error } = await supabase.rpc("instructor_question_analytics", {
+    p_days: days,
     p_course_id: courseId ?? null,
   });
   if (error) throw new Error(`instructor_question_analytics failed: ${error.message}`);
@@ -356,17 +413,19 @@ export async function getInstructorQuestionAnalytics(
     assessment_id: string;
     assessment_title: string;
     course_id: string;
+    version_number: number;
     question_type: string;
     points: number;
     total_attempts: number;
-    pass_rate: number;
-    difficulty: "easy" | "medium" | "hard";
+    pass_rate: number | null;
+    difficulty: QuestionDifficulty | null;
   }[]).map((r) => ({
     questionId: r.question_id,
     prompt: r.prompt,
     assessmentId: r.assessment_id,
     assessmentTitle: r.assessment_title,
     courseId: r.course_id,
+    versionNumber: r.version_number,
     questionType: r.question_type,
     points: r.points,
     totalAttempts: r.total_attempts,
@@ -377,13 +436,11 @@ export async function getInstructorQuestionAnalytics(
 
 export async function getInstructorExportRows(
   supabase: SupabaseClient,
+  days: number,
   courseId?: string | null,
 ): Promise<InstructorExportRow[]> {
-  const { data, error } = await supabase.rpc("instructor_analytics_export_rows", {
-    p_course_id: courseId ?? null,
-  });
-  if (error) throw new Error(`instructor_analytics_export_rows failed: ${error.message}`);
-  return ((data ?? []) as {
+  // Paged: a single call stops at PostgREST's 1000-row cap.
+  const data = await rpcAllRows<{
     learner_name: string;
     course_title: string;
     status: string;
@@ -392,10 +449,14 @@ export async function getInstructorExportRows(
     progress_percent: number;
     completed_lessons: number;
     total_lessons: number;
-    watch_time_minutes: number;
+    learning_time_minutes: number;
     assessments_passed: number;
     last_activity_at: string | null;
-  }[]).map((r) => ({
+  }>(supabase, "instructor_analytics_export_rows", {
+    p_days: days,
+    p_course_id: courseId ?? null,
+  });
+  return data.map((r) => ({
     learnerName: r.learner_name,
     courseTitle: r.course_title,
     status: r.status,
@@ -404,7 +465,7 @@ export async function getInstructorExportRows(
     progressPercent: r.progress_percent,
     completedLessons: r.completed_lessons,
     totalLessons: r.total_lessons,
-    watchTimeMinutes: r.watch_time_minutes,
+    learningTimeMinutes: r.learning_time_minutes,
     assessmentsPassed: r.assessments_passed,
     lastActivityAt: r.last_activity_at,
   }));

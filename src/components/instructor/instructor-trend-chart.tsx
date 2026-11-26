@@ -41,7 +41,7 @@ export function InstructorTrendChart({ points }: { points: InstructorDailyPoint[
               rx={1}
               className="fill-success"
             >
-              <title>{`${p.day}: ${p.completions} completions`}</title>
+              <title>{`${p.day}: ${p.completions} courses completed (any enrollment)`}</title>
             </rect>
             {/* Active learners bar */}
             <rect
@@ -62,7 +62,7 @@ export function InstructorTrendChart({ points }: { points: InstructorDailyPoint[
           <span className="size-2.5 rounded-sm bg-primary" aria-hidden="true" /> Enrollments
         </span>
         <span className="inline-flex items-center gap-1.5 font-medium">
-          <span className="size-2.5 rounded-sm bg-success" aria-hidden="true" /> Completions
+          <span className="size-2.5 rounded-sm bg-success" aria-hidden="true" /> Courses completed that day
         </span>
         <span className="inline-flex items-center gap-1.5 font-medium">
           <span className="size-2.5 rounded-sm bg-accent-purple" aria-hidden="true" /> Active Learners
@@ -82,7 +82,7 @@ export function InstructorTrendChart({ points }: { points: InstructorDailyPoint[
               <tr>
                 <th scope="col" className="p-2">Date</th>
                 <th scope="col" className="p-2 text-right">Enrollments</th>
-                <th scope="col" className="p-2 text-right">Completions</th>
+                <th scope="col" className="p-2 text-right">Courses completed that day</th>
                 <th scope="col" className="p-2 text-right">Active Learners</th>
               </tr>
             </thead>

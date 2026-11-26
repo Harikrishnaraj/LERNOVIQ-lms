@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { parseAttemptQuery } from "@/features/admin/assessments";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { describe, expect, it, vi } from "vitest";
+import { getAdminQuestionAnalytics, parseAttemptQuery } from "@/features/admin/assessments";
 
 describe("parseAttemptQuery", () => {
   it("defaults to an empty query on page 1", () => {
@@ -28,5 +29,33 @@ describe("parseAttemptQuery", () => {
   it("trims and caps the search query length", () => {
     expect(parseAttemptQuery({ q: "  hi  " }).q).toBe("hi");
     expect(parseAttemptQuery({ q: "x".repeat(150) }).q).toHaveLength(100);
+  });
+});
+
+describe("getAdminQuestionAnalytics", () => {
+  it("maps each row with its course version (C7, C39)", async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      data: [
+        {
+          question_id: "q1",
+          prompt: "2 + 2?",
+          assessment_id: "a1",
+          assessment_title: "Quiz",
+          course_id: "c1",
+          course_title: "Maths",
+          version_number: 1,
+          question_type: "mcq",
+          points: 1,
+          total_attempts: 6,
+          pass_rate: 0,
+          difficulty: "hard",
+          quality_flag: "review_too_hard",
+        },
+      ],
+      error: null,
+    });
+    const rows = await getAdminQuestionAnalytics({ rpc } as unknown as SupabaseClient, "c1");
+    expect(rpc).toHaveBeenCalledWith("admin_question_analytics", { p_course_id: "c1" });
+    expect(rows[0]).toMatchObject({ questionId: "q1", courseTitle: "Maths", versionNumber: 1, qualityFlag: "review_too_hard" });
   });
 });

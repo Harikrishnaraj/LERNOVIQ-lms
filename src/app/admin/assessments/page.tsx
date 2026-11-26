@@ -114,7 +114,7 @@ export default async function AdminAssessmentsPage({
       <Card className="mb-6">
         <CardHeader
           title="Question-quality flags"
-          description="Questions with 5+ attempts where everyone fails or everyone passes, which may signal a broken or trivial question."
+          description="Questions with 5+ answers that everyone gets wrong or everyone gets right, which may signal a broken or trivial question."
         />
         <CardContent>
           {flagged.length === 0 ? (
@@ -122,11 +122,11 @@ export default async function AdminAssessmentsPage({
           ) : (
             <ul className="divide-y divide-border-subtle">
               {flagged.map((q) => (
-                <li key={q.questionId} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <li key={`${q.questionId}-${q.versionNumber}`} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div>
                     <p className="font-medium">{q.prompt}</p>
                     <p className="text-xs text-text-secondary">
-                      {q.assessmentTitle} &middot; {q.courseTitle} &middot; {q.totalAttempts} attempts &middot; {q.passRate}% pass rate
+                      {q.assessmentTitle} &middot; {q.courseTitle} (version {q.versionNumber}) &middot; {q.totalAttempts} answers &middot; {q.passRate}% pass rate
                     </p>
                   </div>
                   <Badge tone={q.qualityFlag === "review_too_hard" ? "danger" : "warning"}>

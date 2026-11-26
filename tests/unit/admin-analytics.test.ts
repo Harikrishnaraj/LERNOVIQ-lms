@@ -12,18 +12,25 @@ describe("parseRange", () => {
 });
 
 describe("summarize", () => {
-  it("sums the range and computes the completion rate", () => {
-    const t = summarize([
-      { day: "2026-01-01", enrollments: 4, completions: 1, signups: 2 },
-      { day: "2026-01-02", enrollments: 6, completions: 2, signups: 0 },
-    ]);
+  it("takes enrollments, completions and the rate from the cohort and sums sign-ups", () => {
+    const t = summarize(
+      [
+        { day: "2026-01-01", enrollments: 4, completions: 1, signups: 2 },
+        { day: "2026-01-02", enrollments: 6, completions: 2, signups: 0 },
+      ],
+      { enrollments: 10, completed: 3 },
+    );
     expect(t).toEqual({ enrollments: 10, completions: 3, signups: 2, completionRate: 30 });
   });
 
-  it("has no rate without enrollments and never exceeds 100", () => {
-    expect(summarize([{ day: "d", enrollments: 0, completions: 0, signups: 0 }]).completionRate).toBeNull();
-    expect(summarize([{ day: "d", enrollments: 1, completions: 5, signups: 0 }]).completionRate).toBe(100);
-    expect(summarize([]).completionRate).toBeNull();
+  it("ignores completion events from older enrollments (C53): 1 new enrollment, 5 older completions", () => {
+    const t = summarize([{ day: "d", enrollments: 1, completions: 5, signups: 0 }], { enrollments: 1, completed: 0 });
+    expect(t.completions).toBe(0);
+    expect(t.completionRate).toBe(0);
+  });
+
+  it("has no rate without enrollments", () => {
+    expect(summarize([], { enrollments: 0, completed: 0 }).completionRate).toBeNull();
   });
 });
 

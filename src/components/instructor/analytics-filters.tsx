@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download } from "lucide-react";
-import { ANALYTICS_RANGES, type AnalyticsRange, type InstructorAnalyticsCourse } from "@/features/instructor/analytics";
+import {
+  ANALYTICS_RANGES,
+  instructorExportUrl,
+  type AnalyticsRange,
+  type InstructorAnalyticsCourse,
+} from "@/features/instructor/analytics";
 import { cn } from "@/lib/utils/cn";
 
 export function AnalyticsFilters({
@@ -29,13 +34,7 @@ export function AnalyticsFilters({
     router.push(`/instructor/analytics?${params.toString()}`);
   };
 
-  const exportParams = new URLSearchParams();
-  if (selectedCourseId) {
-    exportParams.set("course", selectedCourseId);
-  }
-  const exportUrl = exportParams.toString()
-    ? `/instructor/analytics/export?${exportParams.toString()}`
-    : "/instructor/analytics/export";
+  const exportUrl = instructorExportUrl(selectedRange, selectedCourseId);
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -84,10 +83,11 @@ export function AnalyticsFilters({
       <Link
         href={exportUrl}
         download
+        title={`Learners who enrolled or were active in the last ${selectedRange} days`}
         className="inline-flex items-center gap-1.5 rounded-control border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text hover:bg-surface-subtle transition-colors"
       >
         <Download className="size-3.5" aria-hidden="true" />
-        Export CSV
+        Export learners (CSV)
       </Link>
     </div>
   );

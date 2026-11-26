@@ -61,11 +61,16 @@ export interface AdminQuestionAnalytics {
   assessmentTitle: string;
   courseId: string;
   courseTitle: string;
+  /** Course version the question belongs to; older versions appear while they have learners. */
+  versionNumber: number;
   questionType: string;
   points: number;
+  /** Answers to this question that could be scored. */
   totalAttempts: number;
-  passRate: number;
-  difficulty: "easy" | "medium" | "hard";
+  /** Share of those answers that were correct; null with no answers. */
+  passRate: number | null;
+  /** null below 5 answers ("Not enough data"). */
+  difficulty: "easy" | "medium" | "hard" | null;
   qualityFlag: QuestionQualityFlag;
 }
 
@@ -76,11 +81,12 @@ interface QuestionRow {
   assessment_title: string;
   course_id: string;
   course_title: string;
+  version_number: number;
   question_type: string;
   points: number;
   total_attempts: number;
-  pass_rate: number;
-  difficulty: "easy" | "medium" | "hard";
+  pass_rate: number | null;
+  difficulty: "easy" | "medium" | "hard" | null;
   quality_flag: QuestionQualityFlag;
 }
 
@@ -98,6 +104,7 @@ export async function getAdminQuestionAnalytics(
     assessmentTitle: r.assessment_title,
     courseId: r.course_id,
     courseTitle: r.course_title,
+    versionNumber: r.version_number,
     questionType: r.question_type,
     points: r.points,
     totalAttempts: r.total_attempts,

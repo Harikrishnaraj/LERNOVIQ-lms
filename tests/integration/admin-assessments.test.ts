@@ -39,6 +39,8 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
   let hardAssessmentId: string;
   let easyAssessmentId: string;
   let resettableAttemptId: string;
+  /** A sixth failing attempt, put back after the reset test deletes one, so the question keeps 5 answers. */
+  let refillAttempt: Record<string, unknown>;
 
   async function user(name: string, role: string, fullName?: string) {
     const u = await createUserWithRole(svc, `${tag}-${name}`, role, fullName ? { fullName } : undefined);
@@ -74,9 +76,11 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
       .select("id")
       .single();
     hardAssessmentId = hard!.id;
-    await svc
+    const { data: hardQ } = await svc
       .from("assessment_questions")
-      .insert({ assessment_id: hardAssessmentId, type: "mcq", prompt: `${tag} broken question`, points: 1 });
+      .insert({ assessment_id: hardAssessmentId, type: "mcq", prompt: `${tag} broken question`, points: 1 })
+      .select("id")
+      .single();
 
     const { data: easy } = await svc
       .from("assessments")
@@ -84,29 +88,50 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
       .select("id")
       .single();
     easyAssessmentId = easy!.id;
-    await svc
+    const { data: easyQ } = await svc
       .from("assessment_questions")
-      .insert({ assessment_id: easyAssessmentId, type: "mcq", prompt: `${tag} trivial question`, points: 1 });
+      .insert({ assessment_id: easyAssessmentId, type: "mcq", prompt: `${tag} trivial question`, points: 1 })
+      .select("id")
+      .single();
+
+    // Difficulty is scored from each question's own answers against its key (report audit C35).
+    async function keyedOptions(questionId: string) {
+      const { data } = await svc
+        .from("assessment_options")
+        .insert([
+          { question_id: questionId, label: "Right", position: 0 },
+          { question_id: questionId, label: "Wrong", position: 1 },
+        ])
+        .select("id, position");
+      const [right, wrong] = data!.sort((a, b) => a.position - b.position).map((o) => o.id as string);
+      await svc.from("assessment_answer_keys").insert({ question_id: questionId, correct_option_ids: [right] });
+      return { right, wrong };
+    }
+    const hardOptions = await keyedOptions(hardQ!.id);
+    const easyOptions = await keyedOptions(easyQ!.id);
 
     // Five failing attempts on the hard assessment, from the same enrollment (distinct attempt numbers).
     const failLearner = await user("fail", "learner", `${tag} Fail Learner`);
     const failEnrollmentId = await enroll(failLearner.id);
+    const failingAttempt = (attemptNumber: number) => ({
+      assessment_id: hardAssessmentId,
+      enrollment_id: failEnrollmentId,
+      user_id: failLearner.id,
+      attempt_number: attemptNumber,
+      status: "graded",
+      percent: 20,
+      score: 20,
+      max_score: 100,
+      passed: false,
+      answers: { [hardQ!.id]: hardOptions.wrong },
+      started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
+    });
+    refillAttempt = failingAttempt(6);
     for (let i = 1; i <= 5; i++) {
       const { data: att } = await svc
         .from("assessment_attempts")
-        .insert({
-          assessment_id: hardAssessmentId,
-          enrollment_id: failEnrollmentId,
-          user_id: failLearner.id,
-          attempt_number: i,
-          status: "graded",
-          percent: 20,
-          score: 20,
-          max_score: 100,
-          passed: false,
-          started_at: new Date().toISOString(),
-          submitted_at: new Date().toISOString(),
-        })
+        .insert(failingAttempt(i))
         .select("id")
         .single();
       if (i === 1) resettableAttemptId = att!.id;
@@ -126,6 +151,7 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
         score: 95,
         max_score: 100,
         passed: true,
+        answers: { [easyQ!.id]: easyOptions.right },
         started_at: new Date().toISOString(),
         submitted_at: new Date().toISOString(),
       });
@@ -162,6 +188,8 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
     const rows = await getAdminQuestionAnalytics(admin.client, course.courseId);
     const freshQ = rows.find((r) => r.assessmentId === fresh!.id)!;
     expect(freshQ.qualityFlag).toBeNull();
+    // No answers: no rate and no rating, never "easy".
+    expect(freshQ).toMatchObject({ totalAttempts: 0, passRate: null, difficulty: null });
   });
 
   it("searches attempts by learner name and filters by status/course", async () => {
@@ -214,5 +242,23 @@ describe.skipIf(!hasLiveProject)("admin assessment oversight (T-136, live Supaba
     currentClient = admin.client;
     const res = await resetAttemptAction(resettableAttemptId);
     expect(res.ok).toBe(false);
+  });
+
+  // Runs last: it publishes a version 2, which the earlier tests do not expect.
+  it("keeps flagging questions on an older version that still has learners (C7, C39)", async () => {
+    const { data: v2, error } = await svc
+      .from("course_versions")
+      .insert({ course_id: course.courseId, version_number: 2, title: `${tag} Course`, status: "published", published_at: new Date().toISOString() })
+      .select("id")
+      .single();
+    if (error) throw error;
+    await svc.from("courses").update({ published_version_id: v2.id }).eq("id", course.courseId);
+    // The reset test deleted one of the five failing attempts; flags need at least 5 answers.
+    const { error: refillError } = await svc.from("assessment_attempts").insert({ ...refillAttempt, started_at: new Date().toISOString(), submitted_at: new Date().toISOString() });
+    if (refillError) throw refillError;
+
+    const rows = await getAdminQuestionAnalytics(admin.client, course.courseId);
+    const hardQ = rows.find((r) => r.assessmentId === hardAssessmentId)!;
+    expect(hardQ).toMatchObject({ versionNumber: 1, courseTitle: `${tag} Course`, qualityFlag: "review_too_hard" });
   });
 });

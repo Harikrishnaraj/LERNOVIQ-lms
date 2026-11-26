@@ -16,7 +16,7 @@ test.describe("saved reports", () => {
     await cleanup(svc, { learnerIds: [], courseIds: [], userIds: [] });
   });
 
-  test("creates a saved report, runs it, and deletes it (T-140)", async ({ page, context }) => {
+  test("creates a saved report, runs it, and deletes it (T-140)", async ({ page }) => {
     test.setTimeout(120_000);
     const done = await loginAsRole(page, "admin");
     try {
@@ -30,11 +30,12 @@ test.describe("saved reports", () => {
       await expect(page.getByText(`${tag} Weekly Digest`)).toBeVisible();
       await expect(page.getByText(/Auto-runs weekly/)).toBeVisible();
 
+      // Run now downloads the CSV in this tab (a signed URL with a download filename).
       const [download] = await Promise.all([
-        context.waitForEvent("page"),
+        page.waitForEvent("download"),
         page.getByRole("button", { name: "Run now" }).click(),
       ]);
-      await download.close();
+      expect(download.suggestedFilename()).toMatch(/weekly-digest-\d{4}-\d{2}-\d{2}\.csv$/);
 
       await page.getByRole("button", { name: `Delete ${tag} Weekly Digest` }).click();
       await expect(page.getByText(`${tag} Weekly Digest`)).toHaveCount(0);

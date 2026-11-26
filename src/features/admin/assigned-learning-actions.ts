@@ -82,8 +82,11 @@ export async function deleteAssignedLearningAction(id: string, revalidateHref: s
   const { supabase, user } = await actor();
   if (!user) return { ok: false, error: "Please log in again." };
 
-  const { error } = await supabase.from("assigned_learning").delete().eq("id", id);
+  // RLS hides other organisations' rows, so a delete it filters out returns no error and no rows:
+  // only a row that really went is reported and audited (report audit C23, C45).
+  const { data: deleted, error } = await supabase.from("assigned_learning").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: "We could not remove that assignment. Please try again." };
+  if (!deleted || deleted.length === 0) return { ok: false, error: "That assignment is not available." };
 
   await recordAudit({
     actorId: user.id,

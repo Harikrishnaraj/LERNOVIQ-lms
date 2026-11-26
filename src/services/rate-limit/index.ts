@@ -18,6 +18,8 @@ const LIMITS = {
   "instructor-message": { limit: 20, windowSeconds: 10 * 60 },
   "upload-initiate": { limit: 30, windowSeconds: 10 * 60 },
   "analytics-export": { limit: 20, windowSeconds: 10 * 60 },
+  // Saved-report Run now and past-export download links (report audit C20): per user and per IP.
+  "report-run": { limit: 20, windowSeconds: 10 * 60 },
   // Account deletion request/cancel (F-441): per user and per IP, includes failed password checks.
   "account-privacy": { limit: 5, windowSeconds: 60 * 60 },
   // Public marketing contact form (SECURITY §28): per IP and per email.

@@ -18,7 +18,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils/cn";
 import { formatDuration, formatPrice } from "@/lib/utils/format";
 
-const dueDateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+const dueDateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }); // due dates are end-of-day UTC
 
 export const metadata: Metadata = { title: "My Learning" };
 

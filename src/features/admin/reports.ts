@@ -32,6 +32,8 @@ export interface ReportDefinition {
   label: string;
   /** False until the report's data query exists. Unavailable reports are listed, but cannot be saved or run. */
   available: boolean;
+  /** False for snapshot reports that ignore the date range (report audit C12, C32, C50). */
+  usesRange: boolean;
 }
 
 /**
@@ -39,21 +41,28 @@ export interface ReportDefinition {
  * (enrollments, completions and signups per day) and is the only report with real data today.
  */
 export const REPORT_CATALOGUE: readonly ReportDefinition[] = [
-  { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true },
-  { type: "idle_users", category: "user", label: "Idle users", available: true },
-  { type: "user_product_duration", category: "user", label: "User product duration", available: true },
-  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true },
-  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true },
-  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true },
-  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: true },
-  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: true },
-  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: true },
+  { type: "daily_analytics", category: "consolidated", label: "Daily platform analytics", available: true, usesRange: true },
+  { type: "idle_users", category: "user", label: "Idle users", available: true, usesRange: true },
+  { type: "user_product_duration", category: "user", label: "User product duration", available: true, usesRange: true },
+  { type: "individual_user_progress", category: "user", label: "Individual user progress", available: true, usesRange: true },
+  { type: "consolidated_course_module_usage", category: "consolidated", label: "Course-module usage", available: true, usesRange: true },
+  { type: "consolidated_course_library_usage", category: "consolidated", label: "Course-library usage (by access date)", available: true, usesRange: true },
+  { type: "product_course_library_licence_status", category: "product", label: "Course-library licence status", available: true, usesRange: false },
+  { type: "product_course_library_usage", category: "product", label: "Course-library usage", available: true, usesRange: false },
+  { type: "product_course_module_usage", category: "product", label: "Course-module usage", available: true, usesRange: false },
 ];
 
 export const DEFAULT_REPORT_TYPE: ReportType = "daily_analytics";
 
 export function getReportDefinition(type: string): ReportDefinition | null {
   return REPORT_CATALOGUE.find((r) => r.type === type) ?? null;
+}
+
+/** How a saved report row describes its range: a snapshot, an idle threshold or a look-back window. */
+export function describeReportRange(type: ReportType, rangeDays: number): string {
+  if (getReportDefinition(type)?.usesRange === false) return "Current snapshot";
+  if (type === "idle_users") return `Idle for ${rangeDays}+ days`;
+  return `Last ${rangeDays} days`;
 }
 
 export function validateReportType(input: unknown): { ok: true; value: ReportType } | { ok: false; error: string } {
@@ -69,10 +78,24 @@ export interface SavedReport {
   reportLabel: string;
   rangeDays: Range;
   filters: ReportFilters;
+  /** Stored filters no longer pass validation; runs of this report fail until it is recreated. */
+  filtersInvalid: boolean;
   schedule: ReportSchedule;
   nextRunAt: string | null;
   createdAt: string;
+  /** The newest exports (manual and scheduled), newest first. Files are kept for EXPORT_RETENTION_DAYS. */
+  recentExports: ExportSummary[];
 }
+
+export interface ExportSummary {
+  id: string;
+  generatedAt: string;
+  rowCount: number;
+  triggeredBy: "manual" | "scheduled";
+}
+
+/** How many past exports each saved report lists. */
+export const RECENT_EXPORTS = 5;
 
 interface Row {
   id: string;
@@ -83,26 +106,38 @@ interface Row {
   schedule: ReportSchedule;
   next_run_at: string | null;
   created_at: string;
+  report_exports: { id: string; generated_at: string; row_count: number; triggered_by: "manual" | "scheduled" }[] | null;
 }
 
 export async function getSavedReports(supabase: SupabaseClient): Promise<SavedReport[]> {
   const { data, error } = await supabase
     .from("saved_reports")
-    .select("id, name, report_type, range_days, filters, schedule, next_run_at, created_at")
-    .order("created_at", { ascending: false });
+    .select("id, name, report_type, range_days, filters, schedule, next_run_at, created_at, report_exports(id, generated_at, row_count, triggered_by)")
+    .order("created_at", { ascending: false })
+    .order("generated_at", { referencedTable: "report_exports", ascending: false })
+    .limit(RECENT_EXPORTS, { referencedTable: "report_exports" });
   if (error) throw new Error(`saved_reports failed: ${error.message}`);
   return ((data ?? []) as Row[]).map((r) => {
     const def = getReportDefinition(r.report_type) ?? getReportDefinition(DEFAULT_REPORT_TYPE)!;
+    const filters = parseStoredFilters(def.type, r.filters);
     return {
       id: r.id,
       name: r.name,
       reportType: def.type,
       reportLabel: def.label,
       rangeDays: r.range_days,
-      filters: parseStoredFilters(def.type, r.filters),
+      // Display only: generation refuses invalid stored filters (report-actions, cron), so flag them.
+      filters: filters ?? {},
+      filtersInvalid: filters === null,
       schedule: r.schedule,
       nextRunAt: r.next_run_at,
       createdAt: r.created_at,
+      recentExports: (r.report_exports ?? []).map((x) => ({
+        id: x.id,
+        generatedAt: x.generated_at,
+        rowCount: x.row_count,
+        triggeredBy: x.triggered_by,
+      })),
     };
   });
 }
@@ -148,25 +183,41 @@ export function validateReportName(input: unknown): { ok: true; value: string } 
   return { ok: true, value };
 }
 
-/** Next run time for a schedule, from a given moment. `null` for "none". */
-export function computeNextRunAt(schedule: ReportSchedule, from: Date): Date | null {
+/**
+ * Next run time for a schedule (report audit C28). `previous` is the run that just fell due
+ * (saved_reports.next_run_at); whole periods are added to it until the result is after `now`, so a
+ * report keeps its time of day and catches up after downtime with a single run. Without `previous`
+ * (a new report) it counts from `now`. Monthly runs keep `anchorDay` (the day of month the report was
+ * created; defaults to the base date's day), clamped to the last day of shorter months: Jan 31,
+ * Feb 28 (29 in a leap year), Mar 31. `null` for "none".
+ */
+export function computeNextRunAt(schedule: ReportSchedule, now: Date, previous?: Date | null, anchorDay?: number): Date | null {
   if (schedule === "none") return null;
-  const next = new Date(from);
-  if (schedule === "daily") next.setUTCDate(next.getUTCDate() + 1);
-  else if (schedule === "weekly") next.setUTCDate(next.getUTCDate() + 7);
-  else next.setUTCMonth(next.getUTCMonth() + 1);
-  return next;
+  const base = previous ?? now;
+  const day = anchorDay ?? base.getUTCDate();
+  for (let k = 1; ; k++) {
+    const next = new Date(base);
+    if (schedule === "monthly") {
+      next.setUTCDate(1);
+      next.setUTCMonth(base.getUTCMonth() + k);
+      const lastDay = new Date(Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)).getUTCDate();
+      next.setUTCDate(Math.min(day, lastDay));
+    } else {
+      next.setUTCDate(base.getUTCDate() + k * (schedule === "daily" ? 1 : 7));
+    }
+    if (next > now) return next;
+  }
 }
 
 function escapeCsv(value: string | number | null): string {
   if (value === null) return "";
   const str = String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replaceAll('"', '""')}"`;
+  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) return `"${str.replaceAll('"', '""')}"`;
   return str;
 }
 
 /** A text cell that starts with a formula character would run as a formula in Excel; prefix it so it stays text. */
-function safeCell(value: string | number | null): string | number | null {
+export function safeCell(value: string | number | null): string | number | null {
   return typeof value === "string" && /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
